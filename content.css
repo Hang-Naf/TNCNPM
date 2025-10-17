@@ -1,0 +1,202 @@
+/* ===== BỐ CỤC CHUNG ===== */
+body {
+  margin: 0;
+  font-family: "Segoe UI", sans-serif;
+  background: white;
+  display: flex;
+  height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  height: 100vh;
+  background: #0b1548;
+  color: white;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0;
+  left: 0;
+  overflow-y: auto;
+}
+
+.main-content {
+  margin-left: 260px; /* đẩy phần nội dung ra khỏi sidebar */
+  width: calc(100% - 260px);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* ===== HEADER ===== */
+.header {
+  height: 65px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 25px;
+  border-bottom: 1px solid #e2e2e2;
+  position: sticky;
+  top: 0;
+  z-index: 0;
+}
+
+.search-box {
+  display: flex;
+  align-items: center;
+  background: #f3f3f3;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.search-box i {
+  color: #666;
+  margin-right: 8px;
+}
+
+.search-box input {
+  border: none;
+  outline: none;
+  background: transparent;
+  width: 250px;
+}
+
+.header .right {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.header .right i {
+  font-size: 18px;
+  color: #0b1548;
+  cursor: pointer;
+}
+
+.user-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+    position: relative;
+    font-weight: 500;
+    padding: 8px 12px;
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.user-info:hover {
+    background-color: #f0f2f5;
+}
+
+/* Menu dropdown */
+.user-menu {
+    display: none;
+    position: absolute;
+    top: 60px;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    width: 180px;
+    z-index: 999;
+}
+
+.user-menu ul {
+    list-style: none;
+    margin: 0;
+    padding: 8px 0;
+}
+
+.user-menu ul li {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    transition: background 0.2s ease;
+}
+
+.user-menu ul li:hover {
+    background: #f1f3f9;
+    color: #0b1e6b;
+}
+
+
+/* ===== CONTENT ===== */
+.content {
+  flex: 1;
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.notification-area {
+    position: relative;
+    margin-right: 20px;
+    cursor: pointer;
+}
+
+.notification-area i {
+    font-size: 20px;
+    position: relative;
+}
+
+.notification-dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 30px;
+    background: white;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+    width: 320px;
+    max-height: 400px;
+    overflow-y: auto;
+    z-index: 100;
+}
+
+.notification-dropdown h4 {
+    margin: 0;
+    padding: 10px;
+    background: #0b1e6b;
+    color: white;
+    font-size: 15px;
+}
+
+.notification-dropdown ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.notification-dropdown li {
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.notification-dropdown li.unread {
+    background: #eef2ff;
+    font-weight: 600;
+}
+
+.notification-dropdown li:hover {
+    background: #f6f7fb;
+}
+
+.notification-dropdown .time {
+    display: block;
+    color: gray;
+    font-size: 12px;
+    margin-top: 3px;
+}
+
+.no-noti {
+    text-align: center;
+    color: gray;
+    padding: 10px;
+    display: none;
+}
