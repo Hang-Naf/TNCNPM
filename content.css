@@ -200,3 +200,33 @@ body {
     padding: 10px;
     display: none;
 }
+.notification-dropdown ul li:hover {
+    background: #f5f7fa;
+}
+.notification-dropdown ul li strong {
+    display: block;
+    font-size: 14px;
+}
+.notification-dropdown ul li small {
+    color: #888;
+    font-size: 12px;
+}
+.notification-dropdown.show {
+    display: block !important;
+}
+.noti-badge {
+    position: absolute;
+    top: -5px;
+    right: -8px;
+    background: red;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    border-radius: 50%;
+    padding: 3px 6px;
+    display: none; /* Ẩn khi = 0 */
+}
+.notification-area {
+    position: relative;
+    display: inline-block;
+}
