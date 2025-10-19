@@ -60,8 +60,8 @@ if ($action === "add") {
 
     if ($rs->num_rows === 0) {
         $stmt2 = $conn->prepare("
-            INSERT INTO giaovien (maGV, boMon, trinhDo, anhDaiDien, phongBan, namHoc, hocKy, trangThai)
-            VALUES (?, ?, ?, '', ?, ?, ?, ?)
+            INSERT INTO giaovien (maGV, boMon, trinhDo, phongBan, namHoc, hocKy, trangThai)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
         ");
         $stmt2->bind_param("issssss", $newUserId, $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai);
         $stmt2->execute();

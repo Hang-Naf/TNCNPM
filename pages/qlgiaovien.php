@@ -494,7 +494,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             }
         });
 
-        const apiGiaoVien = "src/giaovien.php";
+        const apiGiaoVien = "../src/giaovien.php";
         let currentId = null;
 
         function showAddPopup() {
