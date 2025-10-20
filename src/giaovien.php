@@ -13,17 +13,17 @@ date_default_timezone_set("Asia/Ho_Chi_Minh");
 
 // ======= THÊM GIÁO VIÊN =======
 if ($action === "add") {
-    $hoVaTen   = trim($data["hoVaTen"] ?? '');
-    $email     = trim($data["email"] ?? '');
-    $sdt       = trim($data["sdt"] ?? '');
-    $gioiTinh  = $data["gioiTinh"] ?? 'Nam';
-    $boMon     = $data["boMon"] ?? 'Chưa xác định';
-    $trinhDo   = $data["trinhDo"] ?? 'Chưa cập nhật';
-    $phongBan  = $data["phongBan"] ?? '';
-    $namHoc    = $data["namHoc"] ?? 'Chưa cập nhật';
-    $hocKy     = $data["hocKy"] ?? 'Chưa cập nhật';
+    $hoVaTen = trim($data["hoVaTen"] ?? '');
+    $email = trim($data["email"] ?? '');
+    $sdt = trim($data["sdt"] ?? '');
+    $gioiTinh = $data["gioiTinh"] ?? 'Nam';
+    $boMon = $data["boMon"] ?? 'Chưa xác định';
+    $trinhDo = $data["trinhDo"] ?? 'Chưa cập nhật';
+    $phongBan = $data["phongBan"] ?? '';
+    $namHoc = $data["namHoc"] ?? 'Chưa cập nhật';
+    $hocKy = $data["hocKy"] ?? 'Chưa cập nhật';
     $trangThai = $data["trangThai"] ?? 'active';
-    $matKhau   = password_hash("123456", PASSWORD_DEFAULT);
+    $matKhau = password_hash("123456", PASSWORD_DEFAULT);
 
     // Kiểm tra email trùng
     $check = $conn->prepare("SELECT userID FROM user WHERE email=?");
@@ -60,8 +60,8 @@ if ($action === "add") {
 
     if ($rs->num_rows === 0) {
         $stmt2 = $conn->prepare("
-            INSERT INTO giaovien (maGV, boMon, trinhDo, phongBan, namHoc, hocKy, trangThai)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            INSERT INTO giaovien (maGV, boMon, trinhDo, anhDaiDien, phongBan, namHoc, hocKy, trangThai)
+            VALUES (?, ?, ?, '', ?, ?, ?, ?)
         ");
         $stmt2->bind_param("issssss", $newUserId, $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai);
         $stmt2->execute();
@@ -81,30 +81,42 @@ if ($action === "add") {
 
 // ======= CẬP NHẬT GIÁO VIÊN =======
 if ($action === "update") {
-    $userId    = (int)($data["userId"] ?? 0);
-    $hoVaTen   = $data["hoVaTen"] ?? '';
-    $email     = $data["email"] ?? '';
-    $sdt       = $data["sdt"] ?? '';
-    $gioiTinh  = $data["gioiTinh"] ?? 'Nam';
-    $boMon     = $data["boMon"] ?? 'Chưa xác định';
-    $trinhDo   = $data["trinhDo"] ?? 'Chưa cập nhật';
-    $phongBan  = $data["phongBan"] ?? '';
-    $namHoc    = $data["namHoc"] ?? 'Chưa cập nhật';
-    $hocKy     = $data["hocKy"] ?? 'Chưa cập nhật';
+    $userId = (int) ($data["userId"] ?? 0);
+    $hoVaTen = $data["hoVaTen"] ?? '';
+    $email = $data["email"] ?? '';
+    $sdt = $data["sdt"] ?? '';
+    $gioiTinh = $data["gioiTinh"] ?? 'Nam';
+    $boMon = $data["boMon"] ?? 'Chưa xác định';
+    $trinhDo = $data["trinhDo"] ?? 'Chưa cập nhật';
+    $phongBan = $data["phongBan"] ?? '';
+    $namHoc = $data["namHoc"] ?? 'Chưa cập nhật';
+    $hocKy = $data["hocKy"] ?? 'Chưa cập nhật';
     $trangThai = $data["trangThai"] ?? 'active';
+
+    // ✅ Kiểm tra trùng email (bỏ qua chính user đang cập nhật)
+    $check = $conn->prepare("SELECT userID FROM user WHERE email=? AND userID != ?");
+    $check->bind_param("si", $email, $userId);
+    $check->execute();
+    $check->store_result();
+
+    if ($check->num_rows > 0) {
+        echo json_encode(["error" => "Email đã tồn tại!"]);
+        exit();
+    }
 
     // ✅ Cập nhật bảng user (trigger tự ghi log và tạo thông báo)
     $stmt = $conn->prepare("
-        UPDATE user 
-        SET hoVaTen=?, email=?, sdt=?, gioiTinh=? 
-        WHERE userID=? AND vaiTro='GiaoVien'
-    ");
+    UPDATE user 
+    SET hoVaTen=?, email=?, sdt=?, gioiTinh=? 
+    WHERE userID=? AND vaiTro='GiaoVien'
+");
     $stmt->bind_param("ssssi", $hoVaTen, $email, $sdt, $gioiTinh, $userId);
 
     if (!$stmt->execute()) {
         echo json_encode(["error" => "Lỗi cập nhật user: " . $conn->error]);
         exit();
     }
+
 
     // Cập nhật thông tin phụ
     $stmt2 = $conn->prepare("
@@ -121,7 +133,7 @@ if ($action === "update") {
 
 // ======= XÓA GIÁO VIÊN =======
 if ($action === "delete") {
-    $userId = (int)($data["userId"] ?? 0);
+    $userId = (int) ($data["userId"] ?? 0);
 
     //  Xóa từ bảng user (trigger tự xử lý log & thông báo)
     $stmt = $conn->prepare("DELETE FROM user WHERE userID=? AND vaiTro='GiaoVien'");
