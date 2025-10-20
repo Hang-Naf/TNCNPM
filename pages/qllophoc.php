@@ -5,14 +5,14 @@ session_start();
 
 // ==== Kiểm tra đăng nhập ====
 if (!isset($_SESSION["userID"])) {
-    header("Location: ../dangnhap.php");
+    header("Location: dangnhap.php");
     exit();
 }
 
 // ==== Chỉ cho phép Admin ====
 if ($_SESSION["vaiTro"] !== "Admin") {
     session_destroy();
-    header("Location: ../dangnhap.php");
+    header("Location: dangnhap.php");
     exit();
 }
 
@@ -51,6 +51,7 @@ $giaovien_rs = $conn->query("
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
+    <link rel="stylesheet" href="popup.css">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -101,53 +102,6 @@ $giaovien_rs = $conn->query("
             cursor: pointer;
             margin-right: 10px;
         }
-
-        .popup-bg {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .popup {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 420px;
-        }
-
-        .popup input,
-        .popup select {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        .popup-buttons {
-            text-align: right;
-        }
-
-        .save-btn {
-            background: #0b1e6b;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-        }
-
-        .cancel-btn {
-            background: #ccc;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-        }
     </style>
 </head>
 
@@ -163,41 +117,50 @@ $giaovien_rs = $conn->query("
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
                     <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li class="active" onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i
+                            class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
+                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i
+                            class="fa-solid fa-user-graduate"></i> Học sinh</li>
+                    <li class="active" onclick="window.location.href='../pages/qllophoc.php'"><i
+                            class="fa-solid fa-school"></i> Lớp học</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học
+                    </li>
+                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i>
+                        Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i>
+                        Chuyên cần</li>
+                    <li onclick="window.location.href='../pages/qldiemso.php'"><i
+                            class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li  onclick="window.location.href='../pages/qltsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý tài khoản</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i>
+                        Phân công giảng dạy</li>
+                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i
+                            class="fa-solid fa-user-shield"></i> Phân quyền</li>
                 </ul>
             </div>
         </nav>
@@ -214,7 +177,6 @@ $giaovien_rs = $conn->query("
             <div class="right">
                 <div class="notification-area">
                     <i class="fa-regular fa-bell" id="bellIcon"></i>
-                    <span class="noti-badge" id="notiBadge">0</span>
                     <div class="notification-dropdown" id="notificationDropdown">
                         <h4>Thông báo</h4>
                         <ul id="notificationList"></ul>
@@ -256,7 +218,8 @@ $giaovien_rs = $conn->query("
                 </tr>
             </thead>
             <tbody>
-                <?php if ($result->num_rows > 0): $stt = 1;
+                <?php if ($result->num_rows > 0):
+                    $stt = 1;
                     while ($row = $result->fetch_assoc()): ?>
                         <tr data-id="<?= $row['maLop'] ?>">
                             <td><input type="checkbox"></td>
@@ -286,28 +249,54 @@ $giaovien_rs = $conn->query("
     <!-- Popup thêm -->
     <div class="popup-bg" id="addPopup">
         <div class="popup">
-            <h3>Thêm lớp học</h3>
-            <form id="addForm">
-                <input type="hidden" name="action" value="add">
-                <input type="text" name="tenLop" placeholder="Tên lớp (VD: 11A1)" required>
-                <input type="number" name="siSo" placeholder="Sĩ số" min="0">
-                <select name="maGV">
-                    <option value="">-- Chọn giáo viên phụ trách --</option>
-                    <?php $giaovien_rs->data_seek(0);
-                    while ($gv = $giaovien_rs->fetch_assoc()): ?>
-                        <option value="<?= $gv['maGV'] ?>"><?= htmlspecialchars($gv['hoVaTen']) ?></option>
-                    <?php endwhile; ?>
-                </select>
-                <input type="text" name="namHoc" placeholder="VD: 2024-2025" required>
-                <select name="trangThai">
-                    <option value="Đang học">Đang học</option>
-                    <option value="Tạm dừng">Tạm dừng</option>
-                </select>
-                <div class="popup-buttons">
-                    <button type="button" class="cancel-btn" onclick="closePopup('addPopup')">Hủy</button>
-                    <button type="submit" class="save-btn">Thêm</button>
-                </div>
-            </form>
+            <button class="close-btn" onclick="closePopup()">✖</button>
+            <div class="them-hocsinh">
+                <h2>THÊM LỚP HỌC</h2>
+                <form class="student-form" id="addForm" >
+                    <input type="hidden" name="action" value="add">
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Tên lớp:</label>
+                            <input type="text" name="tenLop" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Sĩ số:</label>
+                            <input type="number" name="siSo" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label>GVCN:</label>
+                            <select name="maGV">
+                                <option value="">-- Chọn giáo viên phụ trách --</option>
+                                <?php $giaovien_rs->data_seek(0);
+                                while ($gv = $giaovien_rs->fetch_assoc()): ?>
+                                    <option value="<?= $gv['maGV'] ?>"><?= htmlspecialchars($gv['hoVaTen']) ?></option>
+                                <?php endwhile; ?>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Năm học:</label>
+                            <input type="text" name="namHoc">
+                        </div>
+                        <div class="form-group">
+                            <label>Trạng thái:</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="trangThai" value="Đang học"> Đang hoạt động</label>
+                                <label><input type="radio" name="trangThai" value="Tạm dừng"> Tạm dừng</label>
+                            </div>
+                        </div>
+                    </div>
+
+
+        
+                    <div class="buttons">
+                        <button type="button" class="btn-secondary" onclick="closePopup('addPopup')">Hủy</button>
+                        <button type="submit" class="btn-primary">Thêm</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -342,201 +331,121 @@ $giaovien_rs = $conn->query("
     </div>
 
     <script>
-        document.getElementById("bellIcon").addEventListener("click", function() {
-            const dropdown = document.getElementById("notificationDropdown");
-            // Hiện/ẩn menu
-            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+    const api = "../src/lophoc.php";
+    let currentId = null;
 
-            // Gọi AJAX lấy thông báo
-            fetch("../get_thongbao.php")
-                .then(res => res.json())
-                .then(data => {
-                    const list = document.getElementById("notificationList");
-                    const noNoti = document.getElementById("noNoti");
-                    const badge = document.getElementById("notiBadge");
-                    list.innerHTML = "";
+    function showAddPopup(mode = "add", row = null) {
+        const popup = document.getElementById("addPopup");
+        const form = document.getElementById("addForm");
+        const title = popup.querySelector("h2");
+        const submitBtn = form.querySelector(".btn-primary");
+        const hiddenAction = form.querySelector("input[name='action']");
 
-                    let unreadCount = 0;
+        popup.style.display = "flex";
 
-                    if (data.length > 0) {
-                        noNoti.style.display = "none";
-                        data.forEach(tb => {
-                            const li = document.createElement("li");
-                            li.style.padding = "10px 8px";
-                            li.style.borderBottom = "1px solid #eee";
-                            li.style.cursor = "pointer";
+        if (mode === "edit" && row) {
+            // Chế độ sửa
+            title.textContent = "CHỈNH SỬA LỚP HỌC";
+            hiddenAction.value = "update";
+            submitBtn.textContent = "Lưu";
 
-                            if (tb.trangThai === "Chưa đọc") {
-                                unreadCount++;
-                                li.style.background = "#f0f8ff";
-                                li.innerHTML = `
-                        <strong style="color:#0b3364;">${tb.tieuDe} 🔵</strong><br>
-                        <span>${tb.noiDung}</span><br>
-                        <small>${tb.ngayGui}</small>
-                    `;
-                            } else {
-                                li.style.opacity = "0.7";
-                                li.innerHTML = `
-                        <strong>${tb.tieuDe}</strong><br>
-                        <span>${tb.noiDung}</span><br>
-                        <small>${tb.ngayGui}</small>
-                    `;
-                            }
-
-                            li.addEventListener("click", () => markAsRead(tb.maThongBao, li));
-                            list.appendChild(li);
-                        });
-                    } else {
-                        noNoti.style.display = "block";
-                    }
-
-                    // Cập nhật badge
-                    if (unreadCount > 0) {
-                        badge.textContent = unreadCount;
-                        badge.style.display = "block";
-                    } else {
-                        badge.style.display = "none";
-                    }
-                })
-                .catch(err => console.error("Lỗi tải thông báo:", err));
-
-
-            function markAsRead(maThongBao, element) {
-                fetch("../update_trangthai.php", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: "maThongBao=" + encodeURIComponent(maThongBao)
-                    })
-                    .then(res => res.text())
-                    .then(response => {
-                        if (response === "OK") {
-                            element.style.background = "transparent";
-                            element.style.opacity = "0.7";
-                            element.querySelector("strong").innerHTML = element.querySelector("strong").innerText;
-
-                            // Giảm số badge đi 1
-                            const badge = document.getElementById("notiBadge");
-                            let current = parseInt(badge.textContent || "0");
-                            if (current > 1) badge.textContent = current - 1;
-                            else badge.style.display = "none";
-                        }
-                    });
+            // Thêm input ẩn mã lớp nếu chưa có
+            let maLopInput = form.querySelector("input[name='maLop']");
+            if (!maLopInput) {
+                maLopInput = document.createElement("input");
+                maLopInput.type = "hidden";
+                maLopInput.name = "maLop";
+                form.appendChild(maLopInput);
             }
+            maLopInput.value = row.dataset.id;
 
-        });
-
-        // Ẩn dropdown khi click ra ngoài
-        document.addEventListener("click", function(e) {
-            const dropdown = document.getElementById("notificationDropdown");
-            const bell = document.getElementById("bellIcon");
-            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
-                dropdown.style.display = "none";
-            }
-        });
-
-        const api = "../src/lophoc.php";
-        let currentId = null;
-
-        function showAddPopup() {
-            document.getElementById("addPopup").style.display = "flex";
-        }
-
-        function closePopup(id) {
-            document.getElementById(id).style.display = "none";
-        }
-
-        // === Thêm lớp học ===
-        document.getElementById("addForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const data = Object.fromEntries(new FormData(e.target).entries());
-            const res = await fetch(api, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
+            // Gán dữ liệu lên form
+            form.tenLop.value = row.children[3].innerText;
+            form.siSo.value = row.children[5].innerText;
+            form.maGV.value = row.children[6].dataset.gv || "";
+            form.namHoc.value = row.children[7].innerText;
+            const tt = row.children[8].innerText;
+            form.trangThai.value = tt;
+            form.querySelectorAll('input[name="trangThai"]').forEach(r => {
+                r.checked = (r.value === tt);
             });
-            const json = await res.json();
-            alert(json.message || json.error);
-            if (json.message) location.reload();
-        });
-
-        // === Mở popup sửa ===
-        document.addEventListener("click", (e) => {
-            if (e.target.classList.contains("edit-btn")) {
-                const tr = e.target.closest("tr");
-                currentId = tr.dataset.id;
-                document.getElementById("editMaLop").value = currentId;
-                document.getElementById("editTenLop").value = tr.children[3].innerText;
-                document.getElementById("editSiSo").value = tr.children[5].innerText;
-                document.getElementById("editMaGV").value = tr.children[6].dataset.gv;
-                document.getElementById("editNamHoc").value = tr.children[7].innerText;
-                document.getElementById("editTrangThai").value = tr.children[8].innerText;
-                document.getElementById("editPopup").style.display = "flex";
-            }
-        });
-
-        // === Lưu sửa lớp ===
-        document.getElementById("editForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const data = Object.fromEntries(new FormData(e.target).entries());
-            const res = await fetch(api, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            alert(json.message || json.error);
-            if (json.message) location.reload();
-        });
-
-        // === Xóa lớp học ===
-        document.addEventListener("click", async (e) => {
-            if (e.target.classList.contains("delete-btn")) {
-                const tr = e.target.closest("tr");
-                const id = tr.dataset.id;
-                if (confirm("Bạn có chắc muốn xóa lớp học này?")) {
-                    const res = await fetch(api, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            action: "delete",
-                            maLop: id
-                        })
-                    });
-                    const json = await res.json();
-                    alert(json.message || json.error);
-                    if (json.message) location.reload();
-                }
-            }
-        });
-        function toggleUserMenu() {
-            const menu = document.getElementById("userMenu");
-            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        } else {
+            // Chế độ thêm
+            title.textContent = "THÊM LỚP HỌC";
+            hiddenAction.value = "add";
+            submitBtn.textContent = "Thêm";
+            form.reset();
+            const maLopInput = form.querySelector("input[name='maLop']");
+            if (maLopInput) maLopInput.remove();
         }
+    }
 
-        // Đóng menu nếu click ra ngoài
-        document.addEventListener("click", function(e) {
-            const menu = document.getElementById("userMenu");
-            const userInfo = document.querySelector(".user-info");
-            if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
-                menu.style.display = "none";
-            }
+    function closePopup() {
+        document.getElementById("addPopup").style.display = "none";
+        document.getElementById("addForm").reset();
+    }
+
+    // === Thêm / Cập nhật lớp học ===
+    document.getElementById("addForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const data = Object.fromEntries(new FormData(e.target).entries());
+        const res = await fetch(api, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
         });
-        
-        // Xử lý đăng xuất
-        function logout() {
-            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
+        const json = await res.json();
+        alert(json.message || json.error);
+        if (json.message) location.reload();
+    });
+
+    // === Mở popup sửa ===
+    document.addEventListener("click", (e) => {
+        if (e.target.classList.contains("edit-btn")) {
+            const tr = e.target.closest("tr");
+            showAddPopup("edit", tr);
+        }
+    });
+
+    // === Xóa lớp học ===
+    document.addEventListener("click", async (e) => {
+        if (e.target.classList.contains("delete-btn")) {
+            const tr = e.target.closest("tr");
+            const id = tr.dataset.id;
+            if (confirm("Bạn có chắc muốn xóa lớp học này?")) {
+                const res = await fetch(api, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "delete", maLop: id })
+                });
+                const json = await res.json();
+                alert(json.message || json.error);
+                if (json.message) location.reload();
             }
         }
-    </script>
+    });
+
+    // === Xử lý user menu ===
+    function toggleUserMenu() {
+        const menu = document.getElementById("userMenu");
+        menu.style.display = (menu.style.display === "block") ? "none" : "block";
+    }
+
+    document.addEventListener("click", function (e) {
+        const menu = document.getElementById("userMenu");
+        const userInfo = document.querySelector(".user-info");
+        if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
+            menu.style.display = "none";
+        }
+    });
+
+    function logout() {
+        if (confirm("Bạn có chắc muốn đăng xuất không?")) {
+            window.location.href = "dangxuat.php";
+        }
+    }
+</script>
+
 </body>
 
 </html>
