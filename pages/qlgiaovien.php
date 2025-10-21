@@ -52,10 +52,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             margin: 0;
         }
 
-        .header {
-            padding: 0px 25px;
-        }
-
         .container {
             padding: 20px;
         }
@@ -173,7 +169,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         </nav>
     </aside>
     <div class="main-content">
-        <header class="header">
+<header class="header">
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -184,7 +180,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             <div class="right">
                 <div class="notification-area">
                     <i class="fa-regular fa-bell" id="bellIcon"></i>
-                    <span class="noti-badge" id="notiBadge">0</span>
                     <div class="notification-dropdown" id="notificationDropdown">
                         <h4>Thông báo</h4>
                         <ul id="notificationList"></ul>
@@ -263,92 +258,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         </table>
     </div>
 
-    <!-- Popup thêm -->
-    <div class="popup-bg" id="addPopup">
-        <div class="popup">
-            <div class="them-hocsinh">
-                <button class="close-btn" onclick="window.closePopup()">✖</button>
-
-                <h2 id="title-h2">THÊM GIÁO VIÊN</h2>
-                <form id="addForm" class="student-form">
-                    <input type="hidden" name="action" value="add" id="formAction">
-                    <input type="hidden" name="userId" id="userId">
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Họ và Tên:</label>
-                            <input type="text" name="hoVaTen">
-                        </div>
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" name="email">
-                        </div>
-                        <div class="form-group">
-                            <label>Số Điện Thoại:</label>
-                            <input type="text" name="sdt">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Giới tính:</label>
-                            <select name="gioiTinh">
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Bộ môn:</label>
-                            <select name="boMon" required>
-                                <option value="">-- Chọn bộ môn --</option>
-                                <?php foreach ($monhoc_list as $mh): ?>
-                                    <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>">
-                                        <?= htmlspecialchars($mh['tenMonHoc']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Trình độ:</label>
-                            <input type="text" name="trinhDo" placeholder="Trình độ (VD: Cử nhân, Thạc sĩ)">
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Phòng ban:</label>
-                            <input type="text" name="phongBan" placeholder="Phòng ban (VD: Tổ Toán)">
-
-                        </div>
-                        <div class="form-group">
-                            <label>Năm học:</label>
-                            <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học" readonly>
-                        </div>
-                        <div class="form-group">
-                            <label>Học kỳ:</label>
-                            <select name="hocKy" id="addHocKy" readonly>
-                                <option value="">-- Học kỳ tự động --</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Trạng thái:</label>
-                            <div class="radio-group">
-                                <label><input type="radio" name="trangThai" value="active"> Đang hoạt động</label>
-                                <label><input type="radio" name="trangThai" value="inactive"> Tạm dừng</label>
-                            </div>
-                        </div>
-                        <div class="popup-buttons">
-                            <button type="button" class="btn-secondary" onclick="closePopup('addPopup')">Hủy</button>
-                            <button type="submit" class="btn-primary" id="submitButton">Thêm giáo viên</button>
-                        </div>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
     <script>
         document.getElementById("bellIcon").addEventListener("click", function () {
             const dropdown = document.getElementById("notificationDropdown");
@@ -432,7 +341,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                         }
                     });
             }
-
         });
 
         // Ẩn dropdown khi click ra ngoài
@@ -447,82 +355,34 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         const apiGiaoVien = "../src/giaovien.php";
         let currentId = null;
 
-        function showAddPopup() {
-            document.getElementById("addPopup").style.display = "flex";
-        }
-
         function closePopup(id) {
             const popup = document.getElementById(id);
-            popup.style.display = "none";
 
-            // Reset về chế độ thêm
-            const form = document.getElementById("addForm");
-            form.reset();
-            document.getElementById("formAction").value = "add";
-            document.getElementById("userId").value = "";
-            document.querySelector("h2").innerText = "THÊM GIÁO VIÊN";
-            document.getElementById("submitButton").innerText = "Thêm giáo viên";
         }
-
-
-        // Thêm giáo viên
-        document.getElementById("addForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const data = Object.fromEntries(new FormData(e.target).entries());
-            const res = await fetch(apiGiaoVien, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            alert(json.message || json.error);
-            if (json.message) location.reload();
-        });
 
         // === Xử lý nhấn nút sửa ===
         document.addEventListener("click", (e) => {
             if (e.target.classList.contains("edit-btn")) {
                 const tr = e.target.closest("tr");
-                const id = tr.dataset.id;
 
-                // Lấy thông tin hiện có trong hàng
+                // Lấy thông tin từ hàng
                 const data = {
-                    maGV: tr.children[2].innerText,
-                    hoVaTen: tr.children[3].innerText,
-                    gioiTinh: tr.children[4].innerText,
-                    email: tr.children[5].innerText,
-                    sdt: tr.children[6].innerText,
-                    boMon: tr.children[7].innerText,
-                    trinhDo: tr.children[8].innerText,
-                    phongBan: tr.children[9].innerText,
-                    namHoc: tr.children[10].innerText,
-                    hocKy: tr.children[11].innerText,
+                    maGV: tr.children[2].innerText.trim(),
+                    hoVaTen: tr.children[3].innerText.trim(),
+                    gioiTinh: tr.children[4].innerText.trim(),
+                    email: tr.children[5].innerText.trim(),
+                    sdt: tr.children[6].innerText.trim(),
+                    boMon: tr.children[7].innerText.trim(),
+                    trinhDo: tr.children[8].innerText.trim(),
+                    phongBan: tr.children[9].innerText.trim(),
+                    namHoc: tr.children[10].innerText.trim(),
+                    hocKy: tr.children[11].innerText.trim(),
                     trangThai: tr.children[12].innerText.includes("Hoạt") ? "active" : "inactive"
                 };
 
-                // Gán dữ liệu vào form thêm (để tái sử dụng)
-                document.getElementById("formAction").value = "update";
-                document.getElementById("userId").value = id;
-                document.getElementById("title-h2").innerText = "CHỈNH SỬA GIÁO VIÊN";
-                document.getElementById("submitButton").innerText = "Lưu thay đổi";
-
-                document.querySelector("#addForm [name='hoVaTen']").value = data.hoVaTen;
-                document.querySelector("#addForm [name='email']").value = data.email;
-                document.querySelector("#addForm [name='sdt']").value = data.sdt;
-                document.querySelector("#addForm [name='gioiTinh']").value = data.gioiTinh;
-                document.querySelector("#addForm [name='boMon']").value = data.boMon;
-                document.querySelector("#addForm [name='trinhDo']").value = data.trinhDo;
-                document.querySelector("#addForm [name='phongBan']").value = data.phongBan;
-                document.querySelector("#addForm [name='namHoc']").value = data.namHoc;
-                document.querySelector("#addForm [name='hocKy']").innerHTML =
-                    `<option value="${data.hocKy}" selected>${data.hocKy}</option>`;
-
-                document.querySelector(`#addForm [name='trangThai'][value='${data.trangThai}']`).checked = true;
-
-                // Hiện popup
-                document.getElementById("addPopup").style.display = "flex";
+                // Mã hóa dữ liệu lên URL
+                const params = new URLSearchParams(data).toString();
+                window.location.href = `themgiaovien.php?edit=1&${params}`;
             }
         });
 
@@ -579,58 +439,13 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
 
         // Gán tự động khi mở form thêm
         function showAddPopup() {
-            const {
-                hocKy,
-                namHoc
-            } = getHocKyVaNamHoc();
-            document.getElementById("addNamHoc").value = namHoc;
-            document.getElementById("addHocKy").innerHTML = `<option value="${hocKy}" selected>${hocKy}</option>`;
-            document.getElementById("addPopup").style.display = "flex";
+            window.location = 'themgiaovien.php';
         }
-
-        // Khi mở popup sửa, nếu dữ liệu trống thì cũng tự động set lại
-        // document.addEventListener("click", (e) => {
-        //     if (e.target.classList.contains("edit-btn")) {
-        //         const tr = e.target.closest("tr");
-        //         currentId = tr.dataset.id;
-        //         document.getElementById("editId").value = currentId;
-        //         document.getElementById("editHoTen").value = tr.children[3].innerText;
-        //         document.getElementById("editGioiTinh").value = tr.children[4].innerText;
-        //         document.getElementById("editEmail").value = tr.children[5].innerText;
-        //         document.getElementById("editSdt").value = tr.children[6].innerText;
-        //         document.getElementById("editBoMon").value = tr.children[7].innerText;
-        //         document.getElementById("editTrinhDo").value = tr.children[8].innerText;
-        //         document.getElementById("editPhongBan").value = tr.children[9].innerText;
-
-        //         // ✅ Nếu năm học và học kỳ chưa có, tự động điền
-        //         const {
-        //             hocKy,
-        //             namHoc
-        //         } = getHocKyVaNamHoc();
-        //         const editNamHoc = tr.children[10].innerText || namHoc;
-        //         const editHocKy = tr.children[11].innerText || hocKy;
-        //         document.getElementById("editNamHoc").value = editNamHoc;
-        //         document.getElementById("editHocKy").innerHTML = `<option value="${editHocKy}" selected>${editHocKy}</option>`;
-
-        //         const active = tr.children[12].innerText.includes("Hoạt");
-        //         document.getElementById(active ? "editActive" : "editInactive").checked = true;
-        //         document.getElementById("editPopup").style.display = "flex";
-        //     }
-        // });
 
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
         }
-
-        // Đóng menu nếu click ra ngoài
-        document.addEventListener("click", function (e) {
-            const menu = document.getElementById("userMenu");
-            const userInfo = document.querySelector(".user-info");
-            if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
-                menu.style.display = "none";
-            }
-        });
 
         // Xử lý đăng xuất
         function logout() {
