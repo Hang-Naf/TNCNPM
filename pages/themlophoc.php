@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý giáo viên</title>
+    <title>Quản lý lớp học</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
