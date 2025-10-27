@@ -465,7 +465,7 @@ $gv_rs = $conn->query("
         const api = "../src/monhoc.php";
 
         function showAddPopup() {
-            document.getElementById("addPopup").style.display = "flex";
+            window.location = 'themmonhoc.php'
         }
 
         function closePopup(id) {

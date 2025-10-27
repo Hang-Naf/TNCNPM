@@ -56,10 +56,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             padding: 20px;
         }
 
-        h1 {
-            margin-bottom: 20px;
-        }
-
         .add-btn {
             background: #0b1e6b;
             color: white;
@@ -252,83 +248,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             </tbody>
         </table>
     </div>
-
-    <!-- Popup thêm -->
-    <div class="popup-bg" id="addPopup">
-        <div class="popup">
-            <button class="close-btn" onclick="closePopup()">✖</button>
-            <h2>THÊM HỌC SINH</h2>
-            <div class="them-hocsinh">
-                <form id="addForm" class="student-form">
-                    <input type="hidden" name="action" value="add">
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Họ và Tên:</label>
-                            <input type="text" name="hoVaTen" id="HoTen" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Email:</label>
-                            <input type="email" name="email" id="Email" required>
-                        </div>
-                        <div class="form-group">
-                            <label>Số Điện Thoại:</label>
-                            <input type="text" name="sdt" id="Sdt">
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Giới tính:</label>
-                            <select name="gioiTinh" id="GioiTinh">
-                                <option value="Nam">Nam</option>
-                                <option value="Nữ">Nữ</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Lớp học:</label>
-                            <select name="lopHocPhuTrach" required>
-                                <option value="">-- Chọn lớp học --</option>
-                                <?php foreach ($lophoc_list as $lh): ?>
-                                    <option value="<?= htmlspecialchars($lh['tenLop']) ?>">
-                                        <?= htmlspecialchars($lh['tenLop']) ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Năm học:</label>
-                            <input type="text" name="namHoc" id="addNamHoc" placeholder="VD: 2022-2025" required
-                                readonly>
-                        </div>
-                    </div>
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Học kỳ:</label>
-                            <select name="hocKy" id="addHocKy" readonly>
-                                <option value="">-- Học kỳ tự động --</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label>Trạng thái:</label>
-                            <div class="radio-group">
-                                <label><input type="radio" name="trangThai" checked> Đang học</label>
-                                <label><input type="radio" name="trangThai"> Đã nghỉ</label>
-                            </div>
-                        </div>
-                        <!-- <div class="popup-buttons">
-                            <button type="button" class="cancel-btn" onclick="closePopup('addPopup')">Hủy</button>
-                            <button type="submit" class="save-btn">Thêm</button>
-                        </div> -->
-                    </div>
-                    <div class="buttons">
-                        <button type="submit" class="btn-primary">
-                            <i class="fa-solid fa-plus"></i> Thêm mới
-                        </button>
-                        <button type="button" class="btn-secondary" onclick="window.closePopup()">Hủy</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
     <script>
         const api = "../src/hocsinh.php";
         let isEditing = false;
@@ -336,24 +255,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
 
         // === Mở popup thêm ===
         function showAddPopup() {
-            isEditing = false;
-            currentId = null;
-
-            // reset form
-            const form = document.getElementById("addForm");
-            form.reset();
-            form.querySelector('input[name="action"]').value = "add";
-
-            // đổi tiêu đề + nút
-            document.querySelector("#addPopup h2").innerText = "THÊM HỌC SINH";
-            document.querySelector("#addForm .btn-primary").innerHTML = `<i class="fa-solid fa-plus"></i> Thêm mới`;
-
-            // tự động học kỳ & năm học
-            const { hocKy, namHoc } = getHocKyVaNamHoc();
-            document.getElementById("addNamHoc").value = namHoc;
-            document.getElementById("addHocKy").innerHTML = `<option value="${hocKy}" selected>${hocKy}</option>`;
-
-            document.getElementById("addPopup").style.display = "flex";
+            window.location = 'themhocsinh.php'
         }
 
         // === Đóng popup ===

@@ -44,7 +44,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
-    <link rel="stylesheet" href="popup.css">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
