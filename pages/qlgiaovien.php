@@ -102,6 +102,10 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             cursor: pointer;
             margin-right: 10px;
         }
+
+        td:not(.no-center) {
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -168,7 +172,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         </nav>
     </aside>
     <div class="main-content">
-<header class="header">
+        <header class="header">
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
@@ -230,7 +234,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                             <td><input type="checkbox"></td>
                             <td><?= $stt++ ?></td>
                             <td><?= $row['maGV'] ?></td>
-                            <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
+                            <td class="no-center"><?= htmlspecialchars($row['hoVaTen']) ?></td>
                             <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
                             <td><?= htmlspecialchars($row['email']) ?></td>
                             <td><?= htmlspecialchars($row['sdt']) ?></td>
@@ -356,34 +360,16 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
 
         function closePopup(id) {
             const popup = document.getElementById(id);
-
         }
 
         // === Xử lý nhấn nút sửa ===
         document.addEventListener("click", (e) => {
             if (e.target.classList.contains("edit-btn")) {
-                const tr = e.target.closest("tr");
-
-                // Lấy thông tin từ hàng
-                const data = {
-                    maGV: tr.children[2].innerText.trim(),
-                    hoVaTen: tr.children[3].innerText.trim(),
-                    gioiTinh: tr.children[4].innerText.trim(),
-                    email: tr.children[5].innerText.trim(),
-                    sdt: tr.children[6].innerText.trim(),
-                    boMon: tr.children[7].innerText.trim(),
-                    trinhDo: tr.children[8].innerText.trim(),
-                    phongBan: tr.children[9].innerText.trim(),
-                    namHoc: tr.children[10].innerText.trim(),
-                    hocKy: tr.children[11].innerText.trim(),
-                    trangThai: tr.children[12].innerText.includes("Hoạt") ? "active" : "inactive"
-                };
-
-                // Mã hóa dữ liệu lên URL
-                const params = new URLSearchParams(data).toString();
-                window.location.href = `themgiaovien.php?edit=1&${params}`;
+                const maGV = e.target.closest("tr").children[2].innerText.trim();
+                window.location.href = `chinhsuagiaovien.php?maGV=${encodeURIComponent(maGV)}`;
             }
         });
+
 
         // Xóa giáo viên
         document.addEventListener("click", async (e) => {

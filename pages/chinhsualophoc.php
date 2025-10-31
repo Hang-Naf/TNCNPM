@@ -1,46 +1,9 @@
-<?php
-include_once(__DIR__ . '/../src/func.php');
-include_once(__DIR__ . '/../csdl/db.php');
-session_start();
-
-// ==== Kiểm tra đăng nhập ====
-if (!isset($_SESSION["userID"])) {
-    header("Location: dangnhap.php");
-    exit();
-}
-
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
-    session_destroy();
-    header("Location: dangnhap.php");
-    exit();
-}
-
-// ==== Lấy danh sách giáo viên ====
-$sql = "
-    SELECT 
-        g.maGV, u.hoVaTen, u.gioiTinh, u.email, u.sdt,
-        g.boMon, g.trinhDo, g.phongBan, g.namHoc, g.hocKy, g.trangThai
-    FROM giaovien g
-    JOIN user u ON g.maGV = u.userID
-    WHERE u.vaiTro = 'GiaoVien'
-";
-$result = $conn->query($sql);
-
-// ==== Lấy danh sách môn học ====
-$monhoc_rs = $conn->query("SELECT maMonHoc, tenMonHoc FROM monhoc");
-$monhoc_list = [];
-while ($mh = $monhoc_rs->fetch_assoc()) {
-    $monhoc_list[] = $mh;
-}
-?>
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý giáo viên</title>
+    <title>Quản lý lớp học</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -139,12 +102,12 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <ul>
                     <li onclick="window.location.href='index.php'"><i class="fa-solid fa-house"></i>
                         Dashboard</li>
-                    <li class="active" onclick="window.location.href='qlgiaovien.php'"><i
-                            class="fa-solid fa-chalkboard-user"></i> Giáo
+                    <li onclick="window.location.href='qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo
                         viên</li>
-                    <li onclick="window.location.href='qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i>
+                    <li onclick="window.location.href='qlhocsinh.php'"><i
+                            class="fa-solid fa-user-graduate"></i>
                         Học sinh</li>
-                    <li onclick="window.location.href='qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học
+                    <li class="active" onclick="window.location.href='qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học
                     </li>
                 </ul>
             </div>
@@ -217,119 +180,51 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         </header>
         <div class="popup-bg" id="addPopup">
             <div class="popup">
+                <h2 id="title-h2">THÊM LỚP HỌC</h2>
                 <div class="them-hocsinh">
-                    <h2 id="title-h2">THÊM GIÁO VIÊN</h2>
-                    <form id="addForm" class="form">
+                    <form id="addForm" class="student-form">
                         <input type="hidden" name="action" value="add" id="formAction">
-                        <input type="hidden" name="userId" id="userId">
-
                         <div class="row">
                             <div class="form-group">
-                                <label>Họ và Tên:</label>
-                                <input type="text" name="hoVaTen">
+                                <label>Tên lớp:</label>
+                                <input type="text">
                             </div>
                             <div class="form-group">
-                                <label>Email:</label>
-                                <input type="email" name="email">
+                                <label>Sĩ số:</label>
+                                <input type="text">
                             </div>
                             <div class="form-group">
-                                <label>Số Điện Thoại:</label>
-                                <input type="text" name="sdt">
+                                <label>GVCN:</label>
+                                <select name="maGV">
+                                </select>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="form-group">
-                                <label>Giới tính:</label>
-                                <select name="gioiTinh">
-                                    <option value="Nam">Nam</option>
-                                    <option value="Nữ">Nữ</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Bộ môn:</label>
-                                <select name="boMon" required>
-                                    <?php foreach ($monhoc_list as $mh): ?>
-                                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>">
-                                            <?= htmlspecialchars($mh['tenMonHoc']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="form-group">
-                                <label>Trình độ:</label>
-                                <input type="text" name="trinhDo" placeholder="Trình độ (VD: Cử nhân, Thạc sĩ)">
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Phòng ban:</label>
-                                <input type="text" name="phongBan" placeholder="Phòng ban (VD: Tổ Toán)">
-
-                            </div>
                             <div class="form-group">
                                 <label>Năm học:</label>
-                                <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học" readonly>
+                                <input type="text">
                             </div>
-                            <div class="form-group">
-                                <label>Học kỳ:</label>
-                                <select name="hocKy" id="addHocKy" readonly>
-                                    <option value="">-- Học kỳ tự động --</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
                             <div class="form-group">
                                 <label>Trạng thái:</label>
                                 <div class="radio-group">
-                                    <label><input type="radio" name="trangThai" value="active"> Đang hoạt động</label>
-                                    <label><input type="radio" name="trangThai" value="inactive"> Tạm dừng</label>
+                                    <label><input type="radio" name="status" checked> Đang hoạt động</label>
+                                    <label><input type="radio" name="status"> Tạm dừng</label>
                                 </div>
                             </div>
-                            <div class="popup-buttons">
-                                <button type="button" class="btn-secondary"
-                                    onclick="window.location.href='qlgiaovien.php'">Quay
-                                    lại</button>
-                                <button type="submit" class="btn-primary" id="submitButton">Thêm giáo viên</button>
-                            </div>
+                        </div>
+
+                        <div class="buttons">
+                            <button type="submit" class="btn-primary">
+                                <i class="fa-solid fa-plus"></i> Thêm mới
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="window.closePopup()">Hủy</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    <script src="../header.js"></script>
-    <script>
-        // === Xử lý thêm giáo viên qua AJAX ===
-        document.getElementById("addForm").addEventListener("submit", async function (e) {
-            e.preventDefault(); // ✅ Ngăn trình duyệt reload trang
-
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-
-            try {
-                const response = await fetch("../src/giaovien.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (result.error) {
-                    alert(result.error);
-                } else {
-                    alert(result.message);
-                    window.location.href = "qlgiaovien.php";
-                }
-            } catch (error) {
-                console.error("Lỗi khi thêm giáo viên:", error);
-                alert("Lỗi khi thêm giáo viên. Vui lòng thử lại!");
-            }
-        });
-    </script>
 </body>
 
 </html>

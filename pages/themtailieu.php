@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý lớp học</title>
+    <title>Quản lý tài liệu</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -88,6 +88,11 @@
     .btn-secondary:hover {
         background: #bbb;
     }
+
+    textarea {
+        width: 99%;
+        height: 150%;
+    }
 </style>
 
 <body>
@@ -106,7 +111,7 @@
                         viên</li>
                     <li onclick="window.location.href='qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i>
                         Học sinh</li>
-                    <li class="active" onclick="window.location.href='qllophoc.php'"><i class="fa-solid fa-school"></i>
+                    <li onclick="window.location.href='qllophoc.php'"><i class="fa-solid fa-school"></i>
                         Lớp học
                     </li>
                 </ul>
@@ -116,7 +121,7 @@
                 <ul>
                     <li onclick="window.location.href='qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học
                     </li>
-                    <li onclick="window.location.href='qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài
+                    <li class="active" onclick="window.location.href='qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài
                         liệu</li>
                 </ul>
             </div>
@@ -180,81 +185,50 @@
         </header>
         <div class="popup-bg" id="addPopup">
             <div class="popup">
-                <h2 id="title-h2">THÊM LỚP HỌC</h2>
+                <h2 id="title-h2">THÊM TÀI LIỆU</h2>
                 <div class="them-hocsinh">
-                    <form id="addForm" class="student-form">
-                        <input type="hidden" name="action" value="add" id="formAction">
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Tên lớp:</label>
-                                <input type="text">
-                            </div>
-                            <div class="form-group">
-                                <label>Sĩ số:</label>
-                                <input type="text">
-                            </div>
-                            <div class="form-group">
-                                <label>GVCN:</label>
-                                <select name="maGV">
-                                </select>
-                            </div>
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Môn học:</label>
+                            <select></select>
                         </div>
 
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Năm học:</label>
-                                <input type="text">
-                            </div>
-                            <div class="form-group">
-                                <label>Trạng thái:</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="status" checked> Đang hoạt động</label>
-                                    <label><input type="radio" name="status"> Tạm dừng</label>
-                                </div>
-                            </div>
+                        <div class="form-group">
+                            <label>Tiêu đề:</label>
+                            <input type="text">
                         </div>
 
-                        <div class="buttons">
-                            <button type="submit" class="btn-primary">
-                                <i class="fa-solid fa-plus"></i> Thêm mới
-                            </button>
-                            <button type="button" class="btn-secondary" onclick="window.closePopup()">Hủy</button>
+                        <div class="form-group">
+                            <label>Giáo viên tải lên:</label>
+                            <select></select>
                         </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="form-group">
+                            <label>Nội dung:</label>
+                            <textarea></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Trạng thái:</label>
+                            <div class="radio-group">
+                                <label><input type="radio" name="status"> Công khai</label>
+                                <label><input type="radio" name="status"> Riêng tư</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="buttons">
+                        <button type="submit" class="btn-primary">
+                            <i class="fa-solid fa-plus"></i> Thêm mới
+                        </button>
+                        <button type="button" class="btn-secondary" onclick="window.closePopup()">Hủy</button>
+                    </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    <script src="../header.js"></script>
-    <script>
-        // === Xử lý thêm giáo viên qua AJAX ===
-        document.getElementById("addForm").addEventListener("submit", async function (e) {
-            e.preventDefault(); // ✅ Ngăn trình duyệt reload trang
-
-            const formData = new FormData(this);
-            const data = Object.fromEntries(formData.entries());
-
-            try {
-                const response = await fetch("../src/lophoc.php", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(data)
-                });
-
-                const result = await response.json();
-
-                if (result.error) {
-                    alert(result.error);
-                } else {
-                    alert(result.message);
-                    window.location.href = "qllophoc.php";
-                }
-            } catch (error) {
-                console.error("Lỗi khi thêm lớp học:", error);
-                alert("Lỗi khi thêm lớp học. Vui lòng thử lại!");
-            }
-        });
-    </script>
 </body>
 
 </html>

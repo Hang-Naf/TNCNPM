@@ -3,6 +3,12 @@ include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
+// ==== Lấy mã giáo viên từ URL ====
+if (!isset($_GET['maGV'])) {
+    die("Thiếu mã giáo viên!");
+}
+$maGV = $_GET['maGV'];
+
 // ==== Kiểm tra đăng nhập ====
 if (!isset($_SESSION["userID"])) {
     header("Location: dangnhap.php");
@@ -33,6 +39,39 @@ $monhoc_list = [];
 while ($mh = $monhoc_rs->fetch_assoc()) {
     $monhoc_list[] = $mh;
 }
+
+// ==== Lấy thông tin giáo viên từ CSDL ====
+if (!isset($_GET['maGV'])) {
+    die("Thiếu mã giáo viên!");
+}
+$maGV = $_GET['maGV'];
+
+$sql = "
+    SELECT 
+        gv.maGV,
+        u.hoVaTen,
+        u.gioiTinh,
+        u.email,
+        u.sdt,
+        gv.boMon,
+        gv.trinhDo,
+        gv.phongBan,
+        gv.namHoc,
+        gv.hocKy,
+        gv.trangThai
+    FROM giaovien gv
+    JOIN user u ON gv.maGV = u.userID
+    WHERE gv.maGV = ?
+";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $maGV);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    die("Không tìm thấy giáo viên có mã $maGV");
+}
+$gv = $result->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
@@ -218,64 +257,72 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         <div class="popup-bg" id="addPopup">
             <div class="popup">
                 <div class="them-hocsinh">
-                    <h2 id="title-h2">THÊM GIÁO VIÊN</h2>
+                    <h2 id="title-h2">CHỈNH SỬA GIÁO VIÊN</h2>
                     <form id="addForm" class="form">
-                        <input type="hidden" name="action" value="add" id="formAction">
-                        <input type="hidden" name="userId" id="userId">
+                        <input type="hidden" name="action" value="update" id="formAction">
+                        <input type="hidden" name="userId" value="<?= htmlspecialchars($gv['maGV']) ?>">
 
                         <div class="row">
                             <div class="form-group">
-                                <label>Họ và Tên:</label>
-                                <input type="text" name="hoVaTen">
+                                <label for="hoVaTen">Họ và tên:</label>
+                                <input type="text" id="hoVaTen" name="hoVaTen"
+                                    value="<?= htmlspecialchars($gv['hoVaTen']) ?>" required>
                             </div>
                             <div class="form-group">
-                                <label>Email:</label>
-                                <input type="email" name="email">
+                                <label for="email">Email:</label>
+                                <input type="email" id="email" name="email"
+                                    value="<?= htmlspecialchars($gv['email']) ?>" required>
                             </div>
                             <div class="form-group">
-                                <label>Số Điện Thoại:</label>
-                                <input type="text" name="sdt">
+                                <label for="sdt">Số điện thoại:</label>
+                                <input type="text" id="sdt" name="sdt" value="<?= htmlspecialchars($gv['sdt']) ?>"
+                                    required>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="form-group">
-                                <label>Giới tính:</label>
-                                <select name="gioiTinh">
-                                    <option value="Nam">Nam</option>
-                                    <option value="Nữ">Nữ</option>
+                                <label for="gioiTinh">Giới tính:</label>
+                                <select id="gioiTinh" name="gioiTinh" required>
+                                    <option value="Nam" <?= $gv['gioiTinh'] === 'Nam' ? 'selected' : '' ?>>Nam</option>
+                                    <option value="Nữ" <?= $gv['gioiTinh'] === 'Nữ' ? 'selected' : '' ?>>Nữ</option>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Bộ môn:</label>
-                                <select name="boMon" required>
+                                <label for="boMon">Bộ môn:</label>
+                                <select id="boMon" name="boMon" required>
                                     <?php foreach ($monhoc_list as $mh): ?>
-                                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>">
+                                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>"
+                                            <?= ($gv['boMon'] === $mh['tenMonHoc']) ? 'selected' : '' ?>>
                                             <?= htmlspecialchars($mh['tenMonHoc']) ?>
                                         </option>
                                     <?php endforeach; ?>
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Trình độ:</label>
-                                <input type="text" name="trinhDo" placeholder="Trình độ (VD: Cử nhân, Thạc sĩ)">
+                                <label for="trinhDo">Trình độ:</label>
+                                <input type="text" id="trinhDo" name="trinhDo"
+                                    value="<?= htmlspecialchars($gv['trinhDo']) ?>" required>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="form-group">
-                                <label>Phòng ban:</label>
-                                <input type="text" name="phongBan" placeholder="Phòng ban (VD: Tổ Toán)">
-
+                                <label for="phongBan">Phòng ban:</label>
+                                <input type="text" id="phongBan" name="phongBan"
+                                    value="<?= htmlspecialchars($gv['phongBan']) ?>" required>
                             </div>
                             <div class="form-group">
-                                <label>Năm học:</label>
-                                <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học" readonly>
+                                <label for="namHoc">Năm học:</label>
+                                <input type="text" id="namHoc" name="namHoc"
+                                    value="<?= htmlspecialchars($gv['namHoc']) ?>" required>
                             </div>
                             <div class="form-group">
-                                <label>Học kỳ:</label>
-                                <select name="hocKy" id="addHocKy" readonly>
-                                    <option value="">-- Học kỳ tự động --</option>
+                                <label for="hocKy">Học kỳ:</label>
+                                <select id="hocKy" name="hocKy" required>
+                                    <option value="HK1" <?= $gv['hocKy'] === 'HK1' ? 'selected' : '' ?>>HK1</option>
+                                    <option value="HK2" <?= $gv['hocKy'] === 'HK2' ? 'selected' : '' ?>>HK2</option>
+                                    <option value="Hè" <?= $gv['hocKy'] === 'Hè' ? 'selected' : '' ?>>Hè</option>
                                 </select>
                             </div>
                         </div>
@@ -283,16 +330,19 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                         <div class="row">
                             <div class="form-group">
                                 <label>Trạng thái:</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="trangThai" value="active"> Đang hoạt động</label>
-                                    <label><input type="radio" name="trangThai" value="inactive"> Tạm dừng</label>
-                                </div>
+                                <label>
+                                    <input type="radio" name="trangThai" value="active" <?= $gv['trangThai'] === 'active' ? 'checked' : '' ?>>
+                                    Đang hoạt động
+                                </label>
+                                <label>
+                                    <input type="radio" name="trangThai" value="inactive"
+                                        <?= $gv['trangThai'] === 'inactive' ? 'checked' : '' ?>>
+                                    Tạm dừng
+                                </label>
                             </div>
-                            <div class="popup-buttons">
-                                <button type="button" class="btn-secondary"
-                                    onclick="window.location.href='qlgiaovien.php'">Quay
-                                    lại</button>
-                                <button type="submit" class="btn-primary" id="submitButton">Thêm giáo viên</button>
+                            <div class="form-group">
+                                <button type="submit" name="update" class="btn btn-primary">Lưu thay đổi</button>
+                                <a href="qlgiaovien.php" class="btn btn-secondary">Hủy</a>
                             </div>
                         </div>
                     </form>
@@ -300,7 +350,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             </div>
         </div>
     </div>
-    <script src="../header.js"></script>
     <script>
         // === Xử lý thêm giáo viên qua AJAX ===
         document.getElementById("addForm").addEventListener("submit", async function (e) {
@@ -329,6 +378,121 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 alert("Lỗi khi thêm giáo viên. Vui lòng thử lại!");
             }
         });
+
+        document.getElementById("bellIcon").addEventListener("click", function () {
+            const dropdown = document.getElementById("notificationDropdown");
+            // Hiện/ẩn menu
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+
+            // Gọi AJAX lấy thông báo
+            fetch("get_thongbao.php")
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById("notificationList");
+                    const noNoti = document.getElementById("noNoti");
+                    const badge = document.getElementById("notiBadge");
+                    list.innerHTML = "";
+
+                    let unreadCount = 0;
+
+                    if (data.length > 0) {
+                        noNoti.style.display = "none";
+                        data.forEach(tb => {
+                            const li = document.createElement("li");
+                            li.style.padding = "10px 8px";
+                            li.style.borderBottom = "1px solid #eee";
+                            li.style.cursor = "pointer";
+
+                            if (tb.trangThai === "Chưa đọc") {
+                                unreadCount++;
+                                li.style.background = "#f0f8ff";
+                                li.innerHTML = `
+                        <strong style="color:#0b3364;">${tb.tieuDe} 🔵</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            } else {
+                                li.style.opacity = "0.7";
+                                li.innerHTML = `
+                        <strong>${tb.tieuDe}</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            }
+
+                            li.addEventListener("click", () => markAsRead(tb.maThongBao, li));
+                            list.appendChild(li);
+                        });
+                    } else {
+                        noNoti.style.display = "block";
+                    }
+
+                    // Cập nhật badge
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount;
+                        badge.style.display = "block";
+                    } else {
+                        badge.style.display = "none";
+                    }
+                })
+                .catch(err => console.error("Lỗi tải thông báo:", err));
+
+
+            function markAsRead(maThongBao, element) {
+                fetch("update_trangthai.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "maThongBao=" + encodeURIComponent(maThongBao)
+                })
+                    .then(res => res.text())
+                    .then(response => {
+                        if (response === "OK") {
+                            element.style.background = "transparent";
+                            element.style.opacity = "0.7";
+                            element.querySelector("strong").innerHTML = element.querySelector("strong").innerText;
+
+                            // Giảm số badge đi 1
+                            const badge = document.getElementById("notiBadge");
+                            let current = parseInt(badge.textContent || "0");
+                            if (current > 1) badge.textContent = current - 1;
+                            else badge.style.display = "none";
+                        }
+                    });
+            }
+
+        });
+
+        // Ẩn dropdown khi click ra ngoài
+        document.addEventListener("click", function (e) {
+            const dropdown = document.getElementById("notificationDropdown");
+            const bell = document.getElementById("bellIcon");
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = "none";
+            }
+        });
+
+        function toggleUserMenu() {
+            const menu = document.getElementById("userMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+
+        // Đóng menu nếu click ra ngoài
+        document.addEventListener("click", function (e) {
+            const menu = document.getElementById("userMenu");
+            const userInfo = document.querySelector(".user-info");
+            if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = "none";
+            }
+        });
+
+        // Xử lý đăng xuất
+        function logout() {
+            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
+                window.location.href = "dangxuat.php"; // hoặc logout.php nếu có xử lý session
+            }
+        }
     </script>
 </body>
 

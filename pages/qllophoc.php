@@ -102,6 +102,10 @@ $giaovien_rs = $conn->query("
             cursor: pointer;
             margin-right: 10px;
         }
+
+        td:not(.no-center) {
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -209,7 +213,7 @@ $giaovien_rs = $conn->query("
                     <th>STT</th>
                     <th>MÃ LỚP</th>
                     <th>TÊN LỚP</th>
-                    <th>KHỐI</th> <!-- Cột khối mới -->
+                    <th>KHỐI</th>
                     <th>SĨ SỐ</th>
                     <th>GIÁO VIÊN PHỤ TRÁCH</th>
                     <th>NĂM HỌC</th>
@@ -226,7 +230,7 @@ $giaovien_rs = $conn->query("
                             <td><?= $stt++ ?></td>
                             <td><?= $row['maLop'] ?></td>
                             <td><?= htmlspecialchars($row['tenLop']) ?></td>
-                            <td><?= htmlspecialchars($row['khoi']) ?></td> <!-- Hiển thị khối -->
+                            <td><?= htmlspecialchars($row['khoi']) ?></td>
                             <td><?= htmlspecialchars($row['siSo']) ?></td>
                             <td data-gv="<?= $row['maGV'] ?? '' ?>"><?= htmlspecialchars($row['tenGV'] ?? '—') ?></td>
                             <td><?= htmlspecialchars($row['namHoc']) ?></td>
@@ -245,6 +249,7 @@ $giaovien_rs = $conn->query("
             </tbody>
         </table>
     </div>
+    <script src="../header.js"></script>
     <script>
         const api = "../src/lophoc.php";
         let currentId = null;
@@ -258,25 +263,11 @@ $giaovien_rs = $conn->query("
             document.getElementById("addForm").reset();
         }
 
-        // === Thêm / Cập nhật lớp học ===
-        document.getElementById("addForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const data = Object.fromEntries(new FormData(e.target).entries());
-            const res = await fetch(api, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            alert(json.message || json.error);
-            if (json.message) location.reload();
-        });
-
-        // === Mở popup sửa ===
+        // === Xử lý nhấn nút sửa ===
         document.addEventListener("click", (e) => {
             if (e.target.classList.contains("edit-btn")) {
-                const tr = e.target.closest("tr");
-                showAddPopup("edit", tr);
+                const maGV = e.target.closest("tr").children[2].innerText.trim();
+                window.location.href = `chinhsualophoc.php?maGV=${encodeURIComponent(maGV)}`;
             }
         });
 

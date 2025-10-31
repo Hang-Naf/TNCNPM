@@ -99,6 +99,10 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             cursor: pointer;
             margin-right: 10px;
         }
+
+        td:not(.no-center) {
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -222,7 +226,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                             <td><input type="checkbox"></td>
                             <td><?= $stt++ ?></td>
                             <td><?= $row['maHS'] ?></td>
-                            <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
+                            <td class="no-center"><?= htmlspecialchars($row['hoVaTen']) ?></td>
                             <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
                             <td><?= htmlspecialchars($row['email']) ?></td>
                             <td><?= htmlspecialchars($row['sdt']) ?></td>
@@ -249,18 +253,11 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         </table>
     </div>
     <script>
-        const api = "../src/hocsinh.php";
-        let isEditing = false;
-        let currentId = null;
+        const apiHocSinh = "../src/hocsinh.php";
 
         // === Mở popup thêm ===
         function showAddPopup() {
             window.location = 'themhocsinh.php'
-        }
-
-        // === Đóng popup ===
-        function closePopup() {
-            document.getElementById("addPopup").style.display = "none";
         }
 
         // === Tính học kỳ và năm học ===
@@ -282,70 +279,21 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             return { hocKy, namHoc };
         }
 
-        // === Xử lý submit (thêm hoặc sửa) ===
-        document.getElementById("addForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const form = e.target;
-            const data = Object.fromEntries(new FormData(form).entries());
-            if (isEditing) {
-                data.userId = currentId;
-                data.action = "update";
-            } else {
-                data.action = "add";
-            }
-
-            const res = await fetch(api, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            alert(json.message || json.error);
-            if (json.message) location.reload();
-        });
-
-        // === Mở popup sửa ===
-        document.addEventListener("click", (e) => {
-            if (e.target.classList.contains("edit-btn")) {
-                const tr = e.target.closest("tr");
-                currentId = tr.dataset.id;
-                isEditing = true;
-
-                // Điền dữ liệu vào form
-                document.getElementById("HoTen").value = tr.children[3].innerText;
-                document.getElementById("GioiTinh").value = tr.children[4].innerText;
-                document.getElementById("Email").value = tr.children[5].innerText;
-                document.getElementById("Sdt").value = tr.children[6].innerText;
-
-                document.querySelector("select[name='lopHocPhuTrach']").value = tr.children[7].innerText;
-                document.getElementById("addNamHoc").value = tr.children[8].innerText;
-                document.getElementById("addHocKy").innerHTML =
-                    `<option value="${tr.children[9].innerText}" selected>${tr.children[9].innerText}</option>`;
-
-                // Trạng thái
-                const isActive = tr.children[10].innerText.includes("Hoạt");
-                document.querySelectorAll("input[name='trangThai']")[0].checked = isActive;
-                document.querySelectorAll("input[name='trangThai']")[1].checked = !isActive;
-
-                // Cập nhật tiêu đề và nút
-                document.querySelector("#addPopup h2").innerText = "CHỈNH SỬA HỌC SINH";
-                document.querySelector("#addForm .btn-primary").innerHTML = `<i class="fa-solid fa-save"></i> Lưu thay đổi`;
-
-                // Hiển thị popup
-                document.getElementById("addPopup").style.display = "flex";
-            }
-        });
-
-        // === Xóa học sinh ===
+        // Xóa học sinh
         document.addEventListener("click", async (e) => {
             if (e.target.classList.contains("delete-btn")) {
                 const tr = e.target.closest("tr");
                 const id = tr.dataset.id;
                 if (confirm("Bạn có chắc muốn xóa học sinh này?")) {
-                    const res = await fetch(api, {
+                    const res = await fetch(apiHocSinh, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ action: "delete", userId: id })
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            action: "delete",
+                            userId: id
+                        })
                     });
                     const json = await res.json();
                     alert(json.message || json.error);

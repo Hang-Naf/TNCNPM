@@ -1,3 +1,40 @@
+<?php
+include_once(__DIR__ . '/../src/func.php');
+include_once(__DIR__ . '/../csdl/db.php');
+session_start();
+
+// ==== Kiểm tra đăng nhập ====
+if (!isset($_SESSION["userID"])) {
+    header("Location: dangnhap.php");
+    exit();
+}
+
+// ==== Chỉ cho phép Admin ====
+if ($_SESSION["vaiTro"] !== "Admin") {
+    session_destroy();
+    header("Location: dangnhap.php");
+    exit();
+}
+
+// ==== Lấy danh sách học sinh ====
+$sql = "
+    SELECT 
+        h.maHS, u.hoVaTen, u.gioiTinh, u.email, u.sdt,
+        h.lopHocPhuTrach, h.namHoc, h.hocKy, h.trangThai
+    FROM hocsinh h
+    JOIN user u ON h.maHS = u.userID
+    WHERE u.vaiTro = 'HocSinh'
+";
+$result = $conn->query($sql);
+
+// ==== Lấy danh sách lớp học ====
+$lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
+$lophoc_list = [];
+while ($lh = $lophoc_rs->fetch_assoc()) {
+    $lophoc_list[] = $lh;
+}
+?>
+
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -102,10 +139,10 @@
                 <ul>
                     <li onclick="window.location.href='index.php'"><i class="fa-solid fa-house"></i>
                         Dashboard</li>
-                    <li onclick="window.location.href='qlgiaovien.php'"><i
-                            class="fa-solid fa-chalkboard-user"></i> Giáo
+                    <li onclick="window.location.href='qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo
                         viên</li>
-                    <li class="active" onclick="window.location.href='qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i>
+                    <li class="active" onclick="window.location.href='qlhocsinh.php'"><i
+                            class="fa-solid fa-user-graduate"></i>
                         Học sinh</li>
                     <li onclick="window.location.href='qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học
                     </li>
@@ -202,6 +239,7 @@
                             <div class="form-group">
                                 <label>Giới tính:</label>
                                 <select name="gioiTinh" id="GioiTinh">
+                                    <option hidden></option>
                                     <option value="Nam">Nam</option>
                                     <option value="Nữ">Nữ</option>
                                 </select>
@@ -209,7 +247,7 @@
                             <div class="form-group">
                                 <label>Lớp học:</label>
                                 <select name="lopHocPhuTrach" required>
-                                    <option value="">-- Chọn lớp học --</option>
+                                    <option hidden></option>
                                     <?php foreach ($lophoc_list as $lh): ?>
                                         <option value="<?= htmlspecialchars($lh['tenLop']) ?>">
                                             <?= htmlspecialchars($lh['tenLop']) ?>
@@ -249,6 +287,36 @@
             </div>
         </div>
     </div>
+    <script src="../header.js"></script>
+    <script>
+        // === Xử lý thêm giáo viên qua AJAX ===
+        document.getElementById("addForm").addEventListener("submit", async function (e) {
+            e.preventDefault(); // ✅ Ngăn trình duyệt reload trang
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch("../src/hocsinh.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    alert(result.message);
+                    window.location.href = "qlhocsinh.php";
+                }
+            } catch (error) {
+                console.error("Lỗi khi thêm học sinh:", error);
+                alert("Lỗi khi thêm giáo viên. Vui lòng thử lại!");
+            }
+        });
+    </script>
 </body>
 
 </html>
