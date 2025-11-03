@@ -477,7 +477,7 @@ $giaoviens = $conn->query("
 
         // === Mở/đóng popup ===
         function showAddPopup() {
-            document.getElementById("addPopup").style.display = "flex";
+            window.location = 'themphancong.php'
         }
 
         function closePopup(id) {

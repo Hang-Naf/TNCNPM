@@ -299,7 +299,7 @@ $gv_rs = $conn->query("
                             <button type="submit" class="btn-primary" id="submitBtn">
                                 <i class="fa-solid fa-plus"></i> Thêm mới
                             </button>
-                            <button type="button" class="btn-secondary" onclick="window.location.href='qlmonhoc.php'">Hủy</button>
+                            <button type="button" class="btn-secondary" onclick="closePopup()">Hủy</button>
                         </div>
                     </form>
                 </div>

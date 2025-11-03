@@ -90,37 +90,66 @@ $result = $conn->query($sql);
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            background: #f8f9fb;
+            margin: 0;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .add-btn {
+            background: #0b1e6b;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 150px;
+        }
+
         table {
-            border-collapse: collapse;
             width: 100%;
+            border-collapse: collapse;
+            background: white;
             margin-top: 20px;
         }
 
         th,
         td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
         }
 
         th {
-            background: #f4f4f4;
+            background: #f1f3f9;
         }
 
-        form {
-            margin-bottom: 20px;
+        .status.active {
+            color: green;
+            font-weight: 500;
         }
 
-        input,
-        select,
-        textarea {
-            margin: 5px 0;
-            padding: 5px;
+        .status.inactive {
+            color: gray;
         }
 
-        button {
-            padding: 6px 12px;
+        .actions i {
             cursor: pointer;
+            margin-right: 10px;
+        }
+
+        td:not(.no-center) {
+            text-align: center;
         }
     </style>
 </head>
@@ -137,41 +166,52 @@ $result = $conn->query($sql);
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
                     <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i
+                            class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
+                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i
+                            class="fa-solid fa-user-graduate"></i> Học sinh</li>
+                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp
+                        học</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học
+                    </li>
+                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i>
+                        Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li class="active" onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li class="active" onclick="window.location.href='../pages/qlchuyencan.php'"><i
+                            class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li onclick="window.location.href='../pages/qldiemso.php'"><i
+                            class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li  onclick="window.location.href='../pages/qltsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông
+                        báo</li>
+                    <li onclick="window.location.href='../pages/qltsukien.php'"><i
+                            class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý tài khoản</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i>
+                        Phân công giảng dạy</li>
+                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i
+                            class="fa-solid fa-user-shield"></i> Phân quyền</li>
                 </ul>
             </div>
         </nav>
@@ -209,7 +249,7 @@ $result = $conn->query($sql);
                 </div>
             </div>
         </header>
-        <h1>📋 Quản lý chuyên cần học sinh</h1>
+        <!-- <h1>📋 Quản lý chuyên cần học sinh</h1>
 
         <h3>Thêm điểm danh mới</h3>
         <form method="POST">
@@ -247,14 +287,16 @@ $result = $conn->query($sql);
             <textarea name="ghiChu" rows="2"></textarea>
 
             <button type="submit" name="add">Thêm</button>
-        </form>
+        </form> -->
 
-        <h3>Danh sách điểm danh</h3>
+        <h1>ĐIỂM DANH HỌC SINH</h1>
+        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm học sinh</button>
         <table>
             <thead>
                 <tr>
+                    <th><input type="checkbox"></th>
                     <th>Mã</th>
-                    <th>Học sinh</th>
+                    <th>Họ và tên</th>
                     <th>Môn học</th>
                     <th>Ngày học</th>
                     <th>Trạng thái</th>
@@ -265,6 +307,7 @@ $result = $conn->query($sql);
             <tbody>
                 <?php while ($row = $result->fetch_assoc()) { ?>
                     <tr>
+                        <td><input type="checkbox"></td>
                         <td><?= $row['maDiemDanh'] ?></td>
                         <td><?= htmlspecialchars($row['tenHS']) ?></td>
                         <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
@@ -273,7 +316,8 @@ $result = $conn->query($sql);
                         <td><?= htmlspecialchars($row['ghiChu']) ?></td>
                         <td>
                             <a href="?edit=<?= $row['maDiemDanh'] ?>">Sửa</a> |
-                            <a href="?delete=<?= $row['maDiemDanh'] ?>" onclick="return confirm('Bạn có chắc muốn xóa không?')">Xóa</a>
+                            <a href="?delete=<?= $row['maDiemDanh'] ?>"
+                                onclick="return confirm('Bạn có chắc muốn xóa không?')">Xóa</a>
                         </td>
                     </tr>
                 <?php } ?>
@@ -286,7 +330,7 @@ $result = $conn->query($sql);
     if (isset($_GET['edit'])) {
         $id = $_GET['edit'];
         $edit = $conn->query("SELECT * FROM chuyencan WHERE maDiemDanh = $id")->fetch_assoc();
-    ?>
+        ?>
         <h3>Chỉnh sửa điểm danh</h3>
         <form method="POST">
             <input type="hidden" name="maDiemDanh" value="<?= $edit['maDiemDanh'] ?>">
@@ -328,7 +372,7 @@ $result = $conn->query($sql);
         </form>
     <?php } ?>
     <script>
-        document.getElementById("bellIcon").addEventListener("click", function() {
+        document.getElementById("bellIcon").addEventListener("click", function () {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu
             dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
@@ -389,12 +433,12 @@ $result = $conn->query($sql);
 
             function markAsRead(maThongBao, element) {
                 fetch("../update_trangthai.php", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: "maThongBao=" + encodeURIComponent(maThongBao)
-                    })
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "maThongBao=" + encodeURIComponent(maThongBao)
+                })
                     .then(res => res.text())
                     .then(response => {
                         if (response === "OK") {
@@ -414,7 +458,7 @@ $result = $conn->query($sql);
         });
 
         // Ẩn dropdown khi click ra ngoài
-        document.addEventListener("click", function(e) {
+        document.addEventListener("click", function (e) {
             const dropdown = document.getElementById("notificationDropdown");
             const bell = document.getElementById("bellIcon");
             if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
@@ -428,14 +472,14 @@ $result = $conn->query($sql);
         }
 
         // Đóng menu nếu click ra ngoài
-        document.addEventListener("click", function(e) {
+        document.addEventListener("click", function (e) {
             const menu = document.getElementById("userMenu");
             const userInfo = document.querySelector(".user-info");
             if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
                 menu.style.display = "none";
             }
         });
-        
+
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {

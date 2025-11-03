@@ -3,6 +3,38 @@ include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
+// ==== Lấy mã giáo viên từ URL ====
+if (!isset($_GET['maHS'])) {
+    die("Thiếu mã học sinh!");
+}
+
+$maHS = $_GET['maHS'];
+
+$sql = "
+    SELECT 
+        hs.maHS,
+        u.hoVaTen,
+        u.gioiTinh,
+        u.email,
+        u.sdt,
+        hs.lopHocPhuTrach,
+        hs.namHoc,
+        hs.hocKy,
+        hs.trangThai
+    FROM hocsinh hs
+    JOIN user u ON hs.maHS = u.userID
+    WHERE hs.maHS = ?
+";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("s", $maHS);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    die("Không tìm thấy giáo viên có mã $maHS");
+}
+$hs = $result->fetch_assoc();
+
 // ==== Kiểm tra đăng nhập ====
 if (!isset($_SESSION["userID"])) {
     header("Location: dangnhap.php");
@@ -16,33 +48,23 @@ if ($_SESSION["vaiTro"] !== "Admin") {
     exit();
 }
 
-// ==== Lấy danh sách môn học và trưởng bộ môn ====
+// ==== Lấy danh sách học sinh ====
 $sql = "
     SELECT 
-        m.maMonHoc,
-        m.tenMonHoc,
-        m.moTa,
-        m.hocKy,
-        m.trongSo,
-        m.trangThai,
-        m.namHoc,
-        u.hoVaTen AS truongBoMon
-    FROM monhoc m
-    LEFT JOIN (
-        SELECT gm.maMonHoc, gm.maGV
-        FROM giaovien_monhoc gm
-        GROUP BY gm.maMonHoc
-    ) AS gvmh ON m.maMonHoc = gvmh.maMonHoc
-    LEFT JOIN user u ON u.userID = gvmh.maGV
+        h.maHS, u.hoVaTen, u.gioiTinh, u.email, u.sdt,
+        h.lopHocPhuTrach, h.namHoc, h.hocKy, h.trangThai
+    FROM hocsinh h
+    JOIN user u ON h.maHS = u.userID
+    WHERE u.vaiTro = 'HocSinh'
 ";
 $result = $conn->query($sql);
 
-// ==== Lấy danh sách giáo viên cho select ====
-$gv_rs = $conn->query("
-    SELECT g.maGV, u.hoVaTen, g.boMon 
-    FROM giaovien g 
-    JOIN user u ON g.maGV = u.userID
-");
+// ==== Lấy danh sách lớp học ====
+$lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
+$lophoc_list = [];
+while ($lh = $lophoc_rs->fetch_assoc()) {
+    $lophoc_list[] = $lh;
+}
 ?>
 
 <!DOCTYPE html>
@@ -50,7 +72,7 @@ $gv_rs = $conn->query("
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý môn học</title>
+    <title>Quản lý học sinh</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -135,11 +157,6 @@ $gv_rs = $conn->query("
     .btn-secondary:hover {
         background: #bbb;
     }
-
-    textarea {
-        width: 99%;
-        height: 200%;
-    }
 </style>
 
 <body>
@@ -156,18 +173,17 @@ $gv_rs = $conn->query("
                         Dashboard</li>
                     <li onclick="window.location.href='qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo
                         viên</li>
-                    <li onclick="window.location.href='qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i>
+                    <li class="active" onclick="window.location.href='qlhocsinh.php'"><i
+                            class="fa-solid fa-user-graduate"></i>
                         Học sinh</li>
-                    <li onclick="window.location.href='qllophoc.php'"><i class="fa-solid fa-school"></i>
-                        Lớp học
+                    <li onclick="window.location.href='qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học
                     </li>
                 </ul>
             </div>
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li class="active" onclick="window.location.href='qlmonhoc.php'"><i class="fa-solid fa-book"></i>
-                        Môn học
+                    <li onclick="window.location.href='qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học
                     </li>
                     <li onclick="window.location.href='qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài
                         liệu</li>
@@ -233,73 +249,69 @@ $gv_rs = $conn->query("
         </header>
         <div class="popup-bg" id="addPopup">
             <div class="popup">
-                <h2 id="title-h2">THÊM MÔN HỌC</h2>
+                <h2 id="title-h2">THÊM HỌC SINH</h2>
                 <div class="them-hocsinh">
                     <form id="addForm" class="student-form">
-                        <input type="hidden" name="action" value="add">
-                        <input type="hidden" name="maMonHoc">
-
+                        <input type="hidden" name="action" value="add" id="formAction">
                         <div class="row">
                             <div class="form-group">
-                                <label>Tên môn:</label>
-                                <input type="text" name="tenMonHoc" required>
+                                <label>Họ và Tên:</label>
+                                <input type="text" name="hoVaTen" id="HoTen" required value="<?= htmlspecialchars($hs['hoVaTen']) ?>">
                             </div>
                             <div class="form-group">
-                                <label>Trưởng bộ môn:</label>
-                                <select name="truongBoMon">
-                                    <option value="">--Chọn Trưởng Bộ Môn--</option>
-                                    <?php
-                                    $gv_rs->data_seek(0);
-                                    while ($gv = $gv_rs->fetch_assoc()):
-                                        ?>
-                                        <option value="<?= $gv['maGV'] ?>"><?= htmlspecialchars($gv['hoVaTen']) ?>
-                                            (<?= htmlspecialchars($gv['boMon']) ?>)</option>
-                                    <?php endwhile; ?>
-                                </select>
+                                <label>Email:</label>
+                                <input type="email" name="email" id="Email" required value="<?= htmlspecialchars($hs['email']) ?>">
+                            </div>
+                            <div class="form-group">
+                                <label>Số Điện Thoại:</label>
+                                <input type="text" name="sdt" id="Sdt" value="<?= htmlspecialchars($hs['sdt']) ?>">
                             </div>
                         </div>
-
                         <div class="row">
+                            <div class="form-group">
+                                <label>Giới tính:</label>
+                                <select name="gioiTinh" id="GioiTinh">
+                                    <option hidden></option>
+                                    <option value="Nam" <?= $hs['gioiTinh'] === 'Nam' ? 'selected' : '' ?>>Nam</option>
+                                    <option value="Nữ" <?= $hs['gioiTinh'] === 'Nữ' ? 'selected' : '' ?>>Nữ</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Lớp học:</label>
+                                <select name="lopHocPhuTrach" required>
+                                    <option hidden></option>
+                                    <?php foreach ($lophoc_list as $lh): ?>
+                                        <option>
+                                            <?= htmlspecialchars($lh['tenLop']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
                             <div class="form-group">
                                 <label>Năm học:</label>
-                                <input type="text" name="namHoc" placeholder="VD: 2024-2025" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Học kỳ:</label>
-                                <select name="hocKy">
-                                    <option value="HK1">Học kỳ 1</option>
-                                    <option value="HK2">Học kỳ 2</option>
-                                    <option value="Hè">Học kỳ Hè</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Trọng số:</label>
-                                <input type="number" name="trongSo" placeholder="Trọng số" step="0.1" required>
+                                <input type="text" name="namHoc" id="addNamHoc" required value="<?= htmlspecialchars($hs['namHoc']) ?>">
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="form-group">
-                                <label>Mô tả:</label>
-                                <textarea name="moTa"></textarea>
+                                <label>Học kỳ:</label>
+                                <select name="hocKy" id="addHocKy" readonly>
+                                    <option value="">-- Học kỳ tự động --</option>
+                                </select>
                             </div>
                             <div class="form-group">
                                 <label>Trạng thái:</label>
                                 <div class="radio-group">
-                                    <label><input type="radio" name="trangThai" value="Hoạt động"> Đang hoạt
-                                        động</label>
-                                    <label><input type="radio" name="trangThai" value="Ngưng"> Tạm dừng</label>
+                                    <label><input type="radio" name="trangThai" checked> Đang học</label>
+                                    <label><input type="radio" name="trangThai"> Đã nghỉ</label>
                                 </div>
                             </div>
                         </div>
-
                         <div class="buttons">
-                            <button type="submit" class="btn-primary" id="submitBtn">
+                            <button type="submit" class="btn-primary" id="submitButton">
                                 <i class="fa-solid fa-plus"></i> Thêm mới
                             </button>
-                            <button type="button" class="btn-secondary" onclick="window.location.href='qlmonhoc.php'">Hủy</button>
+                            <button type="button" class="btn-secondary" onclick="window.location.href='qlhocsinh.php'">Hủy</button>
                         </div>
                     </form>
                 </div>
@@ -308,14 +320,15 @@ $gv_rs = $conn->query("
     </div>
     <script src="../header.js"></script>
     <script>
+        // === Xử lý thêm học sinh qua AJAX ===
         document.getElementById("addForm").addEventListener("submit", async function (e) {
-            e.preventDefault();
+            e.preventDefault(); // ✅ Ngăn trình duyệt reload trang
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
             try {
-                const response = await fetch("../src/monhoc.php", {
+                const response = await fetch("../src/hocsinh.php", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(data)
@@ -327,13 +340,32 @@ $gv_rs = $conn->query("
                     alert(result.error);
                 } else {
                     alert(result.message);
-                    window.location.href = "qlmonhoc.php";
+                    window.location.href = "qlhocsinh.php";
                 }
             } catch (error) {
-                console.error("Lỗi khi thêm môn học:", error);
-                alert("Lỗi khi thêm môn học. Vui lòng thử lại!");
+                console.error("Lỗi khi thêm học sinh:", error);
+                alert("Lỗi khi thêm học sinh. Vui lòng thử lại!");
             }
         });
+
+        // === Tính học kỳ và năm học ===
+        function getHocKyVaNamHoc() {
+            const now = new Date();
+            const thang = now.getMonth() + 1;
+            const nam = now.getFullYear();
+            let hocKy, namHoc;
+            if (thang >= 8 && thang <= 12) {
+                hocKy = "HK1";
+                namHoc = `${nam}-${nam + 1}`;
+            } else if (thang >= 1 && thang <= 5) {
+                hocKy = "HK2";
+                namHoc = `${nam - 1}-${nam}`;
+            } else {
+                hocKy = "Hè";
+                namHoc = `${nam - 1}-${nam}`;
+            }
+            return { hocKy, namHoc };
+        }
     </script>
 </body>
 

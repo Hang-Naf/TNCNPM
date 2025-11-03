@@ -218,7 +218,7 @@
                             <button type="submit" class="btn-primary">
                                 <i class="fa-solid fa-plus"></i> Thêm mới
                             </button>
-                            <button type="button" class="btn-secondary" onclick="window.closePopup()">Hủy</button>
+                            <button type="button" class="btn-secondary" onclick="window.location.href='qllophoc.php'">Hủy</button>
                         </div>
                     </form>
                 </div>

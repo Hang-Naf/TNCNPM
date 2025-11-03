@@ -1,3 +1,69 @@
+<?php
+include_once(__DIR__ . "/../csdl/db.php"); // Đảm bảo có file kết nối CSDL
+
+// Xử lý thêm mới
+if (isset($_POST['add'])) {
+    $maMonHoc = $_POST['maMonHoc'];
+    $tieuDe = $_POST['tieuDe'];
+    $noiDung = $_POST['noiDung'];
+    $ngayTai = date('Y-m-d');
+    $maGV = $_POST['maGV'];
+    $trangThai = $_POST['trangThai'];
+
+    $sql = "INSERT INTO tailieu (maMonHoc, tieuDe, noiDung, ngayTai, maGV, trangThai)
+            VALUES ('$maMonHoc', '$tieuDe', '$noiDung', '$ngayTai', '$maGV', '$trangThai')";
+    if ($conn->query($sql)) {
+        echo "<script>alert('Thêm tài liệu thành công!'); window.location='qltailieu.php';</script>";
+    } else {
+        echo "Lỗi: " . $conn->error;
+    }
+}
+
+// Xử lý xóa
+if (isset($_GET['delete'])) {
+    $maTL = $_GET['delete'];
+    $sql = "DELETE FROM tailieu WHERE maTL = $maTL";
+    if ($conn->query($sql)) {
+        echo "<script>alert('Xóa thành công!'); window.location='qltailieu.php';</script>";
+    } else {
+        echo "Lỗi: " . $conn->error;
+    }
+}
+
+// Xử lý cập nhật
+if (isset($_POST['update'])) {
+    $maTL = $_POST['maTL'];
+    $maMonHoc = $_POST['maMonHoc'];
+    $tieuDe = $_POST['tieuDe'];
+    $noiDung = $_POST['noiDung'];
+    $trangThai = $_POST['trangThai'];
+
+    $sql = "UPDATE tailieu 
+            SET maMonHoc='$maMonHoc', tieuDe='$tieuDe', noiDung='$noiDung', trangThai='$trangThai'
+            WHERE maTL='$maTL'";
+    if ($conn->query($sql)) {
+        echo "<script>alert('Cập nhật thành công!'); window.location='qltailieu.php';</script>";
+    } else {
+        echo "Lỗi: " . $conn->error;
+    }
+}
+
+// Lấy danh sách môn học để hiển thị dropdown
+$monhoc = $conn->query("SELECT * FROM monhoc");
+
+// Lấy danh sách giáo viên
+$giaovien = $conn->query("SELECT g.maGV, u.hoVaTen FROM giaovien g 
+                          JOIN user u ON g.maGV = u.userID");
+
+// Lấy danh sách tài liệu
+$sql = "SELECT t.maTL, t.tieuDe, t.noiDung, t.ngayTai, t.trangThai, 
+               m.tenMonHoc, u.hoVaTen AS tenGV
+        FROM tailieu t
+        LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
+        LEFT JOIN user u ON t.maGV = u.userID";
+$result = $conn->query($sql);
+?>
+
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -7,7 +73,6 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
-    <link rel="stylesheet" href="popup.css">
 </head>
 <style>
     .popup-bg {
@@ -91,7 +156,7 @@
 
     textarea {
         width: 99%;
-        height: 150%;
+        height: 200%;
     }
 </style>
 
@@ -121,7 +186,8 @@
                 <ul>
                     <li onclick="window.location.href='qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học
                     </li>
-                    <li class="active" onclick="window.location.href='qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài
+                    <li class="active" onclick="window.location.href='qltailieu.php'"><i
+                            class="fa-solid fa-file-lines"></i> Tài
                         liệu</li>
                 </ul>
             </div>
@@ -187,48 +253,61 @@
             <div class="popup">
                 <h2 id="title-h2">THÊM TÀI LIỆU</h2>
                 <div class="them-hocsinh">
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Môn học:</label>
-                            <select></select>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Tiêu đề:</label>
-                            <input type="text">
-                        </div>
-
-                        <div class="form-group">
-                            <label>Giáo viên tải lên:</label>
-                            <select></select>
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="form-group">
-                            <label>Nội dung:</label>
-                            <textarea></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Trạng thái:</label>
-                            <div class="radio-group">
-                                <label><input type="radio" name="status"> Công khai</label>
-                                <label><input type="radio" name="status"> Riêng tư</label>
+                    <form method="post" action="" id="addForm" class="student-form">
+                        <input type="hidden" name="action" value="add" id="formAction">
+                        <input type="hidden" name="userId" id="userId">
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Môn học:</label>
+                                <select name="maMonHoc" required>
+                                    <option value="">-- Chọn môn học --</option>
+                                    <?php while ($row = $monhoc->fetch_assoc()) { ?>
+                                        <option value="<?= $row['maMonHoc'] ?>"><?= htmlspecialchars($row['tenMonHoc']) ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tiêu đề:</label>
+                                <input type="text" name="tieuDe" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Giáo viên tải lên:</label>
+                                <select name="maGV" required>
+                                    <option hidden></option>
+                                    <?php while ($row = $giaovien->fetch_assoc()) { ?>
+                                        <option value="<?= $row['maGV'] ?>"><?= htmlspecialchars($row['hoVaTen']) ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
                             </div>
                         </div>
-                    </div>
-
-                    <div class="buttons">
-                        <button type="submit" class="btn-primary">
-                            <i class="fa-solid fa-plus"></i> Thêm mới
-                        </button>
-                        <button type="button" class="btn-secondary" onclick="window.closePopup()">Hủy</button>
-                    </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Nội dung:</label>
+                                <textarea name="noiDung" rows="3" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Trạng thái:</label>
+                                <select name="trangThai" required>
+                                    <option value="Công khai">Công khai</option>
+                                    <option value="Riêng tư">Riêng tư</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="buttons">
+                            <button type="submit" class="btn-primary" name="add">
+                                <i class="fa-solid fa-plus"></i> Thêm mới
+                            </button>
+                            <button type="button" class="btn-secondary" onclick="window.location.href='qltailieu.php'">Hủy</button>
+                        </div>
                     </form>
                 </div>
             </div>
         </div>
     </div>
+    </div>
+    <script src="../header.js"></script>
 </body>
 
 </html>

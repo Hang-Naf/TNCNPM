@@ -260,24 +260,13 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             window.location = 'themhocsinh.php'
         }
 
-        // === Tính học kỳ và năm học ===
-        function getHocKyVaNamHoc() {
-            const now = new Date();
-            const thang = now.getMonth() + 1;
-            const nam = now.getFullYear();
-            let hocKy, namHoc;
-            if (thang >= 8 && thang <= 12) {
-                hocKy = "HK1";
-                namHoc = `${nam}-${nam + 1}`;
-            } else if (thang >= 1 && thang <= 5) {
-                hocKy = "HK2";
-                namHoc = `${nam - 1}-${nam}`;
-            } else {
-                hocKy = "Hè";
-                namHoc = `${nam - 1}-${nam}`;
+        // === Xử lý nhấn nút sửa ===
+        document.addEventListener("click", (e) => {
+            if (e.target.classList.contains("edit-btn")) {
+                const maHS = e.target.closest("tr").children[2].innerText.trim();
+                window.location.href = `chinhsuahocsinh.php?maHS=${encodeURIComponent(maHS)}`;
             }
-            return { hocKy, namHoc };
-        }
+        });
 
         // Xóa học sinh
         document.addEventListener("click", async (e) => {

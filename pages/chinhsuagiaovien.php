@@ -342,7 +342,7 @@ $gv = $result->fetch_assoc();
                             </div>
                             <div class="form-group">
                                 <button type="submit" name="update" class="btn btn-primary">Lưu thay đổi</button>
-                                <a href="qlgiaovien.php" class="btn btn-secondary">Hủy</a>
+                                <a href="qlgiaovien.php" class="btn btn-secondary" onclick="window.location.href='qlgiaovien.php'">Hủy</a>
                             </div>
                         </div>
                     </form>
