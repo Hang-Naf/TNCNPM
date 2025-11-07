@@ -58,16 +58,6 @@ if (isset($_POST['updateRole'])) {
     }
 }
 
-// ================== XỬ LÝ XÓA ==================
-if (isset($_GET['delete'])) {
-    $userID = $_GET['delete'];
-    $sql = "DELETE FROM user WHERE userID = $userID";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Xóa người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
 
 // ================== LẤY DANH SÁCH NGƯỜI DÙNG ==================
 $sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC";
@@ -160,7 +150,8 @@ $result = $conn->query($sql);
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li  onclick="window.location.href='../pages/qltsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -200,47 +191,53 @@ $result = $conn->query($sql);
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
+                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h2>THÔNG TIN TÀI KHOẢN</h2>
 
-        <form method="POST" action="qlphanquyen.php" style="max-width:600px; margin:auto;">
-            <input type="hidden" name="userID" value="<?= $user['userID'] ?? '' ?>">
+        <h1>PHÂN QUYỀN</h1>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label>Email đăng nhập:</label><br>
-                    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Tên hiển thị:</label><br>
-                    <input type="text" name="hoVaTen" value="<?= htmlspecialchars($user['hoVaTen'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Mã giáo viên:</label><br>
-                    <input type="text" name="maGV" value="<?= htmlspecialchars($user['maGV'] ?? '') ?>" readonly>
-                </div>
-                <div>
-                    <label>Số điện thoại:</label><br>
-                    <input type="text" name="sdt" value="<?= htmlspecialchars($user['sdt'] ?? '') ?>">
-                </div>
-            </div>
-
-            <h3 style="margin-top:30px;">PHÂN QUYỀN</h3>
-            <div style="background:#f9fafc; padding:15px; border-radius:10px; width:fit-content;">
-                <label><input type="checkbox" name="vaiTro[]" value="Admin" <?= ($user['vaiTro'] ?? '') === 'Admin' ? 'checked' : '' ?>> Admin hệ thống</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="GiaoVien" <?= ($user['vaiTro'] ?? '') === 'GiaoVien' ? 'checked' : '' ?>> Giáo viên</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="HocSinh" <?= ($user['vaiTro'] ?? '') === 'HocSinh' ? 'checked' : '' ?>> Học sinh</label>
-            </div>
-
-            <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="window.location.href='qlphanquyen.php'" style="background:#fff; border:1px solid #ccc; padding:10px 20px; border-radius:6px;">Hủy</button>
-                <button type="submit" name="updateRole" style="background:#0b1e6b; color:#fff; border:none; padding:10px 20px; border-radius:6px;">Lưu thông tin</button>
-            </div>
-        </form>
+        <table>
+            <thead>
+                <tr>
+                    <th>Mã</th>
+                    <th>Họ và tên</th>
+                    <th>Email</th>
+                    <th>Số điện thoại</th>
+                    <th>Giới tính</th>
+                    <th>Ngày sinh</th>
+                    <th>Vai trò</th>
+                    <th>Thay đổi vai trò</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php while ($row = $result->fetch_assoc()) { ?>
+                    <tr>
+                        <td><?= $row['userID'] ?></td>
+                        <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
+                        <td><?= htmlspecialchars($row['email']) ?></td>
+                        <td><?= htmlspecialchars($row['sdt']) ?></td>
+                        <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
+                        <td><?= $row['ngaySinh'] ?></td>
+                        <td><?= $row['vaiTro'] ?></td>
+                        <td>
+                            <form method="POST" style="display:inline;">
+                                <input type="hidden" name="userID" value="<?= $row['userID'] ?>">
+                                <select name="vaiTro">
+                                    <option value="Admin" <?= $row['vaiTro'] == 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                    <option value="GiaoVien" <?= $row['vaiTro'] == 'GiaoVien' ? 'selected' : '' ?>>Giáo viên</option>
+                                    <option value="HocSinh" <?= $row['vaiTro'] == 'HocSinh' ? 'selected' : '' ?>>Học sinh</option>
+                                </select>
+                                <button type="submit" name="updateRole">Lưu</button>
+                            </form>
+                        </td>
+                    </tr>
+                <?php } ?>
+            </tbody>
+        </table>
     </div>
 
     <script>
