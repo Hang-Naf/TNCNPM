@@ -20,7 +20,7 @@ if ($_SESSION["vaiTro"] !== "Admin") {
 $sql = "
     SELECT 
         h.maHS, u.hoVaTen, u.gioiTinh, u.email, u.sdt,
-        h.lopHocPhuTrach, h.namHoc, h.hocKy, h.trangThai
+        h.lopHocPhuTrach, h.chucVu, h.namHoc, h.hocKy, h.trangThai
     FROM hocsinh h
     JOIN user u ON h.maHS = u.userID
     WHERE u.vaiTro = 'HocSinh'
@@ -190,7 +190,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
                     <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li  onclick="window.location.href='../pages/qltsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -230,7 +229,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
-                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
@@ -250,6 +248,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                     <th>EMAIL</th>
                     <th>SDT</th>
                     <th>LỚP</th>
+                    <th>CHỨC VỤ</th>
                     <th>KHÓA HỌC</th>
                     <th>HỌC KỲ</th>
                     <th>TRẠNG THÁI</th>
@@ -268,6 +267,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                             <td><?= htmlspecialchars($row['email']) ?></td>
                             <td><?= htmlspecialchars($row['sdt']) ?></td>
                             <td><?= htmlspecialchars($row['lopHocPhuTrach']) ?></td>
+                            <td><?= htmlspecialchars($row['chucVu']) ?></td>
                             <td><?= htmlspecialchars($row['namHoc']) ?></td>
                             <td><?= htmlspecialchars($row['hocKy']) ?></td>
                             <td>
@@ -312,6 +312,8 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                     <?php endforeach; ?>
                 </select>
 
+                <input type="text" name="chucVu" placeholder="Chức vụ" >
+
                 <input type="text" name="namHoc" id="addNamHoc" placeholder="VD: 2022-2025" required readonly>
                 <select name="hocKy" id="addHocKy" readonly>
                     <option value="">-- Học kỳ tự động --</option>
@@ -350,6 +352,8 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                         <option value="<?= htmlspecialchars($lh['tenLop']) ?>"><?= htmlspecialchars($lh['tenLop']) ?></option>
                     <?php endforeach; ?>
                 </select>
+
+                <input type="text" name="chucVu" id="editChucVu" placeholder="Chức vụ">
 
                 <input type="text" name="namHoc" id="editNamHoc" placeholder="Năm học">
                 <select name="hocKy" id="editHocKy">
@@ -503,9 +507,10 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                 document.getElementById("editEmail").value = tr.children[5].innerText;
                 document.getElementById("editSdt").value = tr.children[6].innerText;
                 document.getElementById("editLop").value = tr.children[7].innerText; // chọn đúng lớp
-                document.getElementById("editNamHoc").value = tr.children[8].innerText;
-                document.getElementById("editHocKy").value = tr.children[9].innerText;
-                const active = tr.children[10].innerText.includes("Hoạt");
+                document.getElementById("editChucVu").value = tr.children[8].innerText;
+                document.getElementById("editNamHoc").value = tr.children[9].innerText;
+                document.getElementById("editHocKy").value = tr.children[10].innerText;
+                const active = tr.children[11].innerText.includes("Hoạt");
                 document.getElementById(active ? "editActive" : "editInactive").checked = true;
                 document.getElementById("editPopup").style.display = "flex";
             }

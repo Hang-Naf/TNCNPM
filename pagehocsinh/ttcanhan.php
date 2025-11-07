@@ -9,69 +9,44 @@ if (!isset($_SESSION["userID"])) {
     exit();
 }
 
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
+// ==== Chỉ cho phép HocSinh ====
+if ($_SESSION["vaiTro"] !== "HocSinh") {
     session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
+$userID = $_SESSION["userID"];
 
-// ================== XỬ LÝ THÊM ==================
-if (isset($_POST['add'])) {
-    $hoVaTen = $_POST['hoVaTen'];
-    $email = $_POST['email'];
-    $sdt = $_POST['sdt'];
-    $matKhau = $_POST['matKhau'];
-    $vaiTro = $_POST['vaiTro'];
-    $gioiTinh = $_POST['gioiTinh'];
-    $ngaySinh = $_POST['ngaySinh'];
+$sql = "SELECT h.maHS AS maHS,
+            u.userID, 
+            u.hoVaTen, 
+            u.sdt, 
+            u.ngaySinh, 
+            u.gioiTinh, 
+            u.email,
+            h.lopHocPhuTrach AS lop,
+            h.anhDaiDien,
+            h.chucVu,
+            h.namHoc,
+            h.hocKy,
+            h.trangThai
+        FROM user u
+        JOIN hocsinh h ON u.userID = h.maHS
+        WHERE u.userID = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $userID);
+$stmt->execute();
+$result = $stmt->get_result();
+$hs = $result->fetch_assoc();
 
-    // Kiểm tra xem có cột anhDaiDien không
-    $sql_check = "SHOW COLUMNS FROM user LIKE 'anhDaiDien'";
-    $hasAvatar = $conn->query($sql_check)->num_rows > 0;
-
-    if ($hasAvatar) {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro, anhDaiDien)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro', '')";
-    } else {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro')";
-    }
-
-    if ($conn->query($sql)) {
-        echo "<script>alert('Thêm người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
+// ===== Tính tuổi nếu có ngày sinh =====
+if (!empty($hs['ngaySinh'])) {
+    $dob = new DateTime($hs['ngaySinh']);
+    $today = new DateTime();
+    $hs['tuoi'] = $today->diff($dob)->y;
+} else {
+    $hs['tuoi'] = 'Chưa cập nhật';
 }
-
-// ================== XỬ LÝ CẬP NHẬT VAI TRÒ ==================
-if (isset($_POST['updateRole'])) {
-    $userID = $_POST['userID'];
-    $vaiTro = $_POST['vaiTro'];
-
-    $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = '$userID'";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ XÓA ==================
-if (isset($_GET['delete'])) {
-    $userID = $_GET['delete'];
-    $sql = "DELETE FROM user WHERE userID = $userID";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Xóa người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== LẤY DANH SÁCH NGƯỜI DÙNG ==================
-$sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC";
-$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
@@ -79,46 +54,175 @@ $result = $conn->query($sql);
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý phân quyền</title>
+    <title>Thông tin cá nhân</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: "Segoe UI", sans-serif;
+            background: #f8f9fb;
+            margin: 0;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .header {
+            padding: 0px 25px;
         }
 
-        th,
-        td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
+        .container {
+            padding: 20px;
         }
 
-        th {
-            background: #f4f4f4;
-        }
-
-        form {
+        h1 {
             margin-bottom: 20px;
         }
 
-        input,
-        select {
-            padding: 5px;
-            margin: 5px 0;
+        .add-btn {
+            background: #0b1e6b;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 150px;
         }
 
-        button {
-            padding: 6px 12px;
+        .profile-card {
+            display: flex;
+            align-items: center;
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            margin: 20px auto;
+        }
+
+        .profile-left {
+            flex: 0 0 200px;
+            text-align: center;
+        }
+
+        .avatar {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid #ddd;
+        }
+
+        .avatar-placeholder {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            background: #eaeaea;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+            color: #999;
+        }
+
+        .profile-right {
+            flex: 1;
+            padding-left: 40px;
+        }
+
+        .profile-right p {
+            margin: 6px 0;
+            font-size: 16px;
+            color: #333;
+        }
+
+        .profile-right strong {
+            color: #555;
+            width: 140px;
+            display: inline-block;
+        }
+
+        .contact-info {
+            margin-top: 20px;
+            display: flex;
+            gap: 30px;
+        }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            background: #f5f7fb;
+            padding: 10px 16px;
+            border-radius: 8px;
+            color: #0b1e6b;
+            font-weight: 500;
+        }
+
+        .contact-item i {
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .status.active {
+            color: green;
+            font-weight: 500;
+        }
+
+        .status.inactive {
+            color: gray;
+        }
+
+        .actions i {
             cursor: pointer;
+            margin-right: 10px;
+        }
+
+        .popup-bg {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .popup {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            width: 450px;
+        }
+
+        .popup input,
+        .popup select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .popup-buttons {
+            text-align: right;
+        }
+
+        .save-btn {
+            background: #0b1e6b;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+        }
+
+        .cancel-btn {
+            background: #ccc;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -132,43 +236,18 @@ $result = $conn->query($sql);
 
         <nav class="menu">
             <div class="menu-section">
-                <div class="menu-title">Quản lý chung</div>
+                <div class="menu-title">Trang cá nhân</div>
                 <ul>
-                    <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li class="active" onclick="window.location.href='../pagehocsinh/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
+                    <li  onclick="window.location.href='../pagehocsinh/thongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
             <div class="menu-section">
-                <div class="menu-title">Quản lý dữ liệu</div>
+                <div class="menu-title">Tra cứu thông tin</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý đánh giá</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý thông tin</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý tài khoản</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li class="active" onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pagehocsinh/tlhoctap.php'"><i class="fa-solid fa-book"></i> Tài liệu học tập</li>
+                    <li onclick="window.location.href='../pagehocsinh/kqhoctap.php'"><i class="fa-solid fa-file-lines"></i> Kết quả học tập</li>
                 </ul>
             </div>
         </nav>
@@ -195,52 +274,54 @@ $result = $conn->query($sql);
 
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
-                    <span>Quản trị viên</span>
+                    <span><?= htmlspecialchars($hs['hoVaTen']) ?></span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
+                        <li onclick="window.location.href='../pagehocsinh/ttcanhan.php'"><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h2>THÔNG TIN TÀI KHOẢN</h2>
 
-        <form method="POST" action="qlphanquyen.php" style="max-width:600px; margin:auto;">
-            <input type="hidden" name="userID" value="<?= $user['userID'] ?? '' ?>">
+        <div class="container">
+            <h1>Thông tin cá nhân</h1>
+            <?php if ($hs): ?>
+                <div class="profile-card">
+                    <div class="profile-left">
+                        
+                            <div class="avatar-placeholder">
+                                <i class="fa-solid fa-user"></i>
+                            </div>
+                        
+                    </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label>Email đăng nhập:</label><br>
-                    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Tên hiển thị:</label><br>
-                    <input type="text" name="hoVaTen" value="<?= htmlspecialchars($user['hoVaTen'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Mã giáo viên:</label><br>
-                    <input type="text" name="maGV" value="<?= htmlspecialchars($user['maGV'] ?? '') ?>" readonly>
-                </div>
-                <div>
-                    <label>Số điện thoại:</label><br>
-                    <input type="text" name="sdt" value="<?= htmlspecialchars($user['sdt'] ?? '') ?>">
-                </div>
-            </div>
+                    <div class="profile-right">
+                        <p><strong>Mã học sinh:</strong> <?= htmlspecialchars($hs['maHS']) ?></p>
+                        <p><strong>Họ và tên:</strong> <?= htmlspecialchars($hs['hoVaTen']) ?></p>
+                        <p><strong>Lớp:</strong> <?= htmlspecialchars($hs['lop']) ?></p>
+                        <p><strong>Chức vụ:</strong> <?= htmlspecialchars($hs['chucVu']) ?></p>
+                        <p><strong>Tuổi:</strong> <?= htmlspecialchars($hs['tuoi']) ?></p>
+                        <p><strong>Giới tính:</strong> <?= htmlspecialchars($hs['gioiTinh'] ?: 'Chưa cập nhật') ?></p>
 
-            <h3 style="margin-top:30px;">PHÂN QUYỀN</h3>
-            <div style="background:#f9fafc; padding:15px; border-radius:10px; width:fit-content;">
-                <label><input type="checkbox" name="vaiTro[]" value="Admin" <?= ($user['vaiTro'] ?? '') === 'Admin' ? 'checked' : '' ?>> Admin hệ thống</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="GiaoVien" <?= ($user['vaiTro'] ?? '') === 'GiaoVien' ? 'checked' : '' ?>> Giáo viên</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="HocSinh" <?= ($user['vaiTro'] ?? '') === 'HocSinh' ? 'checked' : '' ?>> Học sinh</label>
-            </div>
-
-            <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="window.location.href='qlphanquyen.php'" style="background:#fff; border:1px solid #ccc; padding:10px 20px; border-radius:6px;">Hủy</button>
-                <button type="submit" name="updateRole" style="background:#0b1e6b; color:#fff; border:none; padding:10px 20px; border-radius:6px;">Lưu thông tin</button>
-            </div>
-        </form>
+                        <div class="contact-info">
+                            <div class="contact-item">
+                                <i class="fa-solid fa-phone"></i>
+                                <span><?= htmlspecialchars($hs['sdt'] ?: 'Chưa có số') ?></span>
+                            </div>
+                            <div class="contact-item">
+                                <i class="fa-solid fa-envelope"></i>
+                                <span><?= htmlspecialchars($hs['email'] ?: 'Chưa có email') ?></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            <?php else: ?>
+                <p>Không tìm thấy thông tin cá nhân.</p>
+            <?php endif; ?>
+        </div>
     </div>
 
     <script>

@@ -193,7 +193,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
                     <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li  onclick="window.location.href='../pages/qlsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -233,7 +232,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
-                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
@@ -610,15 +608,15 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         }
 
         // Gán tự động khi mở form thêm
-        function showAddPopup() {
-            const {
-                hocKy,
-                namHoc
-            } = getHocKyVaNamHoc();
-            document.getElementById("addNamHoc").value = namHoc;
-            document.getElementById("addHocKy").innerHTML = `<option value="${hocKy}" selected>${hocKy}</option>`;
-            document.getElementById("addPopup").style.display = "flex";
-        }
+        // function showAddPopup() {
+        //     const {
+        //         hocKy,
+        //         namHoc
+        //     } = getHocKyVaNamHoc();
+        //     document.getElementById("addNamHoc").value = namHoc;
+        //     document.getElementById("addHocKy").innerHTML = `<option value="${hocKy}" selected>${hocKy}</option>`;
+        //     document.getElementById("addPopup").style.display = "flex";
+        // }
 
         // Khi mở popup sửa, nếu dữ liệu trống thì cũng tự động set lại
         // document.addEventListener("click", (e) => {

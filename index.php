@@ -197,8 +197,7 @@ $vaiTro = $_SESSION["vaiTro"];
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -229,6 +228,10 @@ $vaiTro = $_SESSION["vaiTro"];
                         <h4>Thông báo</h4>
                         <ul id="notificationList"></ul>
                         <div class="no-noti" id="noNoti">Không có thông báo mới</div>
+                        <div id="xemChiTietThongBao"
+                            style="text-align:center;padding:10px;background:#f0f2f6;cursor:pointer;font-size:13px;font-weight:600;color:#0b3364;border-top:1px solid #ddd;">
+                            🔍 Xem chi tiết thông báo
+                        </div>
                     </div>
                 </div>
 
@@ -239,7 +242,6 @@ $vaiTro = $_SESSION["vaiTro"];
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
-                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
@@ -429,6 +431,11 @@ $vaiTro = $_SESSION["vaiTro"];
             if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
                 menu.style.display = "none";
             }
+        });
+        
+        // Khi click vào "Xem chi tiết thông báo"
+        document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
+            window.location.href = "../pages/qlthongbao.php";
         });
 
         // Xử lý đăng xuất

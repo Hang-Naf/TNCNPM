@@ -2,78 +2,157 @@
 include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
+// === XỬ LÝ AJAX CẬP NHẬT CHUYÊN CẦN ===
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['ajax'] === '1') {
+    include_once(__DIR__ . '/../csdl/db.php');
+
+    $maHS = intval($_POST['maHS'] ?? 0);
+    $maMonHoc = intval($_POST['maMonHoc'] ?? 0);
+    $ngayHoc = $_POST['ngayHoc'] ?? '';
+    $trangThai = $_POST['trangThai'] ?? '';
+
+    if ($maHS > 0 && $maMonHoc > 0 && !empty($ngayHoc)) {
+        $stmt = $conn->prepare("SELECT maDiemDanh FROM chuyencan WHERE maHS=? AND maMonHoc=? AND ngayHoc=?");
+        if (!$stmt) {
+            die("❌ Lỗi prepare SQL: " . $conn->error);
+        }
+
+        $stmt->bind_param("iis", $maHS, $maMonHoc, $ngayHoc);
+        $stmt->execute();
+        $res = $stmt->get_result();
+
+        if ($res->num_rows > 0) {
+            $update = $conn->prepare("UPDATE chuyencan SET trangThai=? WHERE maHS=? AND maMonHoc=? AND ngayHoc=?");
+            $update->bind_param("siis", $trangThai, $maHS, $maMonHoc, $ngayHoc);
+            if ($update->execute()) echo "OK";
+            else echo "Lỗi UPDATE: " . $conn->error;
+        } else {
+            $insert = $conn->prepare("INSERT INTO chuyencan(maHS, maMonHoc, ngayHoc, trangThai) VALUES (?, ?, ?, ?)");
+            $insert->bind_param("iiss", $maHS, $maMonHoc, $ngayHoc, $trangThai);
+            if ($insert->execute()) echo "OK";
+            else echo "Lỗi INSERT: " . $conn->error;
+        }
+    } else {
+        echo "Thiếu dữ liệu POST";
+    }
+    exit(); // Dừng xử lý HTML bên dưới
+}
+
 
 // ==== Kiểm tra đăng nhập & quyền ====
 if (!isset($_SESSION["userID"])) {
     header("Location: ../dangnhap.php");
     exit();
 }
-if ($_SESSION["vaiTro"] !== "Admin") {
+if ($_SESSION["vaiTro"] !== "GiaoVien") {
     session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
 
-// ==== Xử lý thêm/sửa điểm danh ====
+$maGV = $_SESSION["userID"];
+// ==== Lấy thông tin giáo viên ====
+$sqlGV = "SELECT u.hoVaTen 
+           FROM user u 
+           JOIN giaovien g ON u.userID = g.maGV 
+           WHERE g.maGV = '$maGV' 
+           LIMIT 1";
+$resultGV = $conn->query($sqlGV);
+$gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTen' => 'Giáo viên'];
+
+
+// ==== Lấy danh sách lớp được phân công ====
+$sql_lop = "SELECT DISTINCT l.maLop, l.tenLop
+             FROM lophoc l
+             JOIN lophoc_monhoc lm ON l.maLop = lm.maLop
+             WHERE lm.maGV = ?";
+$stmt = $conn->prepare($sql_lop);
+$stmt->bind_param("i", $maGV);
+$stmt->execute();
+$lophoc = $stmt->get_result();
+
+// ==== Lấy MÔN HỌC duy nhất hoặc đầu tiên theo giáo viên ====
+$sql_mon = "SELECT DISTINCT m.maMonHoc, m.tenMonHoc
+             FROM monhoc m
+             JOIN lophoc_monhoc lm ON m.maMonHoc = lm.maMonHoc
+             WHERE lm.maGV = ?
+             LIMIT 1";
+$stmt2 = $conn->prepare($sql_mon);
+$stmt2->bind_param("i", $maGV);
+$stmt2->execute();
+$result_mon = $stmt2->get_result();
+$monhoc = $result_mon->fetch_assoc();
+
+if (!$monhoc) {
+    die("<h3 style='color:red;text-align:center;'>⚠️ Giáo viên chưa được phân công môn học nào!</h3>");
+}
+
+$maMonHoc = $monhoc['maMonHoc']; // dùng để lọc và lưu điểm danh
+
+
+// ==== Xử lý lưu điểm danh ====
 if (isset($_POST['save'])) {
     $ngayHoc = $_POST['ngayHoc'];
     $maMonHoc = $_POST['maMonHoc'];
-    $trangThai = $_POST['trangThai'];
     $maHS = $_POST['maHS'];
+    $trangThai = $_POST['trangThai'];
 
     foreach ($maHS as $hs => $val) {
-        $tt = $trangThai[$hs];
-        $check = $conn->query("SELECT * FROM chuyencan WHERE maHS=$hs AND maMonHoc=$maMonHoc AND ngayHoc='$ngayHoc'");
-        if ($check->num_rows > 0) {
-            $conn->query("UPDATE chuyencan SET trangThai='$tt' WHERE maHS=$hs AND maMonHoc=$maMonHoc AND ngayHoc='$ngayHoc'");
+        $tt = $trangThai[$hs] ?? '';
+        $check = $conn->prepare("SELECT maDiemDanh FROM chuyencan WHERE maHS=? AND maMonHoc=? AND ngayHoc=?");
+        $check->bind_param("iis", $hs, $maMonHoc, $ngayHoc);
+        $check->execute();
+        $res = $check->get_result();
+
+        if ($res->num_rows > 0) {
+            $update = $conn->prepare("UPDATE chuyencan SET trangThai=? WHERE maHS=? AND maMonHoc=? AND ngayHoc=?");
+            $update->bind_param("siis", $tt, $hs, $maMonHoc, $ngayHoc);
+            $update->execute();
         } else {
-            $conn->query("INSERT INTO chuyencan(maHS, maMonHoc, ngayHoc, trangThai) VALUES($hs, $maMonHoc, '$ngayHoc', '$tt')");
+            $insert = $conn->prepare("INSERT INTO chuyencan(maHS, maMonHoc, ngayHoc, trangThai) VALUES (?, ?, ?, ?)");
+            $insert->bind_param("iiss", $hs, $maMonHoc, $ngayHoc, $tt);
+            $insert->execute();
         }
     }
-    echo "<script>alert('Lưu điểm danh thành công!'); window.location='qlchuyencan.php';</script>";
+
+    echo "<script>alert('✅ Lưu điểm danh thành công!'); window.location='chuyencan.php';</script>";
     exit();
 }
 
 // ==== Lấy dữ liệu lọc ====
-$monhoc = $conn->query("SELECT * FROM monhoc ORDER BY tenMonHoc ASC");
-$lophoc = $conn->query("SELECT * FROM lophoc ORDER BY tenLop ASC");
-
 $loc_ngay = $_GET['ngayHoc'] ?? date('Y-m-d');
 $loc_lop = $_GET['maLop'] ?? '';
 $loc_mon = $_GET['maMonHoc'] ?? '';
 
 $filter = "";
-if ($loc_lop) {
-    $filter .= " AND hl.maLop = $loc_lop";
-}
+if ($loc_lop) $filter .= " AND hl.maLop = " . intval($loc_lop);
 
-// Lấy danh sách học sinh theo lọc hoặc tất cả
-$sql = "
-SELECT h.maHS, u.hoVaTen, l.tenLop 
-FROM hocsinh h 
+// ==== Lấy danh sách học sinh trong lớp (theo giáo viên) ====
+$sql_hs = "
+SELECT h.maHS, u.hoVaTen, l.tenLop
+FROM hocsinh h
 JOIN user u ON h.maHS = u.userID
 LEFT JOIN hocsinh_lophoc hl ON h.maHS = hl.maHS
 LEFT JOIN lophoc l ON hl.maLop = l.maLop
-WHERE 1=1 $filter
+JOIN lophoc_monhoc lm ON l.maLop = lm.maLop
+WHERE lm.maGV = ? $filter
 ORDER BY l.tenLop, u.hoVaTen ASC";
-$danhsach = $conn->query($sql);
+$stmt3 = $conn->prepare($sql_hs);
+$stmt3->bind_param("i", $maGV);
+$stmt3->execute();
+$danhsach = $stmt3->get_result();
 
-// Lấy điểm danh hiện có để hiển thị trạng thái (nếu chọn môn)
+// ==== Lấy trạng thái chuyên cần ====
 $chuyencan = [];
-if (!empty($loc_mon)) {
-    $cc = $conn->query("SELECT * FROM chuyencan WHERE ngayHoc='$loc_ngay' AND maMonHoc=$loc_mon");
-    while ($r = $cc->fetch_assoc()) {
-        $chuyencan[$r['maHS']] = $r['trangThai'];
-    }
-} else {
-    // Nếu chưa chọn môn, lấy trạng thái theo ngày (mọi môn)
-    $cc = $conn->query("SELECT * FROM chuyencan WHERE ngayHoc='$loc_ngay'");
+$cc = $conn->query("SELECT * FROM chuyencan WHERE ngayHoc='$loc_ngay' AND maMonHoc=$maMonHoc");
+if ($cc) {
     while ($r = $cc->fetch_assoc()) {
         $chuyencan[$r['maHS']] = $r['trangThai'];
     }
 }
 
 ?>
+
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -211,41 +290,30 @@ if (!empty($loc_mon)) {
             <div class="menu-section">
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
-                    <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
+                    <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pagegiaovien/tlhoctap.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li class="active" onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li class="active" onclick="window.location.href='../pagegiaovien/chuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li onclick="window.location.href='../pagegiaovien/diemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
-                <div class="menu-title">Quản lý thông tin</div>
+                <div class="menu-title">Thông báo</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý tài khoản</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li  onclick="window.location.href='../pagegiaovien/thongbao.php'"><i class="fa-solid fa-bell"></i> Xem thông báo</li>
                 </ul>
             </div>
         </nav>
@@ -272,20 +340,21 @@ if (!empty($loc_mon)) {
 
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
-                    <span>Quản trị viên</span>
+                    <span><?= htmlspecialchars($gv['hoVaTen']) ?></span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
+                        <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h1>Quản lý chuyên cần học sinh</h1>
+        <h1>ĐIỂM DANH HỌC SINH</h1>
         <div class="filter-box">
             <form method="GET">
-                <label>Ngày học:</label>
+                <label>Ngày:</label>
                 <input type="date" name="ngayHoc" value="<?= htmlspecialchars($loc_ngay) ?>">
                 <label>Lớp:</label>
                 <select name="maLop">
@@ -296,17 +365,6 @@ if (!empty($loc_mon)) {
                         </option>
                     <?php } ?>
                 </select>
-                <label>Môn học:</label>
-                <select name="maMonHoc">
-                    <option value="">-- Tất cả môn học --</option>
-                    <?php
-                    mysqli_data_seek($monhoc, 0); // reset con trỏ kết quả
-                    while ($r = $monhoc->fetch_assoc()) { ?>
-                        <option value="<?= $r['maMonHoc'] ?>" <?= ($loc_mon == $r['maMonHoc']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($r['tenMonHoc']) ?>
-                        </option>
-                    <?php } ?>
-                </select>
                 <button type="submit" class="btn">Lọc</button>
             </form>
         </div>
@@ -314,7 +372,7 @@ if (!empty($loc_mon)) {
         <?php if ($danhsach): ?>
             <form method="POST" id="frmDiemDanh">
                 <input type="hidden" name="ngayHoc" value="<?= $loc_ngay ?>">
-                <input type="hidden" name="maMonHoc" value="<?= $loc_mon ?>">
+                <input type="hidden" name="maMonHoc" value="<?= $maMonHoc  ?>">
 
                 <table>
                     <thead>
@@ -499,7 +557,8 @@ if (!empty($loc_mon)) {
             formData.append('trangThai', status);
 
             // Gửi AJAX cập nhật vào CSDL
-            fetch('../src/chuyencan.php', {
+            formData.append('ajax', '1'); // đánh dấu là request AJAX
+            fetch(window.location.href, {
                     method: 'POST',
                     body: formData
                 })

@@ -9,69 +9,72 @@ if (!isset($_SESSION["userID"])) {
     exit();
 }
 
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
-    session_destroy();
+// ==== Chỉ cho phép Giáo viên ====
+if ($_SESSION["vaiTro"] !== "GiaoVien") {
     header("Location: ../dangnhap.php");
     exit();
 }
 
-// ================== XỬ LÝ THÊM ==================
+$maGV = $_SESSION["userID"];
+$today = date('Y-m-d');
+
+// ==== Lấy thông tin giáo viên ====
+$sqlGV = "SELECT u.hoVaTen 
+           FROM user u 
+           JOIN giaovien g ON u.userID = g.maGV 
+           WHERE g.maGV = '$maGV' LIMIT 1";
+$resultGV = $conn->query($sqlGV);
+$gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTen' => 'Giáo viên'];
+
+// ==== Lấy danh sách lớp học mà GV được phân công ====
+$sqlLop = "SELECT DISTINCT l.maLop, l.tenLop 
+           FROM lophoc_monhoc lm
+           JOIN lophoc l ON lm.maLop = l.maLop
+           WHERE lm.maGV = '$maGV'";
+$lopList = $conn->query($sqlLop);
+
+// ==== Xử lý thêm tài liệu ====
 if (isset($_POST['add'])) {
-    $hoVaTen = $_POST['hoVaTen'];
-    $email = $_POST['email'];
-    $sdt = $_POST['sdt'];
-    $matKhau = $_POST['matKhau'];
-    $vaiTro = $_POST['vaiTro'];
-    $gioiTinh = $_POST['gioiTinh'];
-    $ngaySinh = $_POST['ngaySinh'];
+    $maLop = $_POST['maLop'];
+    $tieuDe = trim($_POST['tieuDe']);
+    $moTa = trim($_POST['moTa']);
+    $trangThai = $_POST['trangThai'] ?? 'Công khai';
+    $ngayTai = $today;
+    $fileName = '';
 
-    // Kiểm tra xem có cột anhDaiDien không
-    $sql_check = "SHOW COLUMNS FROM user LIKE 'anhDaiDien'";
-    $hasAvatar = $conn->query($sql_check)->num_rows > 0;
-
-    if ($hasAvatar) {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro, anhDaiDien)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro', '')";
+    // ==== Lấy mã môn học mà GV dạy lớp này (để lưu đúng môn) ====
+    $sqlMonHoc = "SELECT maMonHoc FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop' LIMIT 1";
+    $resultMon = $conn->query($sqlMonHoc);
+    if ($resultMon && $resultMon->num_rows > 0) {
+        $maMonHoc = $resultMon->fetch_assoc()['maMonHoc'];
     } else {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro')";
+        echo "<script>alert('Không tìm thấy môn học bạn phụ trách trong lớp này!');</script>";
+        exit;
     }
 
-    if ($conn->query($sql)) {
-        echo "<script>alert('Thêm người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
+    // ==== Upload file nếu có ====
+    if (!empty($_FILES['fileTaiLieu']['name'])) {
+        $targetDir = "../uploads/tailieu/";
+        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+        $fileName = time() . "_" . basename($_FILES["fileTaiLieu"]["name"]);
+        $targetFile = $targetDir . $fileName;
+        move_uploaded_file($_FILES["fileTaiLieu"]["tmp_name"], $targetFile);
     }
-}
 
-// ================== XỬ LÝ CẬP NHẬT VAI TRÒ ==================
-if (isset($_POST['updateRole'])) {
-    $userID = $_POST['userID'];
-    $vaiTro = $_POST['vaiTro'];
-
-    $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = '$userID'";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
+    // ==== Kiểm tra quyền phân công ====
+    $kiemtra = $conn->query("SELECT * FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop'");
+    if ($kiemtra->num_rows == 0) {
+        echo "<script>alert('Bạn không được phân công dạy lớp này!');</script>";
     } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ XÓA ==================
-if (isset($_GET['delete'])) {
-    $userID = $_GET['delete'];
-    $sql = "DELETE FROM user WHERE userID = $userID";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Xóa người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
+        $sql = "INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai, tepDinhKem)
+                VALUES ('$maMonHoc', '$maLop', '$tieuDe', '$moTa', '$ngayTai', '$maGV', '$trangThai', '$fileName')";
+        if ($conn->query($sql)) {
+            echo "<script>alert('Thêm tài liệu thành công!'); window.location='tlhoctap.php';</script>";
+        } else {
+            echo "Lỗi: " . $conn->error;
+        }
     }
 }
-
-// ================== LẤY DANH SÁCH NGƯỜI DÙNG ==================
-$sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC";
-$result = $conn->query($sql);
 ?>
 
 <!DOCTYPE html>
@@ -79,46 +82,112 @@ $result = $conn->query($sql);
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý phân quyền</title>
+    <title>Thêm tài liệu học tập</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            background: #fff;
+            margin: 0;
+            padding: 0;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
+        .content-area {
+            padding: 30px;
         }
 
-        th,
-        td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 25px;
         }
 
-        th {
-            background: #f4f4f4;
-        }
-
-        form {
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 100px;
             margin-bottom: 20px;
         }
 
-        input,
-        select {
-            padding: 5px;
-            margin: 5px 0;
+        .form-section {
+            background: #f8f9fb;
+            padding: 20px;
+            border-radius: 8px;
         }
 
-        button {
-            padding: 6px 12px;
+        label {
+            font-weight: 600;
+            color: #333;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input[type=text],
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 15px;
+        }
+
+        textarea {
+            resize: none;
+            height: 80px;
+        }
+
+        .status-group {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-top: 8px;
+        }
+
+        .file-upload {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            border: 1px solid #eee;
+        }
+
+        .file-upload input[type=file] {
+            border: 1px solid #ccc;
+            padding: 8px;
+            width: 100%;
+            border-radius: 6px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: #0b3364;
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .btn-primary:hover {
+            background: #124b8a;
         }
     </style>
 </head>
@@ -134,45 +203,37 @@ $result = $conn->query($sql);
             <div class="menu-section">
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
-                    <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
+                    <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
+                    <li onclick="window.location.href='../pagegiaovien/lophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pagegiaovien/kqhoctap.php'"><i class="fa-solid fa-book"></i> Môn học</li>
+                    <li class="active" onclick="window.location.href='../pagegiaovien/tlhoctap.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li onclick="window.location.href='../pagegiaovien/chuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li onclick="window.location.href='../pagegiaovien/diemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
-                <div class="menu-title">Quản lý thông tin</div>
+                <div class="menu-title">Thông báo</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý tài khoản</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li class="active" onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pagegiaovien/thongbao.php'"><i class="fa-solid fa-bell"></i> Xem thông báo</li>
                 </ul>
             </div>
         </nav>
     </aside>
+
     <div class="main-content">
         <header class="header">
             <div class="left">
@@ -195,54 +256,59 @@ $result = $conn->query($sql);
 
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
-                    <span>Quản trị viên</span>
+                    <span><?= htmlspecialchars($gv['hoVaTen']) ?></span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
+                        <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h2>THÔNG TIN TÀI KHOẢN</h2>
-
-        <form method="POST" action="qlphanquyen.php" style="max-width:600px; margin:auto;">
-            <input type="hidden" name="userID" value="<?= $user['userID'] ?? '' ?>">
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label>Email đăng nhập:</label><br>
-                    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
+        <div class="content-area">
+            <h1>THÊM TÀI LIỆU</h1>
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-grid">
+                    <div>
+                        <label>TIÊU ĐỀ</label>
+                        <input type="text" name="tieuDe" required>
+                    </div>
+                    <div>
+                        <label>LỚP HỌC</label>
+                        <select name="maLop" required>
+                            <option value="">-- Chọn lớp được phân công --</option>
+                            <?php while ($lop = $lopList->fetch_assoc()): ?>
+                                <option value="<?= $lop['maLop'] ?>"><?= htmlspecialchars($lop['tenLop']) ?></option>
+                            <?php endwhile; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label>MÔ TẢ</label>
+                        <input type="text" name="moTa" required>
+                    </div>
+                    <div>
+                        <label>TRẠNG THÁI</label>
+                        <div class="status-group">
+                            <label><input type="radio" name="trangThai" value="Công khai" checked> Công khai</label>
+                            <label><input type="radio" name="trangThai" value="Riêng tư"> Riêng tư</label>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label>Tên hiển thị:</label><br>
-                    <input type="text" name="hoVaTen" value="<?= htmlspecialchars($user['hoVaTen'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Mã giáo viên:</label><br>
-                    <input type="text" name="maGV" value="<?= htmlspecialchars($user['maGV'] ?? '') ?>" readonly>
-                </div>
-                <div>
-                    <label>Số điện thoại:</label><br>
-                    <input type="text" name="sdt" value="<?= htmlspecialchars($user['sdt'] ?? '') ?>">
-                </div>
-            </div>
 
-            <h3 style="margin-top:30px;">PHÂN QUYỀN</h3>
-            <div style="background:#f9fafc; padding:15px; border-radius:10px; width:fit-content;">
-                <label><input type="checkbox" name="vaiTro[]" value="Admin" <?= ($user['vaiTro'] ?? '') === 'Admin' ? 'checked' : '' ?>> Admin hệ thống</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="GiaoVien" <?= ($user['vaiTro'] ?? '') === 'GiaoVien' ? 'checked' : '' ?>> Giáo viên</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="HocSinh" <?= ($user['vaiTro'] ?? '') === 'HocSinh' ? 'checked' : '' ?>> Học sinh</label>
-            </div>
+                <div class="file-upload">
+                    <label>FILE TÀI LIỆU</label>
+                    <input type="file" name="fileTaiLieu" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
+                </div>
 
-            <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="window.location.href='qlphanquyen.php'" style="background:#fff; border:1px solid #ccc; padding:10px 20px; border-radius:6px;">Hủy</button>
-                <button type="submit" name="updateRole" style="background:#0b1e6b; color:#fff; border:none; padding:10px 20px; border-radius:6px;">Lưu thông tin</button>
-            </div>
-        </form>
+                <div class="buttons">
+                    <button type="button" class="btn btn-secondary" onclick="window.location='tlhoctap.php'">Quay lại</button>
+                    <button type="submit" name="add" class="btn btn-primary">Thêm mới</button>
+                </div>
+            </form>
+        </div>
     </div>
-
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");

@@ -9,69 +9,31 @@ if (!isset($_SESSION["userID"])) {
     exit();
 }
 
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
+// ==== Chỉ cho phép GiaoVien ====
+if ($_SESSION["vaiTro"] !== "GiaoVien") {
     session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
+$userID = $_SESSION["userID"];
 
-// ================== XỬ LÝ THÊM ==================
-if (isset($_POST['add'])) {
-    $hoVaTen = $_POST['hoVaTen'];
-    $email = $_POST['email'];
-    $sdt = $_POST['sdt'];
-    $matKhau = $_POST['matKhau'];
-    $vaiTro = $_POST['vaiTro'];
-    $gioiTinh = $_POST['gioiTinh'];
-    $ngaySinh = $_POST['ngaySinh'];
+// Truy vấn thông tin cá nhân giáo viên
+$sql = "SELECT g.maGV AS maGV, u.hoVaTen, u.email, u.sdt, u.ngaySinh, u.gioiTinh, 
+               g.boMon, g.trinhDo, g.phongBan, g.namHoc, g.hocKy, g.trangThai, g.anhDaiDien
+        FROM user u
+        JOIN giaovien g ON u.userID = g.maGV
+        WHERE u.userID = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("i", $userID);
+$stmt->execute();
+$result = $stmt->get_result();
+$gv = $result->fetch_assoc();
 
-    // Kiểm tra xem có cột anhDaiDien không
-    $sql_check = "SHOW COLUMNS FROM user LIKE 'anhDaiDien'";
-    $hasAvatar = $conn->query($sql_check)->num_rows > 0;
-
-    if ($hasAvatar) {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro, anhDaiDien)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro', '')";
-    } else {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro')";
-    }
-
-    if ($conn->query($sql)) {
-        echo "<script>alert('Thêm người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ CẬP NHẬT VAI TRÒ ==================
-if (isset($_POST['updateRole'])) {
-    $userID = $_POST['userID'];
-    $vaiTro = $_POST['vaiTro'];
-
-    $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = '$userID'";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ XÓA ==================
-if (isset($_GET['delete'])) {
-    $userID = $_GET['delete'];
-    $sql = "DELETE FROM user WHERE userID = $userID";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Xóa người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== LẤY DANH SÁCH NGƯỜI DÙNG ==================
-$sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC";
-$result = $conn->query($sql);
+// === Lấy danh sách thông báo ===
+$sql_tb = "SELECT maThongBao, tieuDe, ngayGui 
+           FROM thongbao 
+           ORDER BY ngayGui DESC";
+$result_tb = $conn->query($sql_tb);
 ?>
 
 <!DOCTYPE html>
@@ -79,46 +41,123 @@ $result = $conn->query($sql);
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý phân quyền</title>
+    <title>Quản lý chuyên cần</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f6fa;
+        }
+
+        h1 {
+            margin: 20px 0;
+        }
+
+        .filter-box {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            margin-bottom: 15px;
+        }
+
+        select,
+        input[type=date] {
+            padding: 6px 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        .btn {
+            padding: 7px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            color: #fff;
+            background: #0b3364;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            background: #fff;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
 
         th,
         td {
-            border: 1px solid #ccc;
-            padding: 8px;
-            text-align: left;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
         }
 
         th {
-            background: #f4f4f4;
+            background: #0b3364;
+            color: #fff;
         }
 
-        form {
-            margin-bottom: 20px;
+        tr:hover {
+            background: #f9f9f9;
         }
 
-        input,
-        select {
-            padding: 5px;
-            margin: 5px 0;
+        .status-btns {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
         }
 
-        button {
-            padding: 6px 12px;
+        .status-btn {
+            padding: 5px 8px;
+            border-radius: 6px;
             cursor: pointer;
+            border: none;
+            font-size: 13px;
+            transition: 0.2s;
+        }
+
+        .present {
+            background: #27ae60;
+            color: #fff;
+        }
+
+        .late {
+            background: #f39c12;
+            color: #fff;
+        }
+
+        .absent {
+            background: #e74c3c;
+            color: #fff;
+        }
+
+        .status-btn.active {
+            outline: 3px solid #222;
+        }
+
+        .summary-box {
+            background: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            float: right;
+        }
+
+        .summary-box h3 {
+            margin-bottom: 10px;
+            color: #0b3364;
+        }
+
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 5px 0;
         }
     </style>
 </head>
@@ -134,41 +173,30 @@ $result = $conn->query($sql);
             <div class="menu-section">
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
-                    <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
+                    <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pagegiaovien/tlhoctap.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li onclick="window.location.href='../pagegiaovien/chuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li onclick="window.location.href='../pagegiaovien/diemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
-                <div class="menu-title">Quản lý thông tin</div>
+                <div class="menu-title">Thông báo</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý tài khoản</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li class="active" onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li class="active" onclick="window.location.href='../pagegiaovien/thongbao.php'"><i class="fa-solid fa-bell"></i> Xem thông báo</li>
                 </ul>
             </div>
         </nav>
@@ -195,54 +223,51 @@ $result = $conn->query($sql);
 
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
-                    <span>Quản trị viên</span>
+                    <span><?= htmlspecialchars($gv['hoVaTen']) ?></span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
+                        <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h2>THÔNG TIN TÀI KHOẢN</h2>
 
-        <form method="POST" action="qlphanquyen.php" style="max-width:600px; margin:auto;">
-            <input type="hidden" name="userID" value="<?= $user['userID'] ?? '' ?>">
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label>Email đăng nhập:</label><br>
-                    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Tên hiển thị:</label><br>
-                    <input type="text" name="hoVaTen" value="<?= htmlspecialchars($user['hoVaTen'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Mã giáo viên:</label><br>
-                    <input type="text" name="maGV" value="<?= htmlspecialchars($user['maGV'] ?? '') ?>" readonly>
-                </div>
-                <div>
-                    <label>Số điện thoại:</label><br>
-                    <input type="text" name="sdt" value="<?= htmlspecialchars($user['sdt'] ?? '') ?>">
-                </div>
+        <div class="container">
+            <h1>THÔNG BÁO</h1>
+            <div class="thongbao-box" style="background:#fff; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); padding:15px; margin-top:10px;">
+                <table style="width:100%; border-collapse:collapse;">
+                    <thead>
+                        <tr style="background:#0b3364; color:#fff;">
+                            <th style="padding:10px; text-align:left;">Tiêu đề</th>
+                            <th style="padding:10px; text-align:right; width:150px;">Ngày gửi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php if ($result_tb && $result_tb->num_rows > 0): ?>
+                            <?php while ($row = $result_tb->fetch_assoc()): ?>
+                                <tr style="border-bottom:1px solid #eee; cursor:pointer;"
+                                    onclick="window.location.href='chitiet_thongbao.php?id=<?= $row['maThongBao'] ?>'">
+                                    <td style="padding:10px; color:#0b1e6b; font-weight:500;">
+                                        <?= htmlspecialchars($row['tieuDe']) ?>
+                                    </td>
+                                    <td style="padding:10px; text-align:right; color:#333;">
+                                        <?= date('d/m/Y', strtotime($row['ngayGui'])) ?>
+                                    </td>
+                                </tr>
+                            <?php endwhile; ?>
+                        <?php else: ?>
+                            <tr>
+                                <td colspan="2" style="padding:15px; text-align:center; color:#777;">Không có thông báo nào.</td>
+                            </tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
             </div>
-
-            <h3 style="margin-top:30px;">PHÂN QUYỀN</h3>
-            <div style="background:#f9fafc; padding:15px; border-radius:10px; width:fit-content;">
-                <label><input type="checkbox" name="vaiTro[]" value="Admin" <?= ($user['vaiTro'] ?? '') === 'Admin' ? 'checked' : '' ?>> Admin hệ thống</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="GiaoVien" <?= ($user['vaiTro'] ?? '') === 'GiaoVien' ? 'checked' : '' ?>> Giáo viên</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="HocSinh" <?= ($user['vaiTro'] ?? '') === 'HocSinh' ? 'checked' : '' ?>> Học sinh</label>
-            </div>
-
-            <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="window.location.href='qlphanquyen.php'" style="background:#fff; border:1px solid #ccc; padding:10px 20px; border-radius:6px;">Hủy</button>
-                <button type="submit" name="updateRole" style="background:#0b1e6b; color:#fff; border:none; padding:10px 20px; border-radius:6px;">Lưu thông tin</button>
-            </div>
-        </form>
+        </div>
     </div>
-
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
@@ -351,6 +376,41 @@ $result = $conn->query($sql);
                 menu.style.display = "none";
             }
         });
+
+        // === Cập nhật chuyên cần tức thì (AJAX) ===
+        function setStatus(maHS, status, button) {
+            // Bỏ active các nút cùng hàng
+            const row = button.closest('.status-btns');
+            row.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+
+            // Cập nhật input ẩn
+            document.getElementById('status' + maHS).value = status;
+
+            // Lấy dữ liệu cần gửi
+            const formData = new FormData();
+            formData.append('maHS', maHS);
+            formData.append('maMonHoc', document.querySelector('input[name="maMonHoc"]').value);
+            formData.append('ngayHoc', document.querySelector('input[name="ngayHoc"]').value);
+            formData.append('trangThai', status);
+
+            // Gửi AJAX cập nhật vào CSDL
+            formData.append('ajax', '1'); // đánh dấu là request AJAX
+            fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.text())
+                .then(text => {
+                    if (text.trim() === 'OK') {
+                        console.log(' Cập nhật thành công:', maHS, status);
+                    } else {
+                        console.error(' Lỗi:', text);
+                        alert('Không thể cập nhật trạng thái!');
+                    }
+                })
+                .catch(err => console.error('Lỗi kết nối:', err));
+        }
 
         // Xử lý đăng xuất
         function logout() {

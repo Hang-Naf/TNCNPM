@@ -193,7 +193,6 @@ $giaoviens = $conn->query("
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
                     <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li  onclick="window.location.href='../pages/qltsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -233,7 +232,6 @@ $giaoviens = $conn->query("
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
-                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>

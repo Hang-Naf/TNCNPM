@@ -1,85 +1,97 @@
 <?php
-include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
-// ==== Kiểm tra đăng nhập ====
 if (!isset($_SESSION["userID"])) {
     header("Location: ../dangnhap.php");
     exit();
 }
 
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
-    session_destroy();
-    header("Location: ../dangnhap.php");
+$maHS = $_GET['maHS'] ?? '';
+$maMon = $_GET['mon'] ?? '';
+$maGV = $_SESSION["userID"];
+
+
+if ($maHS == '' || $maMon == '') {
+    die("Thiếu thông tin học sinh hoặc môn học.");
+}
+// ==== Lấy thông tin giáo viên ====
+$sqlGV = "SELECT u.hoVaTen 
+           FROM user u 
+           JOIN giaovien g ON u.userID = g.maGV 
+           WHERE g.maGV = '$maGV' 
+           LIMIT 1";
+$resultGV = $conn->query($sqlGV);
+$gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTen' => 'Giáo viên'];
+
+
+// ====== Lấy thông tin học sinh & môn học ======
+$sqlInfo = "
+SELECT u.hoVaTen AS tenHS, m.tenMonHoc 
+FROM user u 
+JOIN monhoc m ON m.maMonHoc = ? 
+WHERE u.userID = ?";
+$stmt = $conn->prepare($sqlInfo);
+$stmt->bind_param("ii", $maMon, $maHS);
+$stmt->execute();
+$info = $stmt->get_result()->fetch_assoc();
+$tenHS = $info['tenHS'] ?? '';
+$tenMonHoc = $info['tenMonHoc'] ?? '';
+
+// ====== Cập nhật khi nhấn Lưu ======
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $cacLoai = [
+        'hk1_mieng',
+        'hk1_1tiet',
+        'hk1_thiGK',
+        'hk1_thiCK',
+        'hk2_mieng',
+        'hk2_1tiet',
+        'hk2_thiGK',
+        'hk2_thiCK'
+    ];
+
+    $sqlUp = "REPLACE INTO diemso (maHS, maMonHoc, loaiDiem, diem, ngayCapNhat)
+              VALUES (?, ?, ?, ?, NOW())";
+    $stmt2 = $conn->prepare($sqlUp);
+    if (!$stmt2) {
+        die("❌ Lỗi prepare: " . $conn->error);
+    }
+
+
+    $count = 0;
+    foreach ($cacLoai as $loai) {
+        if (isset($_POST[$loai]) && $_POST[$loai] !== '') {
+            $diem = floatval($_POST[$loai]);
+            if ($diem >= 0 && $diem <= 10) {
+                $stmt2->bind_param("iisd", $maHS, $maMon, $loai, $diem);
+                $stmt2->execute();
+                $count++;
+            }
+        }
+    }
+
+    echo "<script>alert('✅ Đã cập nhật điểm thành công!'); window.location='diemso.php';</script>";
     exit();
 }
 
-// ================== XỬ LÝ THÊM ==================
-if (isset($_POST['add'])) {
-    $hoVaTen = $_POST['hoVaTen'];
-    $email = $_POST['email'];
-    $sdt = $_POST['sdt'];
-    $matKhau = $_POST['matKhau'];
-    $vaiTro = $_POST['vaiTro'];
-    $gioiTinh = $_POST['gioiTinh'];
-    $ngaySinh = $_POST['ngaySinh'];
 
-    // Kiểm tra xem có cột anhDaiDien không
-    $sql_check = "SHOW COLUMNS FROM user LIKE 'anhDaiDien'";
-    $hasAvatar = $conn->query($sql_check)->num_rows > 0;
-
-    if ($hasAvatar) {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro, anhDaiDien)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro', '')";
-    } else {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro')";
-    }
-
-    if ($conn->query($sql)) {
-        echo "<script>alert('Thêm người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
+// ====== Lấy điểm hiện tại ======
+$sqlD = "SELECT loaiDiem, diem FROM diemso WHERE maHS = ? AND maMonHoc = ?";
+$stmt3 = $conn->prepare($sqlD);
+$stmt3->bind_param("ii", $maHS, $maMon);
+$stmt3->execute();
+$dsDiem = $stmt3->get_result();
+$diemArr = [];
+while ($r = $dsDiem->fetch_assoc()) {
+    $diemArr[$r['loaiDiem']] = $r['diem'];
 }
-
-// ================== XỬ LÝ CẬP NHẬT VAI TRÒ ==================
-if (isset($_POST['updateRole'])) {
-    $userID = $_POST['userID'];
-    $vaiTro = $_POST['vaiTro'];
-
-    $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = '$userID'";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ XÓA ==================
-if (isset($_GET['delete'])) {
-    $userID = $_GET['delete'];
-    $sql = "DELETE FROM user WHERE userID = $userID";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Xóa người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== LẤY DANH SÁCH NGƯỜI DÙNG ==================
-$sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC";
-$result = $conn->query($sql);
 ?>
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý phân quyền</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -92,7 +104,21 @@ $result = $conn->query($sql);
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
+        }
+
+        .filter-box {
+            display: flex;
+            justify-content: flex-start;
+            gap: 40px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-box label {
+            font-weight: 600;
         }
 
         th,
@@ -111,9 +137,10 @@ $result = $conn->query($sql);
         }
 
         input,
-        select {
-            padding: 5px;
+        select,
+        textarea {
             margin: 5px 0;
+            padding: 5px;
         }
 
         button {
@@ -134,41 +161,30 @@ $result = $conn->query($sql);
             <div class="menu-section">
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
-                    <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
+                    <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pagegiaovien/tlhoctap.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li onclick="window.location.href='../pagegiaovien/chuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li class="active" onclick="window.location.href='../pagegiaovien/diemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
-                <div class="menu-title">Quản lý thông tin</div>
+                <div class="menu-title">Thông báo</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý tài khoản</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li class="active" onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pagegiaovien/thongbao.php'"><i class="fa-solid fa-bell"></i> Xem thông báo</li>
                 </ul>
             </div>
         </nav>
@@ -195,54 +211,55 @@ $result = $conn->query($sql);
 
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
-                    <span>Quản trị viên</span>
+                    <span><?= htmlspecialchars($gv['hoVaTen']) ?></span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
+                        <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h2>THÔNG TIN TÀI KHOẢN</h2>
-
-        <form method="POST" action="qlphanquyen.php" style="max-width:600px; margin:auto;">
-            <input type="hidden" name="userID" value="<?= $user['userID'] ?? '' ?>">
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label>Email đăng nhập:</label><br>
-                    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Tên hiển thị:</label><br>
-                    <input type="text" name="hoVaTen" value="<?= htmlspecialchars($user['hoVaTen'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Mã giáo viên:</label><br>
-                    <input type="text" name="maGV" value="<?= htmlspecialchars($user['maGV'] ?? '') ?>" readonly>
-                </div>
-                <div>
-                    <label>Số điện thoại:</label><br>
-                    <input type="text" name="sdt" value="<?= htmlspecialchars($user['sdt'] ?? '') ?>">
-                </div>
+        <div class="form-box">
+            <h2>CẬP NHẬT ĐIỂM</h2>
+            <div class="info">
+                <div>HỌ TÊN HỌC SINH: <?= htmlspecialchars($tenHS) ?></div>
+                <div>MÃ HỌC SINH: K<?= str_pad($maHS, 7, '0', STR_PAD_LEFT) ?></div>
             </div>
+            <form method="POST">
+                <div class="section">
+                    <div class="section-title">HỌC KỲ I</div>
+                    <div class="row">
+                        <label>ĐIỂM MIỆNG: <input type="number" name="hk1_mieng" step="0.1" value="<?= $data['hk1_mieng'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI GK: <input type="number" name="hk1_thiGK" step="0.1" value="<?= $data['hk1_thiGK'] ?? '' ?>"></label>
+                    </div>
+                    <div class="row">
+                        <label>ĐIỂM 1 TIẾT: <input type="number" name="hk1_1tiet" step="0.1" value="<?= $data['hk1_1tiet'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI CK: <input type="number" name="hk1_thiCK" step="0.1" value="<?= $data['hk1_thiCK'] ?? '' ?>"></label>
+                    </div>
+                </div>
 
-            <h3 style="margin-top:30px;">PHÂN QUYỀN</h3>
-            <div style="background:#f9fafc; padding:15px; border-radius:10px; width:fit-content;">
-                <label><input type="checkbox" name="vaiTro[]" value="Admin" <?= ($user['vaiTro'] ?? '') === 'Admin' ? 'checked' : '' ?>> Admin hệ thống</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="GiaoVien" <?= ($user['vaiTro'] ?? '') === 'GiaoVien' ? 'checked' : '' ?>> Giáo viên</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="HocSinh" <?= ($user['vaiTro'] ?? '') === 'HocSinh' ? 'checked' : '' ?>> Học sinh</label>
-            </div>
+                <div class="section" style="margin-top:25px;">
+                    <div class="section-title">HỌC KỲ II</div>
+                    <div class="row">
+                        <label>ĐIỂM MIỆNG: <input type="number" name="hk2_mieng" step="0.1" value="<?= $data['hk2_mieng'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI GK: <input type="number" name="hk2_thiGK" step="0.1" value="<?= $data['hk2_thiGK'] ?? '' ?>"></label>
+                    </div>
+                    <div class="row">
+                        <label>ĐIỂM 1 TIẾT: <input type="number" name="hk2_1tiet" step="0.1" value="<?= $data['hk2_1tiet'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI CK: <input type="number" name="hk2_thiCK" step="0.1" value="<?= $data['hk2_thiCK'] ?? '' ?>"></label>
+                    </div>
+                </div>
 
-            <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="window.location.href='qlphanquyen.php'" style="background:#fff; border:1px solid #ccc; padding:10px 20px; border-radius:6px;">Hủy</button>
-                <button type="submit" name="updateRole" style="background:#0b1e6b; color:#fff; border:none; padding:10px 20px; border-radius:6px;">Lưu thông tin</button>
-            </div>
-        </form>
+                <div class="buttons">
+                    <button type="button" class="cancel" onclick="window.location.href='diemso.php'">HỦY</button>
+                    <button type="submit" class="save">CẬP NHẬT</button>
+                </div>
+            </form>
+        </div>
     </div>
-
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");

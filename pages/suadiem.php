@@ -1,85 +1,91 @@
 <?php
-include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
-session_start();
 
-// ==== Kiểm tra đăng nhập ====
-if (!isset($_SESSION["userID"])) {
-    header("Location: ../dangnhap.php");
+// ==== LẤY DỮ LIỆU ====
+$maHS = $_GET['maHS'] ?? '';
+$tenMon = $_GET['mon'] ?? '';
+
+if ($maHS === '' || $tenMon === '') {
+    die("Thiếu thông tin học sinh hoặc môn học.");
+}
+
+// ==== CẬP NHẬT (KHI SUBMIT) ====
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $hocKy = ['hk1', 'hk2'];
+    $loai = ['mieng', '1tiet', 'thiGK', 'thiCK'];
+
+    // Lấy mã môn học
+    $getMon = $conn->prepare("SELECT maMonHoc FROM monhoc WHERE tenMonHoc = ?");
+    $getMon->bind_param("s", $tenMon);
+    $getMon->execute();
+    $getMon->bind_result($maMonHoc);
+    $getMon->fetch();
+    $getMon->close();
+
+    if (!$maMonHoc) die("Không tìm thấy môn học trong CSDL!");
+
+    foreach ($hocKy as $hk) {
+        foreach ($loai as $l) {
+            $field = $hk . '_' . $l;
+            if (isset($_POST[$field]) && $_POST[$field] !== '') {
+                $diem = floatval($_POST[$field]);
+
+                // Kiểm tra xem điểm đã có chưa
+                $check = $conn->prepare("SELECT maDiem FROM diemso WHERE maHS=? AND maMonHoc=? AND loaiDiem=?");
+                $check->bind_param("iis", $maHS, $maMonHoc, $field);
+                $check->execute();
+                $check->store_result();
+
+                if ($check->num_rows > 0) {
+                    // Cập nhật
+                    $sql = "UPDATE diemso SET diem=?, ngayCapNhat=NOW() WHERE maHS=? AND maMonHoc=? AND loaiDiem=?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("diis", $diem, $maHS, $maMonHoc, $field);
+                    $stmt->execute();
+                    $stmt->close();
+                } else {
+                    // Thêm mới nếu chưa có
+                    $sql = "INSERT INTO diemso(maHS, maMonHoc, loaiDiem, diem, ngayCapNhat)
+                            VALUES(?, ?, ?, ?, NOW())";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("iisd", $maHS, $maMonHoc, $field, $diem);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+                $check->close();
+            }
+        }
+    }
+
+    echo "<script>alert('Cập nhật điểm thành công!');window.location.href='qldiemso.php';</script>";
     exit();
 }
 
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
-    session_destroy();
-    header("Location: ../dangnhap.php");
-    exit();
+// ==== LẤY THÔNG TIN HỌC SINH + ĐIỂM ====
+$sql = "SELECT u.hoVaTen, d.loaiDiem, d.diem
+        FROM diemso d
+        JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+        JOIN hocsinh h ON d.maHS = h.maHS
+        JOIN user u ON h.maHS = u.userID
+        WHERE d.maHS = ? AND m.tenMonHoc = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("is", $maHS, $tenMon);
+$stmt->execute();
+$res = $stmt->get_result();
+$data = [];
+$tenHS = "";
+while ($r = $res->fetch_assoc()) {
+    $data[$r['loaiDiem']] = $r['diem'];
+    $tenHS = $r['hoVaTen'];
 }
-
-// ================== XỬ LÝ THÊM ==================
-if (isset($_POST['add'])) {
-    $hoVaTen = $_POST['hoVaTen'];
-    $email = $_POST['email'];
-    $sdt = $_POST['sdt'];
-    $matKhau = $_POST['matKhau'];
-    $vaiTro = $_POST['vaiTro'];
-    $gioiTinh = $_POST['gioiTinh'];
-    $ngaySinh = $_POST['ngaySinh'];
-
-    // Kiểm tra xem có cột anhDaiDien không
-    $sql_check = "SHOW COLUMNS FROM user LIKE 'anhDaiDien'";
-    $hasAvatar = $conn->query($sql_check)->num_rows > 0;
-
-    if ($hasAvatar) {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro, anhDaiDien)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro', '')";
-    } else {
-        $sql = "INSERT INTO user (hoVaTen, matKhau, sdt, ngaySinh, gioiTinh, email, vaiTro)
-                VALUES ('$hoVaTen', '$matKhau', '$sdt', '$ngaySinh', '$gioiTinh', '$email', '$vaiTro')";
-    }
-
-    if ($conn->query($sql)) {
-        echo "<script>alert('Thêm người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ CẬP NHẬT VAI TRÒ ==================
-if (isset($_POST['updateRole'])) {
-    $userID = $_POST['userID'];
-    $vaiTro = $_POST['vaiTro'];
-
-    $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = '$userID'";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ XÓA ==================
-if (isset($_GET['delete'])) {
-    $userID = $_GET['delete'];
-    $sql = "DELETE FROM user WHERE userID = $userID";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Xóa người dùng thành công!'); window.location='qlphanquyen.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== LẤY DANH SÁCH NGƯỜI DÙNG ==================
-$sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC";
-$result = $conn->query($sql);
+$stmt->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý phân quyền</title>
+    <title>Cập nhật điểm</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -92,7 +98,21 @@ $result = $conn->query($sql);
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
+        }
+
+        .filter-box {
+            display: flex;
+            justify-content: flex-start;
+            gap: 40px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 12px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .filter-box label {
+            font-weight: 600;
         }
 
         th,
@@ -111,9 +131,10 @@ $result = $conn->query($sql);
         }
 
         input,
-        select {
-            padding: 5px;
+        select,
+        textarea {
             margin: 5px 0;
+            padding: 5px;
         }
 
         button {
@@ -153,7 +174,7 @@ $result = $conn->query($sql);
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
                     <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li class="active" onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
@@ -168,7 +189,7 @@ $result = $conn->query($sql);
                 <div class="menu-title">Quản lý tài khoản</div>
                 <ul>
                     <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li class="active" onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
                 </ul>
             </div>
         </nav>
@@ -205,44 +226,44 @@ $result = $conn->query($sql);
                 </div>
             </div>
         </header>
-        <h2>THÔNG TIN TÀI KHOẢN</h2>
-
-        <form method="POST" action="qlphanquyen.php" style="max-width:600px; margin:auto;">
-            <input type="hidden" name="userID" value="<?= $user['userID'] ?? '' ?>">
-
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
-                <div>
-                    <label>Email đăng nhập:</label><br>
-                    <input type="email" name="email" value="<?= htmlspecialchars($user['email'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Tên hiển thị:</label><br>
-                    <input type="text" name="hoVaTen" value="<?= htmlspecialchars($user['hoVaTen'] ?? '') ?>" required>
-                </div>
-                <div>
-                    <label>Mã giáo viên:</label><br>
-                    <input type="text" name="maGV" value="<?= htmlspecialchars($user['maGV'] ?? '') ?>" readonly>
-                </div>
-                <div>
-                    <label>Số điện thoại:</label><br>
-                    <input type="text" name="sdt" value="<?= htmlspecialchars($user['sdt'] ?? '') ?>">
-                </div>
+        <div class="form-box">
+            <h2>CẬP NHẬT ĐIỂM</h2>
+            <div class="info">
+                <div>HỌ TÊN HỌC SINH: <?= htmlspecialchars($tenHS) ?></div>
+                <div>MÃ HỌC SINH: K<?= str_pad($maHS, 7, '0', STR_PAD_LEFT) ?></div>
             </div>
+            <form method="POST">
+                <div class="section">
+                    <div class="section-title">HỌC KỲ I</div>
+                    <div class="row">
+                        <label>ĐIỂM MIỆNG: <input type="number" name="hk1_mieng" step="0.1" value="<?= $data['hk1_mieng'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI GK: <input type="number" name="hk1_thiGK" step="0.1" value="<?= $data['hk1_thiGK'] ?? '' ?>"></label>
+                    </div>
+                    <div class="row">
+                        <label>ĐIỂM 1 TIẾT: <input type="number" name="hk1_1tiet" step="0.1" value="<?= $data['hk1_1tiet'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI CK: <input type="number" name="hk1_thiCK" step="0.1" value="<?= $data['hk1_thiCK'] ?? '' ?>"></label>
+                    </div>
+                </div>
 
-            <h3 style="margin-top:30px;">PHÂN QUYỀN</h3>
-            <div style="background:#f9fafc; padding:15px; border-radius:10px; width:fit-content;">
-                <label><input type="checkbox" name="vaiTro[]" value="Admin" <?= ($user['vaiTro'] ?? '') === 'Admin' ? 'checked' : '' ?>> Admin hệ thống</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="GiaoVien" <?= ($user['vaiTro'] ?? '') === 'GiaoVien' ? 'checked' : '' ?>> Giáo viên</label><br>
-                <label><input type="checkbox" name="vaiTro[]" value="HocSinh" <?= ($user['vaiTro'] ?? '') === 'HocSinh' ? 'checked' : '' ?>> Học sinh</label>
-            </div>
+                <div class="section" style="margin-top:25px;">
+                    <div class="section-title">HỌC KỲ II</div>
+                    <div class="row">
+                        <label>ĐIỂM MIỆNG: <input type="number" name="hk2_mieng" step="0.1" value="<?= $data['hk2_mieng'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI GK: <input type="number" name="hk2_thiGK" step="0.1" value="<?= $data['hk2_thiGK'] ?? '' ?>"></label>
+                    </div>
+                    <div class="row">
+                        <label>ĐIỂM 1 TIẾT: <input type="number" name="hk2_1tiet" step="0.1" value="<?= $data['hk2_1tiet'] ?? '' ?>"></label>
+                        <label>ĐIỂM THI CK: <input type="number" name="hk2_thiCK" step="0.1" value="<?= $data['hk2_thiCK'] ?? '' ?>"></label>
+                    </div>
+                </div>
 
-            <div style="margin-top:30px; display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="window.location.href='qlphanquyen.php'" style="background:#fff; border:1px solid #ccc; padding:10px 20px; border-radius:6px;">Hủy</button>
-                <button type="submit" name="updateRole" style="background:#0b1e6b; color:#fff; border:none; padding:10px 20px; border-radius:6px;">Lưu thông tin</button>
-            </div>
-        </form>
+                <div class="buttons">
+                    <button type="button" class="cancel" onclick="window.location.href='qldiemso.php'">HỦY</button>
+                    <button type="submit" class="save">CẬP NHẬT</button>
+                </div>
+            </form>
+        </div>
     </div>
-
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");

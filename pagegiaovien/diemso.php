@@ -3,77 +3,123 @@ include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
-// ==== Kiểm tra đăng nhập & quyền ====
+// ==== Kiểm tra đăng nhập ====
 if (!isset($_SESSION["userID"])) {
     header("Location: ../dangnhap.php");
     exit();
 }
-if ($_SESSION["vaiTro"] !== "Admin") {
+
+// ==== Chỉ cho phép Giáo viên ====
+if ($_SESSION["vaiTro"] !== "GiaoVien") {
     session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
 
-// ==== Xử lý thêm/sửa điểm danh ====
-if (isset($_POST['save'])) {
-    $ngayHoc = $_POST['ngayHoc'];
-    $maMonHoc = $_POST['maMonHoc'];
-    $trangThai = $_POST['trangThai'];
-    $maHS = $_POST['maHS'];
+$maGV = $_SESSION["userID"];
+$lopChon = $_GET['lop'] ?? '';
+// ==== Lấy thông tin giáo viên ====
+$sqlGV = "SELECT u.hoVaTen 
+           FROM user u 
+           JOIN giaovien g ON u.userID = g.maGV 
+           WHERE g.maGV = '$maGV' 
+           LIMIT 1";
+$resultGV = $conn->query($sqlGV);
+$gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTen' => 'Giáo viên'];
 
-    foreach ($maHS as $hs => $val) {
-        $tt = $trangThai[$hs];
-        $check = $conn->query("SELECT * FROM chuyencan WHERE maHS=$hs AND maMonHoc=$maMonHoc AND ngayHoc='$ngayHoc'");
-        if ($check->num_rows > 0) {
-            $conn->query("UPDATE chuyencan SET trangThai='$tt' WHERE maHS=$hs AND maMonHoc=$maMonHoc AND ngayHoc='$ngayHoc'");
-        } else {
-            $conn->query("INSERT INTO chuyencan(maHS, maMonHoc, ngayHoc, trangThai) VALUES($hs, $maMonHoc, '$ngayHoc', '$tt')");
-        }
-    }
-    echo "<script>alert('Lưu điểm danh thành công!'); window.location='qlchuyencan.php';</script>";
-    exit();
+
+// ====== Lấy môn học mà giáo viên phụ trách ======
+$sqlMon = "SELECT m.maMonHoc, m.tenMonHoc
+           FROM monhoc m
+           JOIN lophoc_monhoc lm ON lm.maMonHoc = m.maMonHoc
+           WHERE lm.maGV = ?";
+$stmt = $conn->prepare($sqlMon);
+$stmt->bind_param("i", $maGV);
+$stmt->execute();
+$monRes = $stmt->get_result();
+$mon = $monRes->fetch_assoc();
+
+if (!$mon) {
+    die("<h3>❌ Bạn chưa được phân công môn học nào.</h3>");
 }
+$maMonHoc = $mon['maMonHoc'];
+$tenMonHoc = $mon['tenMonHoc'];
 
-// ==== Lấy dữ liệu lọc ====
-$monhoc = $conn->query("SELECT * FROM monhoc ORDER BY tenMonHoc ASC");
-$lophoc = $conn->query("SELECT * FROM lophoc ORDER BY tenLop ASC");
+// ====== Lấy danh sách lớp mà giáo viên này dạy ======
+$sqlLop = "SELECT DISTINCT l.maLop, l.tenLop
+           FROM lophoc l
+           JOIN lophoc_monhoc lm ON lm.maLop = l.maLop
+           WHERE lm.maGV = ?";
+$stmt2 = $conn->prepare($sqlLop);
+$stmt2->bind_param("i", $maGV);
+$stmt2->execute();
+$dsLop = $stmt2->get_result();
 
-$loc_ngay = $_GET['ngayHoc'] ?? date('Y-m-d');
-$loc_lop = $_GET['maLop'] ?? '';
-$loc_mon = $_GET['maMonHoc'] ?? '';
-
-$filter = "";
-if ($loc_lop) {
-    $filter .= " AND hl.maLop = $loc_lop";
-}
-
-// Lấy danh sách học sinh theo lọc hoặc tất cả
+// ====== Truy vấn danh sách học sinh và điểm ======
 $sql = "
-SELECT h.maHS, u.hoVaTen, l.tenLop 
-FROM hocsinh h 
-JOIN user u ON h.maHS = u.userID
-LEFT JOIN hocsinh_lophoc hl ON h.maHS = hl.maHS
-LEFT JOIN lophoc l ON hl.maLop = l.maLop
-WHERE 1=1 $filter
-ORDER BY l.tenLop, u.hoVaTen ASC";
-$danhsach = $conn->query($sql);
+SELECT 
+    u.userID AS maHS,
+    u.hoVaTen,
+    l.tenLop,
 
-// Lấy điểm danh hiện có để hiển thị trạng thái (nếu chọn môn)
-$chuyencan = [];
-if (!empty($loc_mon)) {
-    $cc = $conn->query("SELECT * FROM chuyencan WHERE ngayHoc='$loc_ngay' AND maMonHoc=$loc_mon");
-    while ($r = $cc->fetch_assoc()) {
-        $chuyencan[$r['maHS']] = $r['trangThai'];
-    }
-} else {
-    // Nếu chưa chọn môn, lấy trạng thái theo ngày (mọi môn)
-    $cc = $conn->query("SELECT * FROM chuyencan WHERE ngayHoc='$loc_ngay'");
-    while ($r = $cc->fetch_assoc()) {
-        $chuyencan[$r['maHS']] = $r['trangThai'];
-    }
+    ROUND(SUM(CASE 
+        WHEN d.loaiDiem LIKE 'hk1_%' THEN 
+            CASE 
+                WHEN d.loaiDiem = 'hk1_mieng' THEN d.diem * 1
+                WHEN d.loaiDiem = 'hk1_1tiet' THEN d.diem * 2
+                WHEN d.loaiDiem = 'hk1_thiGK' THEN d.diem * 2
+                WHEN d.loaiDiem = 'hk1_thiCK' THEN d.diem * 3
+                ELSE 0 END
+        ELSE 0 END) /
+    NULLIF(SUM(CASE 
+        WHEN d.loaiDiem LIKE 'hk1_%' THEN 
+            CASE 
+                WHEN d.loaiDiem = 'hk1_mieng' THEN 1
+                WHEN d.loaiDiem = 'hk1_1tiet' THEN 2
+                WHEN d.loaiDiem = 'hk1_thiGK' THEN 2
+                WHEN d.loaiDiem = 'hk1_thiCK' THEN 3
+                ELSE 0 END
+        ELSE 0 END),0),1) AS diemHK1,
+
+    ROUND(SUM(CASE 
+        WHEN d.loaiDiem LIKE 'hk2_%' THEN 
+            CASE 
+                WHEN d.loaiDiem = 'hk2_mieng' THEN d.diem * 1
+                WHEN d.loaiDiem = 'hk2_1tiet' THEN d.diem * 2
+                WHEN d.loaiDiem = 'hk2_thiGK' THEN d.diem * 2
+                WHEN d.loaiDiem = 'hk2_thiCK' THEN d.diem * 3
+                ELSE 0 END
+        ELSE 0 END) /
+    NULLIF(SUM(CASE 
+        WHEN d.loaiDiem LIKE 'hk2_%' THEN 
+            CASE 
+                WHEN d.loaiDiem = 'hk2_mieng' THEN 1
+                WHEN d.loaiDiem = 'hk2_1tiet' THEN 2
+                WHEN d.loaiDiem = 'hk2_thiGK' THEN 2
+                WHEN d.loaiDiem = 'hk2_thiCK' THEN 3
+                ELSE 0 END
+        ELSE 0 END),0),1) AS diemHK2
+
+FROM hocsinh_lophoc hl
+JOIN user u ON hl.maHS = u.userID
+JOIN lophoc l ON hl.maLop = l.maLop
+LEFT JOIN diemso d ON d.maHS = hl.maHS AND d.maMonHoc = ?
+WHERE l.maLop IN (
+    SELECT maLop FROM lophoc_monhoc WHERE maGV = ?
+)
+";
+
+if ($lopChon != '') {
+    $sql .= " AND l.maLop = " . intval($lopChon);
 }
 
+$sql .= " GROUP BY u.userID ORDER BY l.tenLop, u.hoVaTen ASC";
+$stmt3 = $conn->prepare($sql);
+$stmt3->bind_param("ii", $maMonHoc, $maGV);
+$stmt3->execute();
+$result = $stmt3->get_result();
 ?>
+
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -211,41 +257,30 @@ if (!empty($loc_mon)) {
             <div class="menu-section">
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
-                    <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
+                    <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pagegiaovien/tlhoctap.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li class="active" onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li onclick="window.location.href='../pagegiaovien/chuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li class="active" onclick="window.location.href='../pagegiaovien/diemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
-                <div class="menu-title">Quản lý thông tin</div>
+                <div class="menu-title">Thông báo</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                </ul>
-            </div>
-
-            <div class="menu-section">
-                <div class="menu-title">Quản lý tài khoản</div>
-                <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pagegiaovien/thongbao.php'"><i class="fa-solid fa-bell"></i> Xem thông báo</li>
                 </ul>
             </div>
         </nav>
@@ -272,105 +307,90 @@ if (!empty($loc_mon)) {
 
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
-                    <span>Quản trị viên</span>
+                    <span><?= htmlspecialchars($gv['hoVaTen']) ?></span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
+                        <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h1>Quản lý chuyên cần học sinh</h1>
-        <div class="filter-box">
-            <form method="GET">
-                <label>Ngày học:</label>
-                <input type="date" name="ngayHoc" value="<?= htmlspecialchars($loc_ngay) ?>">
-                <label>Lớp:</label>
-                <select name="maLop">
-                    <option value="">-- Tất cả lớp --</option>
-                    <?php while ($r = $lophoc->fetch_assoc()) { ?>
-                        <option value="<?= $r['maLop'] ?>" <?= ($loc_lop == $r['maLop']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($r['tenLop']) ?>
-                        </option>
-                    <?php } ?>
-                </select>
-                <label>Môn học:</label>
-                <select name="maMonHoc">
-                    <option value="">-- Tất cả môn học --</option>
-                    <?php
-                    mysqli_data_seek($monhoc, 0); // reset con trỏ kết quả
-                    while ($r = $monhoc->fetch_assoc()) { ?>
-                        <option value="<?= $r['maMonHoc'] ?>" <?= ($loc_mon == $r['maMonHoc']) ? 'selected' : '' ?>>
-                            <?= htmlspecialchars($r['tenMonHoc']) ?>
-                        </option>
-                    <?php } ?>
-                </select>
-                <button type="submit" class="btn">Lọc</button>
-            </form>
-        </div>
-
-        <?php if ($danhsach): ?>
-            <form method="POST" id="frmDiemDanh">
-                <input type="hidden" name="ngayHoc" value="<?= $loc_ngay ?>">
-                <input type="hidden" name="maMonHoc" value="<?= $loc_mon ?>">
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>STT</th>
-                            <th>Học sinh</th>
-                            <th>Lớp</th>
-                            <th>Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $stt = 1;
-                        $tong = 0;
-                        $present = 0;
-                        $late = 0;
-                        $absent = 0;
-                        while ($hs = $danhsach->fetch_assoc()) {
-                            $maHS = $hs['maHS'];
-                            $status = $chuyencan[$maHS] ?? '';
-                            if ($status == 'Có mặt') $present++;
-                            elseif ($status == 'Đến muộn') $late++;
-                            elseif ($status == 'Vắng mặt') $absent++;
-                            $tong++;
-                        ?>
-                            <tr>
-                                <td><?= $stt++ ?></td>
-                                <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
-                                <td><?= htmlspecialchars($hs['tenLop'] ?? '-') ?></td>
-                                <td class="status-btns">
-                                    <input type="hidden" name="maHS[<?= $maHS ?>]" value="<?= $maHS ?>">
-                                    <input type="hidden" name="trangThai[<?= $maHS ?>]" id="status<?= $maHS ?>" value="<?= $status ?>">
-                                    <button type="button" class="status-btn present <?= ($status == 'Có mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Có mặt',this)">Có mặt</button>
-                                    <button type="button" class="status-btn late <?= ($status == 'Đến muộn') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Đến muộn',this)">Đến muộn</button>
-                                    <button type="button" class="status-btn absent <?= ($status == 'Vắng mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Vắng mặt',this)">Vắng mặt</button>
-                                </td>
-                            </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
-                <br>
-                <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
-            </form>
-
-            <div class="summary-box">
-                <h3>TỔNG QUAN ĐIỂM DANH</h3>
-                <div class="summary-item"><span>Có mặt:</span><strong><?= $present ?></strong></div>
-                <div class="summary-item"><span>Đến muộn:</span><strong><?= $late ?></strong></div>
-                <div class="summary-item"><span>Vắng mặt:</span><strong><?= $absent ?></strong></div>
-                <hr>
-                <div class="summary-item">
-                    <span>Tỷ lệ đi học:</span>
-                    <strong><?= $tong > 0 ? round($present / $tong * 100, 1) : 0 ?>%</strong>
+        <div class="container">
+            <h1>BẢNG ĐIỂM</h1>
+            <form method="GET" class="filter-box">
+                <div>
+                    <label for="lop"><strong>Lớp:</strong></label><br>
+                    <select name="lop" id="lop" onchange="this.form.submit()">
+                        <option value="">Tất cả lớp</option>
+                        <?php while ($l = $dsLop->fetch_assoc()) {
+                            $sel = ($l['maLop'] == $lopChon) ? "selected" : "";
+                            echo "<option value='{$l['maLop']}' $sel>{$l['tenLop']}</option>";
+                        } ?>
+                    </select>
                 </div>
-            </div>
-        <?php endif; ?>
+            </form>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>MÃ HS</th>
+                        <th>HỌ TÊN</th>
+                        <th>LỚP</th>
+                        <th>ĐIỂM HK I</th>
+                        <th>ĐIỂM HK II</th>
+                        <th>TRUNG BÌNH</th>
+                        <th>TÁC VỤ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    if ($result && $result->num_rows > 0) {
+                        $stt = 1;
+                        while ($r = $result->fetch_assoc()) {
+                            $tb = "-";
+                            if (is_numeric($r['diemHK1']) || is_numeric($r['diemHK2'])) {
+                                $tong = 0;
+                                $dem = 0;
+                                foreach (['diemHK1', 'diemHK2'] as $c) {
+                                    if (is_numeric($r[$c])) {
+                                        $tong += $r[$c];
+                                        $dem++;
+                                    }
+                                }
+                                $tb = $dem ? round($tong / $dem, 1) : "-";
+                            }
+                            $hrefSua = "suadiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
+                            $hrefXoa = "xoadiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
+                            echo "
+                        <tr>
+                            <td>{$stt}</td>
+                            <td>K" . str_pad($r['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
+                            <td>" . htmlspecialchars($r['hoVaTen']) . "</td>
+                            <td>" . htmlspecialchars($r['tenLop']) . "</td>
+                            <td>" . ($r['diemHK1'] ?? '-') . "</td>
+                            <td>" . ($r['diemHK2'] ?? '-') . "</td>
+                            <td><strong>{$tb}</strong></td>
+                            <td>
+                                <a href='{$hrefSua}'><i class='fa-solid fa-pen-to-square' style='color:black'></i></a>
+                                &nbsp;
+                                <a href='{$hrefXoa}' onclick=\"return confirm('Xóa toàn bộ điểm của học sinh này?');\">
+                                    <i class='fa-solid fa-trash' style='color:black'></i>
+                                </a>
+                            </td>
+                        </tr>";
+                            $stt++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='8'>Không có dữ liệu phù hợp.</td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
+        </div>
     </div>
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
@@ -499,7 +519,8 @@ if (!empty($loc_mon)) {
             formData.append('trangThai', status);
 
             // Gửi AJAX cập nhật vào CSDL
-            fetch('../src/chuyencan.php', {
+            formData.append('ajax', '1'); // đánh dấu là request AJAX
+            fetch(window.location.href, {
                     method: 'POST',
                     body: formData
                 })

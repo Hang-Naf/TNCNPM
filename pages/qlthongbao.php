@@ -19,25 +19,52 @@ if ($_SESSION["vaiTro"] !== "Admin") {
 $currentUserId = $_SESSION["userID"];
 
 // ==== Lấy danh sách thông báo ====
-$sql = "
-    SELECT 
-        t.maThongBao,
-        t.tieuDe,
-        t.noiDung,
-        t.ngayGui,
-        COALESCE(u.hoVaTen, 'Hệ thống') AS nguoiGui,
-        COUNT(tu.userID) AS tongNguoiNhan,
-        SUM(CASE WHEN tu.trangThai = 'Đã đọc' THEN 1 ELSE 0 END) AS soDaDoc
-    FROM thongbao t
-    LEFT JOIN user u ON t.nguoiGui = u.userID
-    LEFT JOIN thongbaouser tu ON t.maThongBao = tu.maThongBao
-    GROUP BY t.maThongBao, t.tieuDe, t.noiDung, t.ngayGui, u.hoVaTen
-    ORDER BY t.ngayGui DESC
-";
+$filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
+
+if ($filter === 'sent') {
+    // Chỉ lấy thông báo do admin hiện tại gửi
+    $sql = "
+        SELECT 
+            t.maThongBao,
+            t.tieuDe,
+            t.noiDung,
+            t.ngayGui,
+            COALESCE(u.hoVaTen, 'Hệ thống') AS nguoiGui,
+            COUNT(tu.userID) AS tongNguoiNhan,
+            SUM(CASE WHEN tu.trangThai = 'Đã đọc' THEN 1 ELSE 0 END) AS soDaDoc
+        FROM thongbao t
+        LEFT JOIN user u ON t.nguoiGui = u.userID
+        LEFT JOIN thongbaouser tu ON t.maThongBao = tu.maThongBao
+        WHERE t.nguoiGui = '$currentUserId'
+        GROUP BY t.maThongBao, t.tieuDe, t.noiDung, t.ngayGui, u.hoVaTen
+        ORDER BY t.ngayGui DESC
+    ";
+} else {
+    // Tất cả thông báo
+    $sql = "
+        SELECT 
+            t.maThongBao,
+            t.tieuDe,
+            t.noiDung,
+            t.ngayGui,
+            COALESCE(u.hoVaTen, 'Hệ thống') AS nguoiGui,
+            COUNT(tu.userID) AS tongNguoiNhan,
+            SUM(CASE WHEN tu.trangThai = 'Đã đọc' THEN 1 ELSE 0 END) AS soDaDoc
+        FROM thongbao t
+        LEFT JOIN user u ON t.nguoiGui = u.userID
+        LEFT JOIN thongbaouser tu ON t.maThongBao = tu.maThongBao
+        GROUP BY t.maThongBao, t.tieuDe, t.noiDung, t.ngayGui, u.hoVaTen
+        ORDER BY t.ngayGui DESC
+    ";
+}
+
 $result = $conn->query($sql);
 if (!$result) {
     die("<pre>SQL Error: " . $conn->error . "</pre>");
 }
+// ==== Thống kê số lượng ====
+$count_all = $conn->query("SELECT COUNT(*) AS total FROM thongbaouser")->fetch_assoc()['total'];
+$count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGui = '$currentUserId'")->fetch_assoc()['total'];
 ?>
 
 <!DOCTYPE html>
@@ -75,6 +102,50 @@ if (!$result) {
             align-items: center;
             gap: 6px;
             width: 180px;
+        }
+
+        .thongbao-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            padding: 10px 0;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 20px;
+        }
+
+        .tab {
+            background: none;
+            border: none;
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .tab span {
+            color: #666;
+            font-weight: normal;
+        }
+
+        .tab.active {
+            color: #0b1e6b;
+        }
+
+        .tab.active::after {
+            content: "";
+            position: absolute;
+            bottom: -6px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #0b1e6b;
+            border-radius: 2px;
         }
 
         table {
@@ -199,7 +270,6 @@ if (!$result) {
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
                     <li class="active" onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li onclick="window.location.href='../pages/qlsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -240,16 +310,20 @@ if (!$result) {
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
-                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h1>QUẢN LÝ THÔNG BÁO</h1>
+        <h1>THÔNG BÁO</h1>
 
-        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Thông Báo</button>
-
+        <div class="thongbao-header">
+            <div class="tabs">
+                <button class="tab <?= ($filter === 'all') ? 'active' : '' ?>">Tất cả <span>(<?= $count_all ?>)</span></button>
+                <button class="tab <?= ($filter === 'sent') ? 'active' : '' ?>">Đã gửi <span>(<?= $count_sent ?>)</span></button>
+            </div>
+            <button class="add-btn" onclick="window.location.href='themthongbao.php'"><i class="fa-solid fa-plus"></i> Thêm Thông Báo</button>
+        </div>
         <table>
             <thead>
                 <tr>
@@ -276,19 +350,17 @@ if (!$result) {
                             <td><?= htmlspecialchars($row['tongNguoiNhan']) ?></td>
                             <td><?= htmlspecialchars($row['soDaDoc']) ?></td>
                             <td class="actions">
-                                <i class="fa-solid fa-eye" onclick="showDetail(
-                                    '<?= htmlspecialchars(addslashes($row['maThongBao'])) ?>',
-                                    '<?= htmlspecialchars(addslashes($row['tieuDe'])) ?>',
-                                    '<?= htmlspecialchars(addslashes($row['noiDung'])) ?>',
-                                    '<?= htmlspecialchars(addslashes($row['nguoiGui'])) ?>',
-                                    '<?= htmlspecialchars(addslashes($row['ngayGui'])) ?>'
-                                )"></i>
-                                <i class="fa-solid fa-pen-to-square" onclick="showEditPopup(
-                                    <?= $row['maThongBao'] ?>,
-                                    '<?= htmlspecialchars(addslashes($row['tieuDe'])) ?>',
-                                    '<?= htmlspecialchars(addslashes($row['noiDung'])) ?>'
-                                )"></i>
-                                <i class="fa-solid fa-trash" onclick="xoaThongBao(<?= $row['maThongBao'] ?>)"></i>
+                                <a href="xemtb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" title="Xem chi tiết">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="suatb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" title="Chỉnh sửa">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <a href="xoatb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>"
+                                    onclick="return confirm('Bạn có chắc muốn xóa thông báo này?')"
+                                    title="Xóa">
+                                    <i class="fa-solid fa-trash"></i>
+                                </a>
                             </td>
                         </tr>
                     <?php endwhile;
@@ -355,6 +427,20 @@ if (!$result) {
     </div>
 
     <script>
+        // Chuyển tab lọc
+        document.querySelectorAll(".tab").forEach(tab => {
+            tab.addEventListener("click", () => {
+                document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+                tab.classList.add("active");
+
+                if (tab.textContent.includes("Đã gửi")) {
+                    window.location.href = "qlthongbao.php?filter=sent";
+                } else {
+                    window.location.href = "qlthongbao.php?filter=all";
+                }
+            });
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu

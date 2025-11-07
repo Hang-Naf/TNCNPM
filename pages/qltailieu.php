@@ -24,9 +24,11 @@ if (isset($_POST['add'])) {
     $ngayTai = date('Y-m-d');
     $maGV = $_POST['maGV'];
     $trangThai = $_POST['trangThai'];
+    $maLop = $_POST['maLop'];
 
-    $sql = "INSERT INTO tailieu (maMonHoc, tieuDe, noiDung, ngayTai, maGV, trangThai)
-            VALUES ('$maMonHoc', '$tieuDe', '$noiDung', '$ngayTai', '$maGV', '$trangThai')";
+    $sql = "INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai)
+        VALUES ('$maMonHoc', '$maLop', '$tieuDe', '$noiDung', '$ngayTai', '$maGV', '$trangThai')";
+
     if ($conn->query($sql)) {
         echo "<script>alert('Thêm tài liệu thành công!'); window.location='qltailieu.php';</script>";
     } else {
@@ -52,10 +54,12 @@ if (isset($_POST['update'])) {
     $tieuDe = $_POST['tieuDe'];
     $noiDung = $_POST['noiDung'];
     $trangThai = $_POST['trangThai'];
+    $maLop = $_POST['maLop'];
 
     $sql = "UPDATE tailieu 
-            SET maMonHoc='$maMonHoc', tieuDe='$tieuDe', noiDung='$noiDung', trangThai='$trangThai'
-            WHERE maTL='$maTL'";
+        SET maMonHoc='$maMonHoc', maLop='$maLop', 
+            tieuDe='$tieuDe', noiDung='$noiDung', trangThai='$trangThai'
+        WHERE maTL='$maTL'";
     if ($conn->query($sql)) {
         echo "<script>alert('Cập nhật thành công!'); window.location='qltailieu.php';</script>";
     } else {
@@ -108,6 +112,141 @@ $result = $conn->query($sql);
         form {
             margin: 20px 0;
         }
+
+        .content-area {
+            padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
+            background: #f5f6fa;
+            min-height: 100vh;
+        }
+
+        .content-area h1 {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #111;
+        }
+
+        /* Bộ lọc */
+        .filter-bar {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+            background: #fafafa;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+
+        .filter-bar label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        .filter-bar select {
+            padding: 8px 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            min-width: 160px;
+            background: #fff;
+        }
+
+        .filter-bar button {
+            background: #0b3364;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .filter-bar button:hover {
+            background: #124b8a;
+        }
+
+        /* Bảng danh sách */
+        .table-container {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .table-container table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 15px;
+        }
+
+        .table-container th,
+        .table-container td {
+            padding: 12px;
+            text-align: left;
+        }
+
+        .table-container thead {
+            background: #f7f8fa;
+            color: #222;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .table-container tbody tr {
+            border-top: 1px solid #eee;
+            transition: background 0.2s;
+        }
+
+        .table-container tbody tr:hover {
+            background: #f9f9f9;
+        }
+
+        /* Phân trang */
+        .pagination-bar {
+            padding: 12px 16px;
+            background: #f9f9f9;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid #eee;
+        }
+
+        .pagination-bar span {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .pagination-controls button {
+            border: none;
+            background: #eee;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        .pagination-controls button:hover:not(:disabled) {
+            background: #ddd;
+        }
+
+        .pagination-controls button:disabled {
+            opacity: 0.5;
+            cursor: default;
+        }
+
+        .pagination-controls span {
+            font-weight: 600;
+            font-size: 14px;
+        }
     </style>
 </head>
 
@@ -148,8 +287,7 @@ $result = $conn->query($sql);
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li  onclick="window.location.href='../pages/qltsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -189,116 +327,115 @@ $result = $conn->query($sql);
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
-                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-        <h1>📚 Quản lý tài liệu</h1>
+        <main class="content-area">
+            <h1 style="font-size:24px; font-weight:700; margin-bottom:20px;">DANH SÁCH TÀI LIỆU</h1>
 
-    <h3>Thêm tài liệu mới</h3>
-    <form method="POST">
-        <label>Môn học:</label>
-        <select name="maMonHoc" required>
-            <option value="">-- Chọn môn học --</option>
-            <?php while ($row = $monhoc->fetch_assoc()) { ?>
-                <option value="<?= $row['maMonHoc'] ?>"><?= htmlspecialchars($row['tenMonHoc']) ?></option>
-            <?php } ?>
-        </select>
+            <!-- Bộ lọc -->
+            <form method="GET" class="filter-bar">
 
-        <label>Tiêu đề:</label>
-        <input type="text" name="tieuDe" required>
+                <div>
+                    <label style="display:block; font-weight:600; margin-bottom:5px;">Lớp:</label>
+                    <select name="maLop" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; min-width:160px;">
+                        <option value="">Tất cả lớp</option>
+                        <?php
+                        $lopList = $conn->query("SELECT * FROM lophoc ORDER BY tenLop ASC");
+                        while ($lop = $lopList->fetch_assoc()) {
+                            $selected = (isset($_GET['maLop']) && $_GET['maLop'] == $lop['maLop']) ? 'selected' : '';
+                            echo "<option value='{$lop['maLop']}' $selected>{$lop['tenLop']}</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
 
-        <label>Nội dung:</label>
-        <textarea name="noiDung" rows="3" required></textarea>
+                <div>
+                    <label style="display:block; font-weight:600; margin-bottom:5px;">Môn:</label>
+                    <select name="maMonHoc" style="padding:8px 10px; border:1px solid #ccc; border-radius:6px; min-width:160px;">
+                        <option value="">Tất cả môn học</option>
+                        <?php
+                        $monList = $conn->query("SELECT * FROM monhoc ORDER BY tenMonHoc ASC");
+                        while ($mon = $monList->fetch_assoc()) {
+                            $selected = (isset($_GET['maMonHoc']) && $_GET['maMonHoc'] == $mon['maMonHoc']) ? 'selected' : '';
+                            echo "<option value='{$mon['maMonHoc']}' $selected>{$mon['tenMonHoc']}</option>";
+                        }
+                        ?>
+                    </select>
+                </div>
 
-        <label>Giáo viên tải lên:</label>
-        <select name="maGV" required>
-            <option value="">-- Chọn giáo viên --</option>
-            <?php while ($row = $giaovien->fetch_assoc()) { ?>
-                <option value="<?= $row['maGV'] ?>"><?= htmlspecialchars($row['hoVaTen']) ?></option>
-            <?php } ?>
-        </select>
+                <button type="submit">Lọc</button>
+            </form>
 
-        <label>Trạng thái:</label>
-        <select name="trangThai" required>
-            <option value="Công khai">Công khai</option>
-            <option value="Riêng tư">Riêng tư</option>
-        </select>
+            <!-- Bảng danh sách -->
+            <div class="table-container">
 
-        <button type="submit" name="add">Thêm</button>
-    </form>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>STT</th>
+                            <th>TIÊU ĐỀ</th>
+                            <th>MÔ TẢ</th>
+                            <th>MÔN HỌC</th>
+                            <th>NGƯỜI TẠO</th>
+                            <th>TRẠNG THÁI</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php
+                        // Xử lý lọc
+                        $cond = "WHERE 1=1";
+                        if (!empty($_GET['maLop'])) {
+                            $maLop = intval($_GET['maLop']);
+                            $cond .= " AND t.maLop = $maLop";
+                        }
+                        if (!empty($_GET['maMonHoc'])) {
+                            $maMonHoc = intval($_GET['maMonHoc']);
+                            $cond .= " AND t.maMonHoc = $maMonHoc";
+                        }
 
-    <h3>Danh sách tài liệu</h3>
-    <table>
-        <thead>
-            <tr>
-                <th>Mã TL</th>
-                <th>Tiêu đề</th>
-                <th>Môn học</th>
-                <th>Giáo viên</th>
-                <th>Ngày tải</th>
-                <th>Trạng thái</th>
-                <th>Hành động</th>
-            </tr>
-        </thead>
-        <tbody>
-            <?php while ($row = $result->fetch_assoc()) { ?>
-                <tr>
-                    <td><?= $row['maTL'] ?></td>
-                    <td><?= htmlspecialchars($row['tieuDe']) ?></td>
-                    <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
-                    <td><?= htmlspecialchars($row['tenGV']) ?></td>
-                    <td><?= $row['ngayTai'] ?></td>
-                    <td><?= $row['trangThai'] ?></td>
-                    <td>
-                        <a href="qltailieu.php?edit=<?= $row['maTL'] ?>">Sửa</a> |
-                        <a href="qltailieu.php?delete=<?= $row['maTL'] ?>" onclick="return confirm('Xóa tài liệu này?')">Xóa</a>
-                    </td>
-                </tr>
-            <?php } ?>
-        </tbody>
-    </table>
+                        $sql = "SELECT t.tieuDe, t.noiDung, t.trangThai, m.tenMonHoc, u.hoVaTen AS nguoiTao
+                                FROM tailieu t
+                                LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
+                                LEFT JOIN user u ON t.maGV = u.userID
+                                $cond
+                                ORDER BY t.maTL DESC";
 
+                        $ds = $conn->query($sql);
+                        $stt = 1;
+                        if ($ds->num_rows > 0) {
+                            while ($r = $ds->fetch_assoc()) {
+                                echo "<tr style='border-top:1px solid #eee;'>
+                                    <td style='padding:10px;'>$stt</td>
+                                    <td style='padding:10px;'>" . htmlspecialchars($r['tieuDe']) . "</td>
+                                    <td style='padding:10px;'>" . htmlspecialchars($r['noiDung']) . "</td>
+                                    <td style='padding:10px;'>" . htmlspecialchars($r['tenMonHoc']) . "</td>
+                                    <td style='padding:10px;'>" . htmlspecialchars($r['nguoiTao']) . "</td>
+                                    <td style='padding:10px;'>" . htmlspecialchars($r['trangThai'] ?? '') . "</td>
+                                </tr>";
+                                $stt++;
+                            }
+                        } else {
+                            echo "<tr><td colspan='6' style='text-align:center; padding:20px;'>Không có tài liệu nào.</td></tr>";
+                        }
+                        ?>
+                    </tbody>
+                </table>
+
+                <!-- Thanh phân trang giả lập -->
+                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee;">
+                    <span>1–<?= min($stt - 1, 4) ?>/<?= $stt - 1 ?> mục</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px;">◀</button>
+                        <span style="font-weight:600;">1/5</span>
+                        <button style="border:none; background:#eee; border-radius:4px; padding:5px 10px;">▶</button>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
-    
-    <?php
-    // Hiển thị form sửa
-    if (isset($_GET['edit'])) {
-        $id = $_GET['edit'];
-        $edit = $conn->query("SELECT * FROM tailieu WHERE maTL = $id")->fetch_assoc();
-    ?>
-        <h3>Chỉnh sửa tài liệu</h3>
-        <form method="POST">
-            <input type="hidden" name="maTL" value="<?= $edit['maTL'] ?>">
-
-            <label>Môn học:</label>
-            <select name="maMonHoc" required>
-                <?php
-                $monhoc2 = $conn->query("SELECT * FROM monhoc");
-                while ($m = $monhoc2->fetch_assoc()) {
-                    $sel = $edit['maMonHoc'] == $m['maMonHoc'] ? "selected" : "";
-                    echo "<option value='{$m['maMonHoc']}' $sel>{$m['tenMonHoc']}</option>";
-                }
-                ?>
-            </select>
-
-            <label>Tiêu đề:</label>
-            <input type="text" name="tieuDe" value="<?= htmlspecialchars($edit['tieuDe']) ?>" required>
-
-            <label>Nội dung:</label>
-            <textarea name="noiDung" rows="3"><?= htmlspecialchars($edit['noiDung']) ?></textarea>
-
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option <?= $edit['trangThai'] == 'Công khai' ? 'selected' : '' ?>>Công khai</option>
-                <option <?= $edit['trangThai'] == 'Riêng tư' ? 'selected' : '' ?>>Riêng tư</option>
-            </select>
-
-            <button type="submit" name="update">Cập nhật</button>
-        </form>
-    <?php } ?>
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
@@ -407,7 +544,7 @@ $result = $conn->query($sql);
                 menu.style.display = "none";
             }
         });
-        
+
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {

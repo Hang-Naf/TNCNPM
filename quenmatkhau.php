@@ -201,8 +201,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <!-- Bên trái -->
         <div class="left">
             <h2 style="font-size: 48px;">Hello, Welcome!</h2>
-            <p style="font-size: 24px;">Bạn chưa có tài khoản?</p>
-            <button class="btn-outline" onclick="window.location.href='dangky.php'">Đăng Ký</button>
+            <!-- <p style="font-size: 24px;">Bạn chưa có tài khoản?</p>
+            <button class="btn-outline" onclick="window.location.href='dangky.php'">Đăng Ký</button> -->
         </div>
 
         <!-- Bên phải -->
