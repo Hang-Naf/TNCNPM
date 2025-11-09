@@ -74,6 +74,7 @@ $result = $conn->query($sql);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
+    <link rel="stylesheet" href="../form.css">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -81,7 +82,7 @@ $result = $conn->query($sql);
             margin: 0;
         }
 
-        .container {
+        #main-container {
             padding: 20px;
         }
 
@@ -99,7 +100,6 @@ $result = $conn->query($sql);
             display: flex;
             align-items: center;
             gap: 6px;
-            width: 150px;
         }
 
         table {
@@ -140,6 +140,14 @@ $result = $conn->query($sql);
 
         .center {
             text-align: center;
+        }
+
+        #addPopup {
+            display: none;
+        }
+
+        .hide-column {
+            display: none;
         }
     </style>
 </head>
@@ -209,7 +217,7 @@ $result = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" placeholder="Tìm kiếm..." class="search">
                 </div>
             </div>
 
@@ -236,51 +244,249 @@ $result = $conn->query($sql);
                 </div>
             </div>
         </header>
-        <h1>QUẢN LÝ TÀI LIỆU</h1>
-        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm tài liệu</button>
-        <table>
-            <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>Mã TL</th>
-                    <th>Tiêu đề</th>
-                    <th>Môn học</th>
-                    <th>Giáo viên</th>
-                    <th>Ngày tải</th>
-                    <th>Trạng thái</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($result->num_rows > 0):
-                    $stt = 1;
-                    while ($row = $result->fetch_assoc()): ?>
-                        <tr data-id="<?= $row['maTL'] ?>">
-                            <td class="center"><?= $stt++ ?></td>
-                            <td class="center"><?= $row['maTL'] ?></td>
-                            <td><?= htmlspecialchars($row['tieuDe']) ?></td>
-                            <td class="center"><?= htmlspecialchars($row['tenMonHoc']) ?></td>
-                            <td class="center"><?= htmlspecialchars($row['tenGV']) ?></td>
-                            <td class="center"><?= $row['ngayTai'] ?></td>
-                            <td class="center"><?= $row['trangThai'] ?></td>
-                            <td class="center">
-                                <i class="fa-solid fa-pen edit-btn"></i>
-                                <i class="fa-solid fa-trash delete-btn"></i>
-                            </td>
-                        </tr>
-                    <?php endwhile;
-                else: ?>
+        <div id="main-container">
+            <h1>DANH SÁCH TÀI LIỆU</h1>
+            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm tài liệu</button>
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="10" style="text-align:center;">Không có dữ liệu</td>
+                        <th>STT</th>
+                        <th>Mã TL</th>
+                        <th>Tiêu đề</th>
+                        <th>Môn học</th>
+                        <th>Giáo viên</th>
+                        <th>Ngày tải</th>
+                        <th>Trạng thái</th>
+                        <th>Hành động</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php if ($result->num_rows > 0):
+                        $stt = 1;
+                        while ($row = $result->fetch_assoc()): ?>
+                            <tr data-id="<?= $row['maTL'] ?>">
+                                <td class="center"><?= $stt++ ?></td>
+                                <td class="center"><?= $row['maTL'] ?></td>
+                                <td><?= htmlspecialchars($row['tieuDe']) ?></td>
+                                <td class="center"><?= htmlspecialchars($row['tenMonHoc']) ?></td>
+                                <td class="center"><?= htmlspecialchars($row['tenGV']) ?></td>
+                                <td class="center"><?= $row['ngayTai'] ?></td>
+                                <td class="center"><?= $row['trangThai'] ?></td>
+                                <td class="center">
+                                    <i class="fa-solid fa-pen edit-btn"></i>
+                                    <i class="fa-solid fa-trash delete-btn"></i>
+                                </td>
+                            </tr>
+                        <?php endwhile;
+                    else: ?>
+                        <tr>
+                            <td colspan="10" style="text-align:center;">Không có dữ liệu</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="popup-bg" id="addPopup">
+            <div class="popup">
+                <h2 id="title-h2">THÊM TÀI LIỆU</h2>
+                <div class="them-hocsinh">
+                    <form method="post" action="" id="addForm" class="student-form">
+                        <input type="hidden" name="action" value="add" id="formAction">
+                        <input type="hidden" name="maTL" id="maTL">
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Môn học:</label>
+                                <select name="maMonHoc" required>
+                                    <option value="">-- Chọn môn học --</option>
+                                    <?php while ($row = $monhoc->fetch_assoc()) { ?>
+                                        <option value="<?= $row['maMonHoc'] ?>"><?= htmlspecialchars($row['tenMonHoc']) ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Tiêu đề:</label>
+                                <input type="text" name="tieuDe" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Giáo viên tải lên:</label>
+                                <select name="maGV" required>
+                                    <option hidden></option>
+                                    <?php while ($row = $giaovien->fetch_assoc()) { ?>
+                                        <option value="<?= $row['maGV'] ?>"><?= htmlspecialchars($row['hoVaTen']) ?>
+                                        </option>
+                                    <?php } ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Nội dung:</label>
+                                <textarea name="noiDung" rows="3" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Trạng thái:</label>
+                                <select name="trangThai" required>
+                                    <option value="Công khai">Công khai</option>
+                                    <option value="Riêng tư">Riêng tư</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="buttons">
+                            <button type="submit" class="btn-primary" name="add">
+                                <i class="fa-solid fa-plus"></i> Thêm mới
+                            </button>
+                            <button type="button" class="btn-secondary"
+                                onclick="window.location.href='qltailieu.php'">Hủy</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
     <script>
+        document.getElementById("bellIcon").addEventListener("click", function () {
+            const dropdown = document.getElementById("notificationDropdown");
+            // Hiện/ẩn menu
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+
+            // Gọi AJAX lấy thông báo
+            fetch("../get_thongbao.php")
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById("notificationList");
+                    const noNoti = document.getElementById("noNoti");
+                    const badge = document.getElementById("notiBadge");
+                    list.innerHTML = "";
+
+                    let unreadCount = 0;
+
+                    if (data.length > 0) {
+                        noNoti.style.display = "none";
+                        data.forEach(tb => {
+                            const li = document.createElement("li");
+                            li.style.padding = "10px 8px";
+                            li.style.borderBottom = "1px solid #eee";
+                            li.style.cursor = "pointer";
+
+                            if (tb.trangThai === "Chưa đọc") {
+                                unreadCount++;
+                                li.style.background = "#f0f8ff";
+                                li.innerHTML = `
+                        <strong style="color:#0b3364;">${tb.tieuDe} 🔵</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            } else {
+                                li.style.opacity = "0.7";
+                                li.innerHTML = `
+                        <strong>${tb.tieuDe}</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            }
+
+                            li.addEventListener("click", () => markAsRead(tb.maThongBao, li));
+                            list.appendChild(li);
+                        });
+                    } else {
+                        noNoti.style.display = "block";
+                    }
+
+                    // Cập nhật badge
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount;
+                        badge.style.display = "block";
+                    } else {
+                        badge.style.display = "none";
+                    }
+                })
+                .catch(err => console.error("Lỗi tải thông báo:", err));
+
+
+            function markAsRead(maThongBao, element) {
+                fetch("update_trangthai.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "maThongBao=" + encodeURIComponent(maThongBao)
+                })
+                    .then(res => res.text())
+                    .then(response => {
+                        if (response === "OK") {
+                            element.style.background = "transparent";
+                            element.style.opacity = "0.7";
+                            element.querySelector("strong").innerHTML = element.querySelector("strong").innerText;
+
+                            // Giảm số badge đi 1
+                            const badge = document.getElementById("notiBadge");
+                            let current = parseInt(badge.textContent || "0");
+                            if (current > 1) badge.textContent = current - 1;
+                            else badge.style.display = "none";
+                        }
+                    });
+            }
+
+        });
+
+        // === Mở popup sửa tài liệu ===
+        document.addEventListener("click", e => {
+            if (e.target.classList.contains("edit-btn")) {
+                const tr = e.target.closest("tr");
+
+                const maTL = tr.dataset.id;
+                const tieuDe = tr.children[2].innerText.trim();
+                const monHoc = tr.children[3].innerText.trim();
+                const giaoVien = tr.children[4].innerText.trim();
+                const noiDung = tr.children[5].innerText.trim();
+                const trangThai = tr.children[6].innerText.trim();
+
+                showAddPopup();
+                document.getElementById("title-h2").innerText = "CHỈNH SỬA TÀI LIỆU";
+                document.getElementById("formAction").value = "update";
+                document.getElementById("submitButton").innerHTML = '<i class="fa-solid fa-pen"></i> Cập nhật';
+                document.getElementById("maTL").value = maTL;
+
+                const form = document.getElementById("addForm");
+                form.tieuDe.value = tieuDe;
+                form.noiDung.value = noiDung;
+                form.trangThai.value = trangThai;
+
+                // Chọn môn học
+                for (let opt of form.maMonHoc.options) {
+                    if (opt.text === monHoc) opt.selected = true;
+                }
+
+                // Chọn giáo viên
+                for (let opt of form.maGV.options) {
+                    if (opt.text === giaoVien) opt.selected = true;
+                }
+            }
+        });
+
+
+        // Ẩn dropdown khi click ra ngoài
+        document.addEventListener("click", function (e) {
+            const dropdown = document.getElementById("notificationDropdown");
+            const bell = document.getElementById("bellIcon");
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = "none";
+            }
+        });
+
+        // Đóng menu nếu click ra ngoài
+        document.addEventListener("click", function (e) {
+            const menu = document.getElementById("userMenu");
+            const userInfo = document.querySelector(".user-info");
+            if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = "none";
+            }
+        });
         const apiTaiLieu = "../src/tailieu.php";
         function showAddPopup() {
-            window.location = 'themtailieu.php';
+            document.getElementById('addPopup').style.display = 'block';
+            document.getElementById('main-container').style.display = 'none';
         }
         // Xóa tài liệu
         document.addEventListener("click", async (e) => {

@@ -17,6 +17,7 @@ if ($_SESSION["vaiTro"] !== "Admin") {
 }
 
 // ==== Lấy danh sách giáo viên ====
+
 $sql = "
     SELECT 
         g.maGV, u.hoVaTen, u.gioiTinh, u.email, u.sdt,
@@ -44,6 +45,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
+    <link rel="stylesheet" href="../form.css">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -51,7 +53,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             margin: 0;
         }
 
-        .container {
+        #main-container {
             padding: 20px;
         }
 
@@ -105,6 +107,10 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
 
         td:not(.no-center) {
             text-align: center;
+        }
+
+        #addPopup {
+            display: none;
         }
     </style>
 </head>
@@ -176,7 +182,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" placeholder="Tìm kiếm..." class="search">
                 </div>
             </div>
 
@@ -203,64 +209,138 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 </div>
             </div>
         </header>
+        <div id="main-container">
+            <h1>QUẢN LÝ GIÁO VIÊN</h1>
+            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Giáo Viên</button>
 
-        <h1>QUẢN LÝ GIÁO VIÊN</h1>
-        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Giáo Viên</button>
-
-        <table>
-            <thead>
-                <tr>
-                    <th><input type="checkbox"></th>
-                    <th>STT</th>
-                    <th>MÃ GV</th>
-                    <th>HỌ TÊN</th>
-                    <th>GIỚI TÍNH</th>
-                    <th>EMAIL</th>
-                    <th>SDT</th>
-                    <th>BỘ MÔN</th>
-                    <th>TRÌNH ĐỘ</th>
-                    <th>PHÒNG BAN</th>
-                    <th>NĂM HỌC</th>
-                    <th>HỌC KỲ</th>
-                    <th>TRẠNG THÁI</th>
-                    <th>TÁC VỤ</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($result->num_rows > 0):
-                    $stt = 1;
-                    while ($row = $result->fetch_assoc()): ?>
-                        <tr data-id="<?= $row['maGV'] ?>">
-                            <td><input type="checkbox"></td>
-                            <td><?= $stt++ ?></td>
-                            <td><?= $row['maGV'] ?></td>
-                            <td class="no-center"><?= htmlspecialchars($row['hoVaTen']) ?></td>
-                            <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
-                            <td><?= htmlspecialchars($row['email']) ?></td>
-                            <td><?= htmlspecialchars($row['sdt']) ?></td>
-                            <td><?= htmlspecialchars($row['boMon']) ?></td>
-                            <td><?= htmlspecialchars($row['trinhDo']) ?></td>
-                            <td><?= htmlspecialchars($row['phongBan']) ?></td>
-                            <td><?= htmlspecialchars($row['namHoc']) ?></td>
-                            <td><?= htmlspecialchars($row['hocKy']) ?></td>
-                            <td><span class="status <?= $row['trangThai'] === 'active' ? 'active' : 'inactive' ?>">
-                                    <?= $row['trangThai'] === 'active' ? 'Hoạt động' : 'Tạm dừng' ?>
-                                </span></td>
-                            <td class="actions">
-                                <i class="fa-solid fa-pen edit-btn"></i>
-                                <i class="fa-solid fa-trash delete-btn"></i>
-                            </td>
-                        </tr>
-                    <?php endwhile;
-                else: ?>
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="14" style="text-align:center;">Không có dữ liệu</td>
+                        <th><input type="checkbox"></th>
+                        <th>STT</th>
+                        <th>MÃ GV</th>
+                        <th>HỌ TÊN</th>
+                        <th>GIỚI TÍNH</th>
+                        <th>EMAIL</th>
+                        <th>BỘ MÔN</th>
+                        <th>TRẠNG THÁI</th>
+                        <th>TÁC VỤ</th>
                     </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    <?php if ($result->num_rows > 0):
+                        $stt = 1;
+                        while ($row = $result->fetch_assoc()): ?>
+                            <tr data-id="<?= $row['maGV'] ?>">
+                                <td><input type="checkbox"></td>
+                                <td><?= $stt++ ?></td>
+                                <td><?= $row['maGV'] ?></td>
+                                <td class="no-center"><?= htmlspecialchars($row['hoVaTen']) ?></td>
+                                <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
+                                <td><?= htmlspecialchars($row['email']) ?></td>
+                                <td><?= htmlspecialchars($row['boMon']) ?></td>
+                                <td><span class="status <?= $row['trangThai'] === 'active' ? 'active' : 'inactive' ?>">
+                                        <?= $row['trangThai'] === 'active' ? 'Hoạt động' : 'Tạm dừng' ?>
+                                    </span></td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-pen edit-btn"></i>
+                                    <i class="fa-solid fa-trash delete-btn"></i>
+                                </td>
+                            </tr>
+                        <?php endwhile;
+                    else: ?>
+                        <tr>
+                            <td colspan="14" style="text-align:center;">Không có dữ liệu</td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+        <div class="popup-bg" id="addPopup">
+            <div class="popup">
+                <div class="them-hocsinh">
+                    <h2 id="title-h2">THÊM GIÁO VIÊN</h2>
+                    <form id="addForm" class="form">
+                        <input type="hidden" name="action" value="add" id="formAction">
+                        <input type="hidden" name="userId" id="userId">
 
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Họ và Tên:</label>
+                                <input type="text" name="hoVaTen">
+                            </div>
+                            <div class="form-group">
+                                <label>Email:</label>
+                                <input type="email" name="email">
+                            </div>
+                            <div class="form-group">
+                                <label>Số Điện Thoại:</label>
+                                <input type="text" name="sdt">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Giới tính:</label>
+                                <select name="gioiTinh">
+                                    <option value="Nam">Nam</option>
+                                    <option value="Nữ">Nữ</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Bộ môn:</label>
+                                <select name="boMon" required>
+                                    <?php foreach ($monhoc_list as $mh): ?>
+                                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>">
+                                            <?= htmlspecialchars($mh['tenMonHoc']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Trình độ:</label>
+                                <input type="text" name="trinhDo" placeholder="Trình độ (VD: Cử nhân, Thạc sĩ)">
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Phòng ban:</label>
+                                <input type="text" name="phongBan" placeholder="Phòng ban (VD: Tổ Toán)">
+
+                            </div>
+                            <div class="form-group">
+                                <label>Năm học:</label>
+                                <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Học kỳ:</label>
+                                <select name="hocKy" id="addHocKy" readonly>
+                                    <option value="">-- Học kỳ tự động --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group">
+                                <label>Trạng thái:</label>
+                                <div class="radio-group">
+                                    <label><input type="radio" name="trangThai" value="active"> Đang hoạt động</label>
+                                    <label><input type="radio" name="trangThai" value="inactive"> Tạm dừng</label>
+                                </div>
+                            </div>
+                            <div class="popup-buttons">
+                                <button type="button" class="btn-secondary"
+                                    onclick="window.location.href='qlgiaovien.php'">Quay
+                                    lại</button>
+                                <button type="submit" class="btn-primary" id="submitButton">Thêm giáo viên</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     <script>
         document.getElementById("bellIcon").addEventListener("click", function () {
             const dropdown = document.getElementById("notificationDropdown");
@@ -322,7 +402,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
 
 
             function markAsRead(maThongBao, element) {
-                fetch("../update_trangthai.php", {
+                fetch("update_trangthai.php", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/x-www-form-urlencoded"
@@ -344,6 +424,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                         }
                     });
             }
+
         });
 
         // Ẩn dropdown khi click ra ngoài
@@ -355,18 +436,80 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             }
         });
 
-        const apiGiaoVien = "../src/giaovien.php";
-        let currentId = null;
+        // Đóng menu nếu click ra ngoài
+        document.addEventListener("click", function (e) {
+            const menu = document.getElementById("userMenu");
+            const userInfo = document.querySelector(".user-info");
+            if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = "none";
+            }
+        });
 
-        function closePopup(id) {
-            const popup = document.getElementById(id);
-        }
+        // === Xử lý thêm giáo viên qua AJAX ===
+        document.getElementById("addForm").addEventListener("submit", async function (e) {
+            e.preventDefault(); // ✅ Ngăn trình duyệt reload trang
 
-        // === Xử lý nhấn nút sửa ===
-        document.addEventListener("click", (e) => {
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch("../src/giaovien.php", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (result.error) {
+                    alert(result.error);
+                } else {
+                    alert(result.message);
+                    location.reload(); // Cập nhật lại danh sách
+                }
+
+
+            } catch (error) {
+                console.error("Lỗi khi thêm giáo viên:", error);
+                alert("Lỗi khi thêm giáo viên. Vui lòng thử lại!");
+            }
+        });
+
+        document.addEventListener("click", async (e) => {
             if (e.target.classList.contains("edit-btn")) {
-                const maGV = e.target.closest("tr").children[2].innerText.trim();
-                window.location.href = `chinhsuagiaovien.php?maGV=${encodeURIComponent(maGV)}`;
+                const tr = e.target.closest("tr");
+                const maGV = tr.dataset.id;
+
+                // ✅ Gọi PHP chung (giaovien.php) để lấy dữ liệu theo mã
+                const res = await fetch(`../src/giaovien.php?maGV=${maGV}`);
+                const data = await res.json();
+
+                if (data.error) {
+                    alert(data.error);
+                    return;
+                }
+
+                // ✅ Hiển thị popup
+                showAddPopup();
+
+                // ✅ Điền dữ liệu vào form
+                document.querySelector("#title-h2").innerText = "CHỈNH SỬA GIÁO VIÊN";
+                document.querySelector("#submitButton").innerText = "Cập nhật giáo viên";
+                document.querySelector("#formAction").value = "update";
+                document.querySelector("#userId").value = data.maGV;
+                document.querySelector("input[name='hoVaTen']").value = data.hoVaTen;
+                document.querySelector("input[name='email']").value = data.email;
+                document.querySelector("input[name='sdt']").value = data.sdt;
+                document.querySelector("select[name='gioiTinh']").value = data.gioiTinh;
+                document.querySelector("select[name='boMon']").value = data.boMon;
+                document.querySelector("input[name='trinhDo']").value = data.trinhDo;
+                document.querySelector("input[name='phongBan']").value = data.phongBan;
+                document.querySelector("input[name='namHoc']").value = data.namHoc;
+                document.querySelector("select[name='hocKy']").value = data.hocKy;
+
+                document.querySelectorAll("input[name='trangThai']").forEach(radio => {
+                    radio.checked = (radio.value === data.trangThai);
+                });
             }
         });
 
@@ -424,7 +567,8 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
 
         // Gán tự động khi mở form thêm
         function showAddPopup() {
-            window.location = 'themgiaovien.php';
+            document.getElementById('addPopup').style.display = 'block';
+            document.getElementById('main-container').style.display = 'none';
         }
 
         function toggleUserMenu() {
@@ -435,7 +579,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
+                window.location.href = "../dangxuat.php";
             }
         }
     </script>

@@ -89,6 +89,7 @@ $result = $conn->query($sql);
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
+    <link rel="stylesheet" href="../form.css">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -96,7 +97,7 @@ $result = $conn->query($sql);
             margin: 0;
         }
 
-        .container {
+        #main-container {
             padding: 20px;
         }
 
@@ -221,7 +222,7 @@ $result = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" placeholder="Tìm kiếm..." class="search">
                 </div>
             </div>
 
@@ -288,43 +289,61 @@ $result = $conn->query($sql);
 
             <button type="submit" name="add">Thêm</button>
         </form> -->
-
-        <h1>ĐIỂM DANH HỌC SINH</h1>
-        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm học sinh</button>
-        <table>
-            <thead>
-                <tr>
-                    <th><input type="checkbox"></th>
-                    <th>Mã</th>
-                    <th>Họ và tên</th>
-                    <th>Môn học</th>
-                    <th>Ngày học</th>
-                    <th>Trạng thái</th>
-                    <th>Ghi chú</th>
-                    <th>Hành động</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php while ($row = $result->fetch_assoc()) { ?>
+        <div id="main-container">
+            <h1>ĐIỂM DANH HỌC SINH</h1>
+            <!-- <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm học sinh</button> -->
+            <div class="row">
+                <div class="form-group">
+                    <label>Ngày:</label>
+                    <input type="date">
+                </div>
+                <div class="form-group">
+                    <label>Lớp:</label>
+                    <select>
+                        <option>Tất cả các lớp</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Môn:</label>
+                    <select>
+                        <option>Tất cả các lớp</option>
+                    </select>
+                </div>
+            </div>
+            <table>
+                <thead>
                     <tr>
-                        <td><input type="checkbox"></td>
-                        <td><?= $row['maDiemDanh'] ?></td>
-                        <td><?= htmlspecialchars($row['tenHS']) ?></td>
-                        <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
-                        <td><?= $row['ngayHoc'] ?></td>
-                        <td><?= $row['trangThai'] ?></td>
-                        <td><?= htmlspecialchars($row['ghiChu']) ?></td>
-                        <td>
-                            <a href="?edit=<?= $row['maDiemDanh'] ?>">Sửa</a> |
-                            <a href="?delete=<?= $row['maDiemDanh'] ?>"
-                                onclick="return confirm('Bạn có chắc muốn xóa không?')">Xóa</a>
-                        </td>
+                        <th><input type="checkbox"></th>
+                        <th>Mã</th>
+                        <th>Họ và tên</th>
+                        <th>Môn học</th>
+                        <th>Ngày học</th>
+                        <th>Trạng thái</th>
+                        <th>Ghi chú</th>
+                        <th>Hành động</th>
                     </tr>
-                <?php } ?>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <?php while ($row = $result->fetch_assoc()) { ?>
+                        <tr>
+                            <td><input type="checkbox"></td>
+                            <td><?= $row['maDiemDanh'] ?></td>
+                            <td><?= htmlspecialchars($row['tenHS']) ?></td>
+                            <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
+                            <td><?= $row['ngayHoc'] ?></td>
+                            <td><?= $row['trangThai'] ?></td>
+                            <td><?= htmlspecialchars($row['ghiChu']) ?></td>
+                            <td>
+                                <a href="?edit=<?= $row['maDiemDanh'] ?>">Sửa</a> |
+                                <a href="?delete=<?= $row['maDiemDanh'] ?>"
+                                    onclick="return confirm('Bạn có chắc muốn xóa không?')">Xóa</a>
+                            </td>
+                        </tr>
+                    <?php } ?>
+                </tbody>
+            </table>
+        </div>
     </div>
-
     <?php
     // ============ FORM SỬA ============
     if (isset($_GET['edit'])) {
