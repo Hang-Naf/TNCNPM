@@ -1,76 +1,76 @@
 /* ===== BỐ CỤC CHUNG ===== */
 body {
-  margin: 0;
-  font-family: "Segoe UI", sans-serif;
-  background: white;
-  display: flex;
-  height: 100vh;
+    margin: 0;
+    font-family: "Segoe UI", sans-serif;
+    background: white;
+    display: flex;
+    height: 100vh;
 }
 
 .sidebar {
-  width: 260px;
-  height: 100vh;
-  background: #0b1548;
-  color: white;
-  flex-shrink: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  overflow-y: auto;
+    width: 260px;
+    height: 100vh;
+    background: #0b1548;
+    color: white;
+    flex-shrink: 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    overflow-y: auto;
 }
 
 .main-content {
-  margin-left: 260px; /* đẩy phần nội dung ra khỏi sidebar */
-  width: calc(100% - 260px);
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+    margin-left: 260px;
+    width: calc(100% - 260px);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
 }
 
 /* ===== HEADER ===== */
 .header {
-  height: 65px;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 25px;
-  border-bottom: 1px solid #e2e2e2;
-  position: sticky;
-  top: 0;
-  z-index: 0;
+    height: 65px;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 25px;
+    border-bottom: 1px solid #e2e2e2;
+    position: sticky;
+    top: 0;
+    /* z-index: 0; */
 }
 
 .search-box {
-  display: flex;
-  align-items: center;
-  background: #f3f3f3;
-  border-radius: 8px;
-  padding: 8px 12px;
+    display: flex;
+    align-items: center;
+    background: #f3f3f3;
+    border-radius: 8px;
+    padding: 8px 12px;
 }
 
 .search-box i {
-  color: #666;
-  margin-right: 8px;
+    color: #666;
+    margin-right: 8px;
 }
 
 .search-box input {
-  border: none;
-  outline: none;
-  background: transparent;
-  width: 250px;
+    border: none;
+    outline: none;
+    background: transparent;
+    width: 500px;
 }
 
 .header .right {
-  display: flex;
-  align-items: center;
-  gap: 20px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
 }
 
 .header .right i {
-  font-size: 18px;
-  color: #0b1548;
-  cursor: pointer;
+    font-size: 18px;
+    color: #0b1548;
+    cursor: pointer;
 }
 
 .user-info {
@@ -127,9 +127,9 @@ body {
 
 /* ===== CONTENT ===== */
 .content {
-  flex: 1;
-  padding: 20px;
-  overflow-y: auto;
+    flex: 1;
+    padding: 20px;
+    overflow-y: auto;
 }
 
 .notification-area {
@@ -200,20 +200,25 @@ body {
     padding: 10px;
     display: none;
 }
+
 .notification-dropdown ul li:hover {
     background: #f5f7fa;
 }
+
 .notification-dropdown ul li strong {
     display: block;
     font-size: 14px;
 }
+
 .notification-dropdown ul li small {
     color: #888;
     font-size: 12px;
 }
+
 .notification-dropdown.show {
     display: block !important;
 }
+
 .noti-badge {
     position: absolute;
     top: -5px;
@@ -224,9 +229,15 @@ body {
     font-weight: bold;
     border-radius: 50%;
     padding: 3px 6px;
-    display: none; /* Ẩn khi = 0 */
+    display: none;
+    /* Ẩn khi = 0 */
 }
+
 .notification-area {
     position: relative;
     display: inline-block;
+}
+
+.hide-column{
+    display: none;
 }

@@ -171,52 +171,41 @@ $vaiTro = $_SESSION["vaiTro"];
             <div class="menu-section">
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
-                    <li class="active" onclick="window.location.href='index.php'"><i class="fa-solid fa-house"></i>
-                        Dashboard</li>
-                    <li onclick="window.location.href='pages/qlgiaovien.php'"><i
-                            class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i>
-                        Học sinh</li>
-                    <li onclick="window.location.href='pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học
-                    </li>
+                    <li class="active" onclick="window.location.href='index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
+                    <li onclick="window.location.href='pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
+                    <li onclick="window.location.href='pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
+                    <li onclick="window.location.href='pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học
-                    </li>
-                    <li onclick="window.location.href='pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài
-                        liệu</li>
+                    <li onclick="window.location.href='pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
+                    <li onclick="window.location.href='pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li onclick="window.location.href='pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên
-                        cần</li>
-                    <li onclick="window.location.href='pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i>
-                        Điểm số</li>
+                    <li onclick="window.location.href='pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li onclick="window.location.href='pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li onclick="window.location.href='pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý tài khoản</div>
                 <ul>
-                    <li onclick="window.location.href='pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i>
-                        Phân công giảng dạy</li>
-                    <li onclick="window.location.href='pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i>
-                        Phân quyền</li>
+                    <li onclick="window.location.href='pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
+                    <li onclick="window.location.href='pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
                 </ul>
             </div>
         </nav>
@@ -333,7 +322,7 @@ $vaiTro = $_SESSION["vaiTro"];
         </div>
     </div>
     <script>
-        document.getElementById("bellIcon").addEventListener("click", function () {
+        document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu
             dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
@@ -394,12 +383,12 @@ $vaiTro = $_SESSION["vaiTro"];
 
             function markAsRead(maThongBao, element) {
                 fetch("update_trangthai.php", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/x-www-form-urlencoded"
-                    },
-                    body: "maThongBao=" + encodeURIComponent(maThongBao)
-                })
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: "maThongBao=" + encodeURIComponent(maThongBao)
+                    })
                     .then(res => res.text())
                     .then(response => {
                         if (response === "OK") {
@@ -419,7 +408,7 @@ $vaiTro = $_SESSION["vaiTro"];
         });
 
         // Ẩn dropdown khi click ra ngoài
-        document.addEventListener("click", function (e) {
+        document.addEventListener("click", function(e) {
             const dropdown = document.getElementById("notificationDropdown");
             const bell = document.getElementById("bellIcon");
             if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
@@ -433,7 +422,7 @@ $vaiTro = $_SESSION["vaiTro"];
         }
 
         // Đóng menu nếu click ra ngoài
-        document.addEventListener("click", function (e) {
+        document.addEventListener("click", function(e) {
             const menu = document.getElementById("userMenu");
             const userInfo = document.querySelector(".user-info");
             if (!userInfo.contains(e.target) && !menu.contains(e.target)) {

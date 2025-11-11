@@ -7,7 +7,8 @@
     font-family: 'Segoe UI', sans-serif;
 }
 
-.form {
+form {
+    padding: 0 100px;
     display: flex;
     flex-direction: column;
     gap: 20px;
@@ -17,6 +18,12 @@
     flex: 1;
 }
 
+.form-group-horizontal {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
 .row {
     margin-bottom: 20px;
     width: 100%;
@@ -24,13 +31,29 @@
     gap: 20px;
 }
 
+.row-right{
+    display: flex;
+    justify-content: right;
+}
+
 label {
+    width: 150px;
     display: block;
     margin-bottom: 6px;
+    margin-right: 20px;
     font-weight: 500;
 }
 
-input:not(.search),
+.label-width-auto{
+    white-space: nowrap;
+    width: auto;
+    display: block;
+    margin-bottom: 6px;
+    margin-right: 20px;
+    font-weight: 500;
+}
+
+input:not(.searchb, [type="radio"]),
 select {
     border: 1px solid black;
     width: 100%;
@@ -42,6 +65,7 @@ select {
 .radio-group input[type="radio"] {
     width: 16px;
     height: 16px;
+    margin-right: 30px;
     cursor: pointer;
 }
 
@@ -82,4 +106,5 @@ select {
 textarea {
     width: 99%;
     height: 200%;
+    border-radius: 6px;
 }
