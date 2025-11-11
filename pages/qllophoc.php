@@ -218,6 +218,10 @@ $giaovien_rs = $conn->query("
                         <h4>Thông báo</h4>
                         <ul id="notificationList"></ul>
                         <div class="no-noti" id="noNoti">Không có thông báo mới</div>
+                        <div id="xemChiTietThongBao"
+                            style="text-align:center;padding:10px;background:#f0f2f6;cursor:pointer;font-size:13px;font-weight:600;color:#0b3364;border-top:1px solid #ddd;">
+                            🔍 Xem chi tiết thông báo
+                        </div>
                     </div>
                 </div>
 
@@ -526,6 +530,11 @@ $giaovien_rs = $conn->query("
             if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
                 menu.style.display = "none";
             }
+        });
+
+        // Khi click vào "Xem chi tiết thông báo"
+        document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
+            window.location.href = "../pages/qlthongbao.php";
         });
         
         // Xử lý đăng xuất

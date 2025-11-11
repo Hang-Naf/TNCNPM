@@ -28,14 +28,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $maHS = $_POST["maHS"];
     $maMon = $_POST["maMonHoc"];
     $diem = [
-        'mieng_hk1' => $_POST['mieng_hk1'] ?? null,
-        '1tiet_hk1' => $_POST['1tiet_hk1'] ?? null,
-        'thi_gk_hk1' => $_POST['thi_gk_hk1'] ?? null,
-        'thi_ck_hk1' => $_POST['thi_ck_hk1'] ?? null,
-        'mieng_hk2' => $_POST['mieng_hk2'] ?? null,
-        '1tiet_hk2' => $_POST['1tiet_hk2'] ?? null,
-        'thi_gk_hk2' => $_POST['thi_gk_hk2'] ?? null,
-        'thi_ck_hk2' => $_POST['thi_ck_hk2'] ?? null,
+        'hk1_mieng' => $_POST['hk1_mieng'] ?? null,
+        'hk1_1tiet' => $_POST['hk1_1tiet'] ?? null,
+        'hk1_thiGK' => $_POST['hk1_thiGK'] ?? null,
+        'hk1_thiCK' => $_POST['hk1_thiCK'] ?? null,
+        'hk2_mieng' => $_POST['hk2_mieng'] ?? null,
+        'hk2_1tiet' => $_POST['hk2_1tiet'] ?? null,
+        'hk2_thiGK' => $_POST['hk2_thiGK'] ?? null,
+        'hk2_thiCK' => $_POST['hk2_thiCK'] ?? null,
     ];
 
     foreach ($diem as $loai => $value) {
@@ -43,7 +43,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             $sql = "INSERT INTO diemso (maHS, maMonHoc, loaiDiem, diem, ngayCapNhat) VALUES (?, ?, ?, ?, NOW())";
             $stmt = $conn->prepare($sql);
             $stmt->bind_param("iisd", $maHS, $maMon, $loai, $value);
-            $stmt->execute();
+            if (!$stmt->execute()) {
+                echo "Lỗi SQL: " . $stmt->error;
+            }
         }
     }
 
@@ -176,19 +178,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <div class="grid">
                     <div>
                         <label>Điểm miệng:</label>
-                        <input type="number" step="0.1" name="mieng_hk1">
+                        <input type="number" step="0.1" name="hk1_mieng">
                     </div>
                     <div>
                         <label>Điểm 1 tiết:</label>
-                        <input type="number" step="0.1" name="1tiet_hk1">
+                        <input type="number" step="0.1" name="hk1_1tiet">
                     </div>
                     <div>
                         <label>Điểm thi GK:</label>
-                        <input type="number" step="0.1" name="thi_gk_hk1">
+                        <input type="number" step="0.1" name="hk1_thiGK">
                     </div>
                     <div>
                         <label>Điểm thi CK:</label>
-                        <input type="number" step="0.1" name="thi_ck_hk1">
+                        <input type="number" step="0.1" name="hk1_thiCK">
                     </div>
                 </div>
             </div>
@@ -198,19 +200,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <div class="grid">
                     <div>
                         <label>Điểm miệng:</label>
-                        <input type="number" step="0.1" name="mieng_hk2">
+                        <input type="number" step="0.1" name="hk2_mieng">
                     </div>
                     <div>
                         <label>Điểm 1 tiết:</label>
-                        <input type="number" step="0.1" name="1tiet_hk2">
+                        <input type="number" step="0.1" name="hk2_1tiet">
                     </div>
                     <div>
                         <label>Điểm thi GK:</label>
-                        <input type="number" step="0.1" name="thi_gk_hk2">
+                        <input type="number" step="0.1" name="hk2_thiGK">
                     </div>
                     <div>
                         <label>Điểm thi CK:</label>
-                        <input type="number" step="0.1" name="thi_ck_hk2">
+                        <input type="number" step="0.1" name="hk2_thiCK">
                     </div>
                 </div>
             </div>
