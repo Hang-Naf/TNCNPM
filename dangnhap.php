@@ -75,44 +75,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             justify-content: center;
             align-items: center;
             height: 100vh;
-            overflow-x: hidden;
-            transition: transform 0.6s ease-in-out;
-        }
-
-        .fade-in {
-            opacity: 0;
-            transform: translateY(30px);
-            animation: fadeInUp 1s ease forwards;
-        }
-
-        .slide-in-left {
-            opacity: 0;
-            transform: translateX(100px);
-            animation: slideInLeft 1s ease forwards;
-        }
-
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes slideInLeft {
-            from {
-                opacity: 0;
-                transform: translateX(100px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
         }
 
         .container {
@@ -231,10 +193,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
     <div class="container">
+        <div class="left">
+            <h2 style="font-size: 48px;">Hello, Welcome!</h2>
+        </div>
         <div class="right">
             <div class="right-container">
                 <h2>Đăng Nhập</h2>
-                <?php if (!empty($message)) echo "<div class='message'>$message</div>"; ?>
+                <?php if (!empty($message))
+                    echo "<div class='message'>$message</div>"; ?>
                 <form method="POST">
                     <div class="form-group">
                         <input type="text" name="username" placeholder="Tên Đăng nhập">
