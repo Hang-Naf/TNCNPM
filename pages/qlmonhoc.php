@@ -96,12 +96,19 @@ $gv_rs = $conn->query("
         }
 
         .status.active {
-            color: green;
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 500;
         }
 
         .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
             color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
         }
 
         .actions i {
@@ -169,8 +176,6 @@ $gv_rs = $conn->query("
                 <ul>
                     <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông
                         báo</li>
-                    <li onclick="window.location.href='../pages/qltsukien.php'"><i
-                            class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -190,7 +195,7 @@ $gv_rs = $conn->query("
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="search">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -274,7 +279,24 @@ $gv_rs = $conn->query("
                     <form id="addForm" class="student-form">
                         <input type="hidden" name="action" value="add">
                         <input type="hidden" name="maMonHoc">
-
+                        <div class="row">
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Năm học:</label>
+                                <input type="text" name="namHoc" placeholder="VD: 2024-2025" required>
+                            </div>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Học kỳ:</label>
+                                <select name="hocKy">
+                                    <option value="HK1">Học kỳ 1</option>
+                                    <option value="HK2">Học kỳ 2</option>
+                                    <option value="Hè">Học kỳ Hè</option>
+                                </select>
+                            </div>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Trọng số:</label>
+                                <input type="number" name="trongSo" placeholder="Trọng số" step="0.1" required>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="form-group">
                                 <label>Tên môn:</label>
@@ -294,28 +316,6 @@ $gv_rs = $conn->query("
                                 </select>
                             </div>
                         </div>
-
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Năm học:</label>
-                                <input type="text" name="namHoc" placeholder="VD: 2024-2025" required>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Học kỳ:</label>
-                                <select name="hocKy">
-                                    <option value="HK1">Học kỳ 1</option>
-                                    <option value="HK2">Học kỳ 2</option>
-                                    <option value="Hè">Học kỳ Hè</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label>Trọng số:</label>
-                                <input type="number" name="trongSo" placeholder="Trọng số" step="0.1" required>
-                            </div>
-                        </div>
-
                         <div class="row">
                             <div class="form-group">
                                 <label>Mô tả:</label>
@@ -323,20 +323,20 @@ $gv_rs = $conn->query("
                             </div>
                             <div class="form-group">
                                 <label>Trạng thái:</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="trangThai" value="Hoạt động"> Đang hoạt
+                                <div class="form-group-horizontal">
+                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="● Active"> Đang hoạt
                                         động</label>
-                                    <label><input type="radio" name="trangThai" value="Ngưng"> Tạm dừng</label>
+                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="● Inctive"> Tạm dừng</label>
                                 </div>
                             </div>
                         </div>
 
                         <div class="buttons">
+                            <button type="button" class="btn-secondary"
+                                onclick="window.location.href='qlmonhoc.php'">Hủy</button>
                             <button type="submit" class="btn-primary" id="submitBtn">
                                 <i class="fa-solid fa-plus"></i> Thêm mới
                             </button>
-                            <button type="button" class="btn-secondary"
-                                onclick="window.location.href='qlmonhoc.php'">Hủy</button>
                         </div>
                     </form>
                 </div>

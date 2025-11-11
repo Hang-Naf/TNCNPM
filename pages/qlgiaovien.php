@@ -71,7 +71,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             display: flex;
             align-items: center;
             gap: 6px;
-            width: 150px;
         }
 
         table {
@@ -92,12 +91,19 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         }
 
         .status.active {
-            color: green;
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 500;
         }
 
         .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
             color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
         }
 
         .actions i {
@@ -161,8 +167,6 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <ul>
                     <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông
                         báo</li>
-                    <li onclick="window.location.href='../pages/qlsukien.php'"><i class="fa-solid fa-calendar-days"></i>
-                        Sự kiện</li>
                 </ul>
             </div>
 
@@ -182,7 +186,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="search">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -240,7 +244,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                                 <td><?= htmlspecialchars($row['email']) ?></td>
                                 <td><?= htmlspecialchars($row['boMon']) ?></td>
                                 <td><span class="status <?= $row['trangThai'] === 'active' ? 'active' : 'inactive' ?>">
-                                        <?= $row['trangThai'] === 'active' ? 'Hoạt động' : 'Tạm dừng' ?>
+                                        <?= $row['trangThai'] === 'active' ? '● Active' : '● Inactive' ?>
                                     </span></td>
                                 <td class="actions">
                                     <i class="fa-solid fa-pen edit-btn"></i>
@@ -263,7 +267,28 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                     <form id="addForm" class="form">
                         <input type="hidden" name="action" value="add" id="formAction">
                         <input type="hidden" name="userId" id="userId">
-
+                        <div class="row">
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Năm học:</label>
+                                <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học" readonly>
+                            </div>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Học kỳ:</label>
+                                <select name="hocKy" id="addHocKy" readonly>
+                                    <option value="">-- Học kỳ tự động --</option>
+                                </select>
+                            </div>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Bộ môn:</label>
+                                <select name="boMon" required>
+                                    <?php foreach ($monhoc_list as $mh): ?>
+                                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>">
+                                            <?= htmlspecialchars($mh['tenMonHoc']) ?>
+                                        </option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
                         <div class="row">
                             <div class="form-group">
                                 <label>Họ và Tên:</label>
@@ -273,13 +298,12 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                                 <label>Email:</label>
                                 <input type="email" name="email">
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="form-group">
                                 <label>Số Điện Thoại:</label>
                                 <input type="text" name="sdt">
                             </div>
-                        </div>
-
-                        <div class="row">
                             <div class="form-group">
                                 <label>Giới tính:</label>
                                 <select name="gioiTinh">
@@ -288,52 +312,30 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Bộ môn:</label>
-                                <select name="boMon" required>
-                                    <?php foreach ($monhoc_list as $mh): ?>
-                                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>">
-                                            <?= htmlspecialchars($mh['tenMonHoc']) ?>
-                                        </option>
-                                    <?php endforeach; ?>
-                                </select>
-                            </div>
-                            <div class="form-group">
                                 <label>Trình độ:</label>
                                 <input type="text" name="trinhDo" placeholder="Trình độ (VD: Cử nhân, Thạc sĩ)">
                             </div>
                         </div>
-
                         <div class="row">
                             <div class="form-group">
                                 <label>Phòng ban:</label>
                                 <input type="text" name="phongBan" placeholder="Phòng ban (VD: Tổ Toán)">
-
                             </div>
-                            <div class="form-group">
-                                <label>Năm học:</label>
-                                <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học" readonly>
-                            </div>
-                            <div class="form-group">
-                                <label>Học kỳ:</label>
-                                <select name="hocKy" id="addHocKy" readonly>
-                                    <option value="">-- Học kỳ tự động --</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="row">
                             <div class="form-group">
                                 <label>Trạng thái:</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="trangThai" value="active"> Đang hoạt động</label>
-                                    <label><input type="radio" name="trangThai" value="inactive"> Tạm dừng</label>
+                                <div class="form-group-horizontal">
+                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="active"> Đang hoạt động</label>
+                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="inactive"> Tạm dừng</label>
                                 </div>
                             </div>
-                            <div class="popup-buttons">
+                        </div>
+                        <div class="row-right">
+                            <div class="buttons">
                                 <button type="button" class="btn-secondary"
-                                    onclick="window.location.href='qlgiaovien.php'">Quay
-                                    lại</button>
-                                <button type="submit" class="btn-primary" id="submitButton">Thêm giáo viên</button>
+                                    onclick="window.location.href='qlgiaovien.php'">Hủy</button>
+                                <button type="submit" class="btn-primary" id="submitButton">
+                                    <i class="fa-solid fa-plus"></i> Thêm mới
+                                </button>
                             </div>
                         </div>
                     </form>

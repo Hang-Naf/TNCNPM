@@ -129,12 +129,19 @@ $result = $conn->query($sql);
         }
 
         .status.active {
-            color: green;
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 500;
         }
 
         .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
             color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
         }
 
         .actions i {
@@ -217,8 +224,6 @@ $result = $conn->query($sql);
                 <ul>
                     <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông
                         báo</li>
-                    <li onclick="window.location.href='../pages/qltsukien.php'"><i
-                            class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -238,7 +243,7 @@ $result = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="search">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -286,7 +291,7 @@ $result = $conn->query($sql);
                         <th>Giới tính</th>
                         <th class="hide-column">Ngày sinh</th>
                         <th>Vai trò</th>
-                        <th>Thay đổi vai trò</th>
+                        <th class="hide-column">Thay đổi vai trò</th>
                         <th>Hành động</th>
                     </tr>
                 </thead>
@@ -301,7 +306,7 @@ $result = $conn->query($sql);
                             <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
                             <td class="hide-column"><?= $row['ngaySinh'] ?></td>
                             <td><?= $row['vaiTro'] ?></td>
-                            <td>
+                            <td class="hide-column">
                                 <form method="POST" style="display:inline;">
                                     <input type="hidden" name="userID" value="<?= $row['userID'] ?>">
                                     <select name="vaiTro">
@@ -365,7 +370,13 @@ $result = $conn->query($sql);
                                 <td><input type="radio" name="phanQuyen"></td>
                             </tr>
                         </table>
-                        <button type="submit" name="add">Thêm người dùng</button>
+                        <div class="buttons">
+                            <button type="button" class="btn-secondary"
+                                onclick="window.location.href='qlphanquyen.php'">Hủy</button>
+                            <button type="submit" class="btn-primary" id="submitBtn">
+                                <i class="fa-solid fa-plus"></i> Thêm mới
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>

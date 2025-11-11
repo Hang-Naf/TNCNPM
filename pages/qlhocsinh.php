@@ -66,7 +66,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             display: flex;
             align-items: center;
             gap: 6px;
-            width: 150px;
         }
 
         table {
@@ -87,12 +86,19 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         }
 
         .status.active {
-            color: green;
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 500;
         }
 
         .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
             color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
         }
 
         .actions i {
@@ -159,7 +165,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
                     <li><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -179,7 +184,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="search">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -244,7 +249,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                                 <td><?= htmlspecialchars($row['hocKy']) ?></td>
                                 <td>
                                     <span class="status <?= $row['trangThai'] === 'active' ? 'active' : 'inactive' ?>">
-                                        <?= $row['trangThai'] === 'active' ? 'Hoạt động' : 'Tạm dừng' ?>
+                                        <?= $row['trangThai'] === 'active' ? '● Active' : '● Inactive' ?>
                                     </span>
                                 </td>
                                 <td class="actions">
@@ -268,6 +273,23 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                     <form id="addForm" class="student-form">
                         <input type="hidden" name="action" value="add" id="formAction">
                         <div class="row">
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Năm học:</label>
+                                <input type="text" name="namHoc" id="addNamHoc" placeholder="VD: 2022-2025" required
+                                    readonly>
+                            </div>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Học kỳ:</label>
+                                <select name="hocKy" id="addHocKy" readonly>
+                                    <option value="">-- Học kỳ tự động --</option>
+                                </select>
+                            </div>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Mã học sinh:</label>
+                                <input type="text">
+                            </div>
+                        </div>
+                        <div class="row">
                             <div class="form-group">
                                 <label>Họ và Tên:</label>
                                 <input type="text" name="hoVaTen" id="HoTen" required>
@@ -276,12 +298,12 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                                 <label>Email:</label>
                                 <input type="email" name="email" id="Email" required>
                             </div>
+                        </div>
+                        <div class="row">
                             <div class="form-group">
                                 <label>Số Điện Thoại:</label>
                                 <input type="text" name="sdt" id="Sdt">
                             </div>
-                        </div>
-                        <div class="row">
                             <div class="form-group">
                                 <label>Giới tính:</label>
                                 <select name="gioiTinh" id="GioiTinh">
@@ -290,6 +312,14 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                                     <option value="Nữ">Nữ</option>
                                 </select>
                             </div>
+                            <div class="form-group">
+                                <label>Chức vụ:</label>
+                                <select>
+                                    <option value=""></option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
                             <div class="form-group">
                                 <label>Lớp học:</label>
                                 <select name="lopHocPhuTrach" required>
@@ -302,32 +332,20 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                                 </select>
                             </div>
                             <div class="form-group">
-                                <label>Năm học:</label>
-                                <input type="text" name="namHoc" id="addNamHoc" placeholder="VD: 2022-2025" required
-                                    readonly>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="form-group">
-                                <label>Học kỳ:</label>
-                                <select name="hocKy" id="addHocKy" readonly>
-                                    <option value="">-- Học kỳ tự động --</option>
-                                </select>
-                            </div>
-                            <div class="form-group">
                                 <label>Trạng thái:</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="trangThai" checked> Đang học</label>
-                                    <label><input type="radio" name="trangThai"> Đã nghỉ</label>
+                                <div class="form-group-horizontal">
+                                    <label><input type="radio" name="trangThai" value="active" checked> Đang học</label>
+                                    <label><input type="radio" name="trangThai" value="inactive"> Đã nghỉ</label>
                                 </div>
+
                             </div>
                         </div>
                         <div class="buttons">
+                            <button type="button" class="btn-secondary"
+                                onclick="window.location.href='qlhocsinh.php'">Hủy</button>
                             <button type="submit" class="btn-primary" id="submitButton">
                                 <i class="fa-solid fa-plus"></i> Thêm mới
                             </button>
-                            <button type="button" class="btn-secondary"
-                                onclick="window.location.href='qlhocsinh.php'">Hủy</button>
                         </div>
                     </form>
                 </div>

@@ -120,12 +120,19 @@ $result = $conn->query($sql);
         }
 
         .status.active {
-            color: green;
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 500;
         }
 
         .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
             color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
         }
 
         .actions i {
@@ -196,8 +203,7 @@ $result = $conn->query($sql);
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -217,7 +223,7 @@ $result = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="search">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -294,8 +300,8 @@ $result = $conn->query($sql);
                         <input type="hidden" name="action" value="add" id="formAction">
                         <input type="hidden" name="maTL" id="maTL">
                         <div class="row">
-                            <div class="form-group">
-                                <label>Môn học:</label>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Môn học:</label>
                                 <select name="maMonHoc" required>
                                     <option value="">-- Chọn môn học --</option>
                                     <?php while ($row = $monhoc->fetch_assoc()) { ?>
@@ -304,12 +310,12 @@ $result = $conn->query($sql);
                                     <?php } ?>
                                 </select>
                             </div>
-                            <div class="form-group">
-                                <label>Tiêu đề:</label>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Tiêu đề:</label>
                                 <input type="text" name="tieuDe" required>
                             </div>
-                            <div class="form-group">
-                                <label>Giáo viên tải lên:</label>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Giáo viên tải lên:</label>
                                 <select name="maGV" required>
                                     <option hidden></option>
                                     <?php while ($row = $giaovien->fetch_assoc()) { ?>
@@ -333,11 +339,11 @@ $result = $conn->query($sql);
                             </div>
                         </div>
                         <div class="buttons">
+                            <button type="button" class="btn-secondary"
+                                onclick="window.location.href='qltailieu.php'">Hủy</button>
                             <button type="submit" class="btn-primary" name="add">
                                 <i class="fa-solid fa-plus"></i> Thêm mới
                             </button>
-                            <button type="button" class="btn-secondary"
-                                onclick="window.location.href='qltailieu.php'">Hủy</button>
                         </div>
                     </form>
                 </div>

@@ -102,12 +102,19 @@ $giaoviens = $conn->query("
         }
 
         .status.active {
-            color: green;
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
             font-weight: 500;
         }
 
         .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
             color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
         }
 
         .actions i {
@@ -169,8 +176,8 @@ $giaoviens = $conn->query("
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông
+                        báo</li>
                 </ul>
             </div>
 
@@ -190,7 +197,7 @@ $giaoviens = $conn->query("
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="search">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -266,7 +273,7 @@ $giaoviens = $conn->query("
                     <form id="addForm">
                         <input type="hidden" name="action" value="add" id="formAction">
                         <div class="row">
-                            <div class="form-group">
+                            <div class="form-group-horizontal">
                                 <label>Lớp:</label>
                                 <select name="maLop" required>
                                     <option value="">--Chọn lớp--</option>
@@ -277,7 +284,9 @@ $giaoviens = $conn->query("
                                     <?php endwhile; ?>
                                 </select>
                             </div>
-                            <div class="form-group">
+                        </div>
+                        <div class="row">
+                            <div class="form-group-horizontal">
                                 <label>Môn học:</label>
                                 <select name="maMonHoc" id="addMon" required>
                                     <option value="">--Chọn môn học--</option>
@@ -290,7 +299,9 @@ $giaoviens = $conn->query("
                                     <?php endwhile; ?>
                                 </select>
                             </div>
-                            <div class="form-group">
+                        </div>
+                        <div class="row">
+                            <div class="form-group-horizontal">
                                 <label>Giáo viên:</label>
                                 <select name="maGV" id="addGV">
                                     <option value="">--Chọn giáo viên phụ trách--</option>
@@ -304,12 +315,12 @@ $giaoviens = $conn->query("
                                 </select>
                             </div>
                         </div>
-
-
-
-                        <div class="popup-buttons">
-                            <button type="button" class="btn-secondary" onclick="closePopup('addPopup')">Hủy</button>
-                            <button type="submit" class="btn-primary">Thêm</button>
+                        <div class="buttons">
+                            <button type="button" class="btn-secondary"
+                                onclick="window.location.href='phanconggiangday.php'">Hủy</button>
+                            <button type="submit" class="btn-primary" name="add">
+                                <i class="fa-solid fa-plus"></i> Thêm mới
+                            </button>
                         </div>
                     </form>
                 </div>

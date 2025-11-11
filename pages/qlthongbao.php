@@ -49,6 +49,7 @@ if (!$result) {
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
+    <link rel="stylesheet" href="../form.css">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -56,12 +57,8 @@ if (!$result) {
             margin: 0;
         }
 
-        .header {
-            padding: 10px 25px;
-        }
-
-        h1 {
-            margin: 20px 0;
+        #main-container {
+            padding: 20px;
         }
 
         .add-btn {
@@ -74,7 +71,6 @@ if (!$result) {
             display: flex;
             align-items: center;
             gap: 6px;
-            width: 180px;
         }
 
         table {
@@ -88,75 +84,43 @@ if (!$result) {
         td {
             padding: 10px;
             border-bottom: 1px solid #eee;
-            text-align: left;
         }
 
         th {
             background: #f1f3f9;
         }
 
+        .status.active {
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
+            color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
         .actions i {
             cursor: pointer;
             margin-right: 10px;
-            color: #333;
         }
 
-        .actions i:hover {
-            color: #0b1e6b;
+        td:not(.no-center) {
+            text-align: center;
         }
 
-        .popup-bg {
+        #addPopup {
             display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
         }
 
-        .popup {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            width: 500px;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-
-        .popup input,
-        .popup textarea {
-            width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        .popup-buttons {
-            text-align: right;
-            margin-top: 10px;
-        }
-
-        .send-btn,
-        .save-btn {
-            background: #0b1e6b;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-        }
-
-        .cancel-btn {
-            background: #ccc;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
+        .hide-column {
+            display: none;
         }
     </style>
 </head>
@@ -173,41 +137,50 @@ if (!$result) {
                 <div class="menu-title">Quản lý chung</div>
                 <ul>
                     <li onclick="window.location.href='../index.php'"><i class="fa-solid fa-house"></i> Dashboard</li>
-                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
-                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pages/qlgiaovien.php'"><i
+                            class="fa-solid fa-chalkboard-user"></i> Giáo viên</li>
+                    <li onclick="window.location.href='../pages/qlhocsinh.php'"><i
+                            class="fa-solid fa-user-graduate"></i> Học sinh</li>
+                    <li onclick="window.location.href='../pages/qllophoc.php'"><i class="fa-solid fa-school"></i> Lớp
+                        học</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học
+                    </li>
+                    <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i>
+                        Tài liệu</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
-                    <li onclick="window.location.href='../pages/qldiemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
+                    <li onclick="window.location.href='../pages/qlchuyencan.php'"><i class="fa-solid fa-check"></i>
+                        Chuyên cần</li>
+                    <li onclick="window.location.href='../pages/qldiemso.php'"><i
+                            class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li class="active" onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li onclick="window.location.href='../pages/qlsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
+                    <li class="active" onclick="window.location.href='../pages/qlthongbao.php'"><i
+                            class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý tài khoản</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
-                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
+                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i>
+                        Phân công giảng dạy</li>
+                    <li onclick="window.location.href='../pages/qlphanquyen.php'"><i
+                            class="fa-solid fa-user-shield"></i> Phân quyền</li>
                 </ul>
             </div>
         </nav>
@@ -218,7 +191,7 @@ if (!$result) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -246,116 +219,102 @@ if (!$result) {
                 </div>
             </div>
         </header>
-        <h1>QUẢN LÝ THÔNG BÁO</h1>
+        <div id="main-container">
 
-        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Thông Báo</button>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>MÃ TB</th>
-                    <th>TIÊU ĐỀ</th>
-                    <th>NGƯỜI GỬI</th>
-                    <th>NGÀY GỬI</th>
-                    <th>TỔNG NGƯỜI NHẬN</th>
-                    <th>ĐÃ ĐỌC</th>
-                    <th>TÁC VỤ</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($result->num_rows > 0):
-                    $stt = 1;
-                    while ($row = $result->fetch_assoc()): ?>
-                        <tr>
-                            <td><?= $stt++ ?></td>
-                            <td><?= htmlspecialchars($row['maThongBao']) ?></td>
-                            <td><?= htmlspecialchars($row['tieuDe']) ?></td>
-                            <td><?= htmlspecialchars($row['nguoiGui']) ?></td>
-                            <td><?= htmlspecialchars($row['ngayGui']) ?></td>
-                            <td><?= htmlspecialchars($row['tongNguoiNhan']) ?></td>
-                            <td><?= htmlspecialchars($row['soDaDoc']) ?></td>
-                            <td class="actions">
-                                <i class="fa-solid fa-eye" onclick="showDetail(
+            <h1>QUẢN LÝ THÔNG BÁO</h1>
+
+            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Thông Báo</button>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>MÃ TB</th>
+                        <th>TIÊU ĐỀ</th>
+                        <th>NGƯỜI GỬI</th>
+                        <th>NGÀY GỬI</th>
+                        <th>TỔNG NGƯỜI NHẬN</th>
+                        <th>ĐÃ ĐỌC</th>
+                        <th>TÁC VỤ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if ($result->num_rows > 0):
+                        $stt = 1;
+                        while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                                <td><?= $stt++ ?></td>
+                                <td><?= htmlspecialchars($row['maThongBao']) ?></td>
+                                <td><?= htmlspecialchars($row['tieuDe']) ?></td>
+                                <td><?= htmlspecialchars($row['nguoiGui']) ?></td>
+                                <td><?= htmlspecialchars($row['ngayGui']) ?></td>
+                                <td><?= htmlspecialchars($row['tongNguoiNhan']) ?></td>
+                                <td><?= htmlspecialchars($row['soDaDoc']) ?></td>
+                                <td class="actions">
+                                    <i class="fa-solid fa-eye" onclick="showDetail(
                                     '<?= htmlspecialchars(addslashes($row['maThongBao'])) ?>',
                                     '<?= htmlspecialchars(addslashes($row['tieuDe'])) ?>',
                                     '<?= htmlspecialchars(addslashes($row['noiDung'])) ?>',
                                     '<?= htmlspecialchars(addslashes($row['nguoiGui'])) ?>',
                                     '<?= htmlspecialchars(addslashes($row['ngayGui'])) ?>'
                                 )"></i>
-                                <i class="fa-solid fa-pen-to-square" onclick="showEditPopup(
+                                    <i class="fa-solid fa-pen-to-square" onclick="showEditPopup(
                                     <?= $row['maThongBao'] ?>,
                                     '<?= htmlspecialchars(addslashes($row['tieuDe'])) ?>',
                                     '<?= htmlspecialchars(addslashes($row['noiDung'])) ?>'
                                 )"></i>
-                                <i class="fa-solid fa-trash" onclick="xoaThongBao(<?= $row['maThongBao'] ?>)"></i>
-                            </td>
+                                    <i class="fa-solid fa-trash" onclick="xoaThongBao(<?= $row['maThongBao'] ?>)"></i>
+                                </td>
+                            </tr>
+                        <?php endwhile;
+                    else: ?>
+                        <tr>
+                            <td colspan="8" style="text-align:center;">Không có thông báo nào</td>
                         </tr>
-                    <?php endwhile;
-                else: ?>
-                    <tr>
-                        <td colspan="8" style="text-align:center;">Không có thông báo nào</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-    </div>
-
-    <!-- Popup: Thêm -->
-    <div class="popup-bg" id="addPopup">
-        <div class="popup">
-            <h3>Thêm thông báo</h3>
-            <form id="addForm">
-                <input type="hidden" name="action" value="add">
-                <label>Tiêu đề:</label>
-                <input type="text" name="tieuDe" required>
-                <label>Nội dung:</label>
-                <textarea name="noiDung" rows="5" required></textarea>
-                <div class="popup-buttons">
-                    <button type="button" class="cancel-btn" onclick="closePopup('addPopup')">Hủy</button>
-                    <button type="submit" class="send-btn">Gửi</button>
-                </div>
-            </form>
+                    <?php endif; ?>
+                </tbody>
+            </table>
         </div>
-    </div>
-
-    <!-- Popup: Sửa -->
-    <div class="popup-bg" id="editPopup">
-        <div class="popup">
-            <h3>Sửa thông báo</h3>
-            <form id="editForm">
-                <input type="hidden" name="action" value="update">
-                <input type="hidden" name="maThongBao" id="editMaTB">
-                <label>Tiêu đề:</label>
-                <input type="text" name="tieuDe" id="editTieuDe" required>
-                <label>Nội dung:</label>
-                <textarea name="noiDung" id="editNoiDung" rows="5" required></textarea>
-                <div class="popup-buttons">
-                    <button type="button" class="cancel-btn" onclick="closePopup('editPopup')">Hủy</button>
-                    <button type="submit" class="save-btn">Lưu thay đổi</button>
+        <div class="popup-bg" id="addPopup">
+            <div class="popup">
+                <h2 id="title-h2">THÊM THÔNG BÁO</h2>
+                <div class="them-hocsinh">
+                    <form id="addForm" class="student-form">
+                        <input type="hidden" name="action" value="add">
+                        <div class="row">
+                            <div class="form-group-horizontal">
+                                <label>Tiêu đề:</label>
+                                <input type="text" name="tieuDe" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group-horizontal">
+                                <label>Nội dung:</label>
+                                <textarea name="noiDung" required></textarea>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group-horizontal">
+                                <label>Người nhận:</label>
+                                <input type="radio" name="nguoiNhan" value="Toàn hệ thống"> Toàn hệ thống
+                                <input type="radio" name="nguoiNhan" value="Giáo viên"> Giáo viên
+                                <input type="radio" name="nguoiNhan" value="Học sinh"> Học sinh
+                            </div>
+                        </div>
+                        <div class="row-right">
+                            <div class="popup-buttons">
+                                <button type="button" class="btn-secondary" onclick="window.location.href='qlthongbao.php'">Hủy</button>
+                                <button type="submit" class="btn-primary" id="submitButton">Thêm mới</button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Popup: Xem chi tiết -->
-    <div class="popup-bg" id="detailPopup">
-        <div class="popup">
-            <h3>Chi tiết thông báo</h3>
-            <p><strong>Mã TB:</strong> <span id="dMaTB"></span></p>
-            <p><strong>Tiêu đề:</strong> <span id="dTieuDe"></span></p>
-            <p><strong>Nội dung:</strong></p>
-            <p id="dNoiDung" style="white-space: pre-wrap; background:#f1f3f9; padding:10px; border-radius:6px;"></p>
-            <p><strong>Người gửi:</strong> <span id="dNguoiGui"></span></p>
-            <p><strong>Ngày gửi:</strong> <span id="dNgayGui"></span></p>
-            <div class="popup-buttons">
-                <button type="button" class="cancel-btn" onclick="closePopup('detailPopup')">Đóng</button>
             </div>
         </div>
     </div>
-
     <script>
-        document.getElementById("bellIcon").addEventListener("click", function() {
+        document.getElementById("bellIcon").addEventListener("click", function () {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu
             dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
@@ -416,12 +375,12 @@ if (!$result) {
 
             function markAsRead(maThongBao, element) {
                 fetch("../update_trangthai.php", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: "maThongBao=" + encodeURIComponent(maThongBao)
-                    })
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "maThongBao=" + encodeURIComponent(maThongBao)
+                })
                     .then(res => res.text())
                     .then(response => {
                         if (response === "OK") {
@@ -441,7 +400,7 @@ if (!$result) {
         });
 
         // Ẩn dropdown khi click ra ngoài
-        document.addEventListener("click", function(e) {
+        document.addEventListener("click", function (e) {
             const dropdown = document.getElementById("notificationDropdown");
             const bell = document.getElementById("bellIcon");
             if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
@@ -450,7 +409,8 @@ if (!$result) {
         });
 
         function showAddPopup() {
-            document.getElementById('addPopup').style.display = 'flex';
+            document.getElementById('addPopup').style.display = 'block';
+            document.getElementById('main-container').style.display = 'none';
         }
 
         function closePopup(id) {
@@ -518,7 +478,7 @@ if (!$result) {
         }
 
         // Đóng menu nếu click ra ngoài
-        document.addEventListener("click", function(e) {
+        document.addEventListener("click", function (e) {
             const menu = document.getElementById("userMenu");
             const userInfo = document.querySelector(".user-info");
             if (!userInfo.contains(e.target) && !menu.contains(e.target)) {

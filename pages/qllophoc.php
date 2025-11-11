@@ -77,7 +77,6 @@ $giaovien_rs = $conn->query("
             display: flex;
             align-items: center;
             gap: 6px;
-            width: 150px;
         }
 
         table {
@@ -162,7 +161,6 @@ $giaovien_rs = $conn->query("
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
                     <li><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -182,7 +180,7 @@ $giaovien_rs = $conn->query("
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="search">
+                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
                 </div>
             </div>
 
@@ -263,41 +261,42 @@ $giaovien_rs = $conn->query("
                     <form id="addForm" class="student-form">
                         <input type="hidden" name="action" value="add" id="formAction">
                         <div class="row">
-                            <div class="form-group">
-                                <label>Tên lớp:</label>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Năm học:</label>
                                 <input type="text">
                             </div>
-                            <div class="form-group">
-                                <label>Sĩ số:</label>
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Tên lớp:</label>
                                 <input type="text">
                             </div>
-                            <div class="form-group">
-                                <label>GVCN:</label>
+                            
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">GVCN:</label>
                                 <select name="maGV">
                                 </select>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="form-group">
-                                <label>Năm học:</label>
-                                <input type="text">
+                            <div class="form-group-horizontal">
+                                <label class="label-width-auto">Sĩ số:</label>
+                                <input type="number">
                             </div>
                             <div class="form-group">
                                 <label>Trạng thái:</label>
-                                <div class="radio-group">
-                                    <label><input type="radio" name="status" checked> Đang hoạt động</label>
-                                    <label><input type="radio" name="status"> Tạm dừng</label>
+                                <div class="form-group-horizontal">
+                                    <label class="label-width-auto"><input type="radio" name="status" checked> Đang hoạt động</label>
+                                    <label class="label-width-auto"><input type="radio" name="status"> Tạm dừng</label>
                                 </div>
                             </div>
                         </div>
 
                         <div class="buttons">
+                            <button type="button" class="btn-secondary"
+                                onclick="window.location.href='qllophoc.php'">Hủy</button>
                             <button type="submit" class="btn-primary">
                                 <i class="fa-solid fa-plus"></i> Thêm mới
                             </button>
-                            <button type="button" class="btn-secondary"
-                                onclick="window.location.href='qllophoc.php'">Hủy</button>
                         </div>
                     </form>
                 </div>
