@@ -320,6 +320,11 @@ $result = $stmt3->get_result();
         </header>
         <div class="container">
             <h1>BẢNG ĐIỂM</h1>
+            <div style="margin-bottom:10px;">
+                <button class="btn" onclick="window.location.href='nhapdiem.php'">
+                    <i class="fa-solid fa-keyboard"></i> Nhập điểm mới
+                </button>
+            </div>
             <form method="GET" class="filter-box">
                 <div>
                     <label for="lop"><strong>Lớp:</strong></label><br>
