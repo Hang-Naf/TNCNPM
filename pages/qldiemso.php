@@ -290,28 +290,29 @@ $result = $conn->query($sql);
                             $tb = $dem ? round($tong / $dem, 1) : "-";
                         }
 
+                        $hrefChiTiet = "../pages/chitietdiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
                         $hrefSua = "../pages/suadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
                         $hrefXoa = "../pages/xoadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
 
                         echo "
-                        <tr>
-                            <td>{$stt}</td>
-                            <td>K" . str_pad($row['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
-                            <td>" . htmlspecialchars($row['hoVaTen']) . "</td>
-                            <td>" . htmlspecialchars($row['tenMonHoc'] ?? '-') . "</td>
-                            <td>" . ($row['diemHK1'] ?? '-') . "</td>
-                            <td>" . ($row['diemHK2'] ?? '-') . "</td>
-                            <td><strong>$tb</strong></td>
-                            <td>
-                                <a href='<?= $hrefChiTiet ?>' title='Xem chi tiết'><i class='fa-solid fa-eye' style='color:green;'></i></a>
-                                &nbsp;
-                                <a href='{$hrefSua}' title='Sửa điểm'><i class='fa-solid fa-pen-to-square' style='color:#0b3364;'></i></a>
-                                &nbsp;
-                                <a href='{$hrefXoa}' onclick=\"return confirm('Bạn có chắc muốn xóa toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($row['tenMonHoc']) . " không?');\" title='Xóa điểm'>
-                                    <i class='fa-solid fa-trash' style='color:black;'></i>
-                                </a>
-                            </td>
-                        </tr>";
+                            <tr>
+                                <td>{$stt}</td>
+                                <td>K" . str_pad($row['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
+                                <td>" . htmlspecialchars($row['hoVaTen']) . "</td>
+                                <td>" . htmlspecialchars($row['tenMonHoc'] ?? '-') . "</td>
+                                <td>" . ($row['diemHK1'] ?? '-') . "</td>
+                                <td>" . ($row['diemHK2'] ?? '-') . "</td>
+                                <td><strong>$tb</strong></td>
+                                <td>
+                                    <a href='{$hrefChiTiet}' title='Xem chi tiết'><i class='fa-solid fa-eye' style='color:green;'></i></a>
+                                    &nbsp;
+                                    <a href='{$hrefSua}' title='Sửa điểm'><i class='fa-solid fa-pen-to-square' style='color:#0b3364;'></i></a>
+                                    &nbsp;
+                                    <a href='{$hrefXoa}' onclick=\"return confirm('Bạn có chắc muốn xóa toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($row['tenMonHoc']) . " không?');\" title='Xóa điểm'>
+                                        <i class='fa-solid fa-trash' style='color:black;'></i>
+                                    </a>
+                                </td>
+                            </tr>";
                         $stt++;
                     }
                 } else {
