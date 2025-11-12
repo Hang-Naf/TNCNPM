@@ -128,5 +128,43 @@ function write_log($conn, $userID, $action, $content, $type = 'Info') {
     $stmt->close();
 }
 
+// Hàm kiểm tra xem email có thể gửi yêu cầu quên mật khẩu không
+function canRequestPasswordReset($email, $limit = 5, $timeWindow = 60) {
+    global $conn;
+
+    // Kiểm tra số lần gửi trong timeWindow (giây)
+    $stmt = $conn->prepare("
+        SELECT COUNT(*) 
+        FROM password_reset_attempts 
+        WHERE email = ? 
+          AND requested_at > (NOW() - INTERVAL ? SECOND)
+    ");
+    if (!$stmt) {
+        error_log("Lỗi prepare trong canRequestPasswordReset: " . $conn->error);
+        return false;
+    }
+
+    $stmt->bind_param("si", $email, $timeWindow);
+    $stmt->execute();
+    $stmt->bind_result($count);
+    $stmt->fetch();
+    $stmt->close();
+
+    if ($count >= $limit) {
+        return false; // vượt giới hạn
+    }
+
+    // Nếu chưa vượt giới hạn, lưu lần gửi mới
+    $stmt = $conn->prepare("INSERT INTO password_reset_attempts (email) VALUES (?)");
+    if (!$stmt) {
+        error_log("Lỗi prepare ghi log password_reset_attempts: " . $conn->error);
+        return false;
+    }
+    $stmt->bind_param("s", $email);
+    $stmt->execute();
+    $stmt->close();
+
+    return true;
+}
 ?>
 
