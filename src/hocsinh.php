@@ -24,7 +24,7 @@ try {
         $namHoc    = $conn->real_escape_string($data['namHoc']);
         $hocKy     = $conn->real_escape_string($data['hocKy']);
         $trangThai = $conn->real_escape_string($data['trangThai']);
-        $matKhau   = password_hash('123456', PASSWORD_DEFAULT);
+        $matKhau   = password_hash('12345678', PASSWORD_DEFAULT);
 
         // === 1. Thêm vào bảng user ===
         $sqlUser = "INSERT INTO user (hoVaTen, email, sdt, gioiTinh, vaiTro, matKhau)

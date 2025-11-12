@@ -88,25 +88,18 @@ function getUserByEmail($email) {
     return $user;
 }
 
-// Hàm kiểm tra đăng nhập
-// function loginUser($email, $password) {
-//     $user = getUserByEmail($email);
-//     if ($user && password_verify($password, $user['password'])) {
-//         $_SESSION['userID']   = $user['userID'];
-//         $_SESSION['hoVaTen']  = $user['hoVaTen'];
-//         $_SESSION['vaiTro']   = $user['vaiTro'];
-//         $_SESSION['email']    = $user['email']; // Lưu email vào session
-//         return true;
-//     }
-//     return false;
-// }
-if (!function_exists('checkLogin')) {
-    function checkLogin($email, $password) {
-        $user = getUserByEmail($email);
-        if ($user && password_verify($user['password'], $password)) {
-            return $user; // trả về dữ liệu user
-        }
-        return null; // đăng nhập thất bại
+function checkLogin($email, $password) {
+    global $conn;
+    $user = getUserByEmail($email);
+
+    if ($user && password_verify($password, $user['password'])) {
+        // ghi log đăng nhập thành công
+        write_log($conn, $user['userID'], 'Đăng nhập', "Người dùng {$user['email']} đã đăng nhập thành công.", 'Info');
+
+        // ghi log đăng nhập thất bại
+        write_log($conn, 0, 'Đăng nhập thất bại', "Người dùng thử đăng nhập với email '{$email}' thất bại.", 'Error');
+
+        return null;
     }
 }
 
@@ -128,43 +121,5 @@ function write_log($conn, $userID, $action, $content, $type = 'Info') {
     $stmt->close();
 }
 
-// Hàm kiểm tra xem email có thể gửi yêu cầu quên mật khẩu không
-function canRequestPasswordReset($email, $limit = 5, $timeWindow = 60) {
-    global $conn;
-
-    // Kiểm tra số lần gửi trong timeWindow (giây)
-    $stmt = $conn->prepare("
-        SELECT COUNT(*) 
-        FROM password_reset_attempts 
-        WHERE email = ? 
-          AND requested_at > (NOW() - INTERVAL ? SECOND)
-    ");
-    if (!$stmt) {
-        error_log("Lỗi prepare trong canRequestPasswordReset: " . $conn->error);
-        return false;
-    }
-
-    $stmt->bind_param("si", $email, $timeWindow);
-    $stmt->execute();
-    $stmt->bind_result($count);
-    $stmt->fetch();
-    $stmt->close();
-
-    if ($count >= $limit) {
-        return false; // vượt giới hạn
-    }
-
-    // Nếu chưa vượt giới hạn, lưu lần gửi mới
-    $stmt = $conn->prepare("INSERT INTO password_reset_attempts (email) VALUES (?)");
-    if (!$stmt) {
-        error_log("Lỗi prepare ghi log password_reset_attempts: " . $conn->error);
-        return false;
-    }
-    $stmt->bind_param("s", $email);
-    $stmt->execute();
-    $stmt->close();
-
-    return true;
-}
 ?>
 

@@ -20,26 +20,21 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $user = getUserByEmail($email);
 
         if ($user) {
-            // --- Thêm kiểm tra rate limit ---
-            if (!canRequestPasswordReset($email)) {
-                $message = "⚠️ Bạn đã gửi quá nhiều yêu cầu quên mật khẩu, vui lòng thử lại sau!";
+            // Tạo mật khẩu mới ngẫu nhiên (8 ký tự)
+            $newPass = substr(md5(time()), 0, 8);
+
+            // Mã hóa mật khẩu
+            $hashed = password_hash($newPass, PASSWORD_DEFAULT);
+
+            // Cập nhật mật khẩu mới
+            $sqlUpdate = "UPDATE user SET matKhau=? WHERE email=?";
+            $ok = executeSQL($sqlUpdate, [$hashed, $email], "ss");
+
+            if ($ok) {
+                $message = "✅ Mật khẩu mới của bạn đã được tạo thành công!";
+                $_SESSION['email'] = $email;
             } else {
-                // Tạo mật khẩu mới ngẫu nhiên (8 ký tự)
-                $newPass = substr(md5(time()), 0, 8);
-
-                // Mã hóa mật khẩu
-                $hashed = password_hash($newPass, PASSWORD_DEFAULT);
-
-                // Cập nhật mật khẩu mới
-                $sqlUpdate = "UPDATE user SET matKhau=? WHERE email=?";
-                $ok = executeSQL($sqlUpdate, [$hashed, $email], "ss");
-
-                if ($ok) {
-                    $message = "✅ Mật khẩu mới của bạn đã được tạo thành công!";
-                    $_SESSION['email'] = $email;
-                } else {
-                    $message = "❌ Có lỗi khi cập nhật mật khẩu.";
-                }
+                $message = "❌ Có lỗi khi cập nhật mật khẩu.";
             }
         } else {
             $message = "⚠️ Email không tồn tại trong hệ thống!";

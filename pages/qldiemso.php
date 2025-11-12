@@ -303,6 +303,8 @@ $result = $conn->query($sql);
                             <td>" . ($row['diemHK2'] ?? '-') . "</td>
                             <td><strong>$tb</strong></td>
                             <td>
+                                <a href='<?= $hrefChiTiet ?>' title='Xem chi tiết'><i class='fa-solid fa-eye' style='color:green;'></i></a>
+                                &nbsp;
                                 <a href='{$hrefSua}' title='Sửa điểm'><i class='fa-solid fa-pen-to-square' style='color:#0b3364;'></i></a>
                                 &nbsp;
                                 <a href='{$hrefXoa}' onclick=\"return confirm('Bạn có chắc muốn xóa toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($row['tenMonHoc']) . " không?');\" title='Xóa điểm'>

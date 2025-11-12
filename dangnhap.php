@@ -73,14 +73,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     } else {
                         $message = "Mật khẩu không đúng! Bạn còn " . (5 - $attempts) . " lần thử.";
                     }
-
+                    // Cập nhật login_attempts và locked_until
                     $stmt = $conn->prepare("UPDATE user SET login_attempts=?, locked_until=? WHERE userID=?");
                     $stmt->bind_param("isi", $attempts, $lockedUntil, $user['userID']);
                     $stmt->execute();
+                    // GHI LOG ĐĂNG NHẬP THẤT BẠI VÀO ghilog
+                    write_log($conn, $user['userID'], 'Đăng nhập thất bại', "Người dùng '{$email}' nhập sai mật khẩu lần $attempts", 'Error');
                 }
             }
         } else {
+            // Không tìm thấy tài khoản
             $message = "Không tìm thấy tài khoản với email này!";
+            write_log($conn, 0, 'Đăng nhập thất bại', "Người dùng thử đăng nhập với email '$email' nhưng không tồn tại trong hệ thống", 'Error');
         }
     }
 }

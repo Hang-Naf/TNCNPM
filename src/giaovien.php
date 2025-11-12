@@ -23,7 +23,7 @@ if ($action === "add") {
     $namHoc    = $data["namHoc"] ?? 'Chưa cập nhật';
     $hocKy     = $data["hocKy"] ?? 'Chưa cập nhật';
     $trangThai = $data["trangThai"] ?? 'active';
-    $matKhau   = password_hash("123456", PASSWORD_DEFAULT);
+    $matKhau   = password_hash("12345678", PASSWORD_DEFAULT);
 
     // Kiểm tra email trùng
     $check = $conn->prepare("SELECT userID FROM user WHERE email=?");
