@@ -25,29 +25,58 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
 
-            // Kiểm tra mật khẩu
-            if (password_verify($password, $user["matKhau"]) || $password === $user["matKhau"]) {
-                // Lưu thông tin vào session
-                $_SESSION["userID"] = $user["userID"];
-                $_SESSION["hoVaTen"] = $user["hoVaTen"];
-                $_SESSION["vaiTro"] = $user["vaiTro"];
-
-                // Chuyển hướng theo vai trò
-                switch ($user["vaiTro"]) {
-                    case "Admin":
-                        header("Location: index.php");
-                        exit();
-                    case "GiaoVien":
-                        header("Location: ../pagegiaovien/ttcanhan.php");
-                        exit();
-                    case "HocSinh":
-                        header("Location: ../pagehocsinh/ttcanhan.php");
-                        exit();
-                    default:
-                        $message = "Vai trò không hợp lệ!";
-                }
+            // Kiểm tra xem tài khoản có bị khóa không
+            if ($user['locked_until'] && strtotime($user['locked_until']) > time()) {
+                $remaining = ceil((strtotime($user['locked_until']) - time()) / 60);
+                $message = "Tài khoản bị khóa. Vui lòng thử lại sau $remaining phút.";
             } else {
-                $message = "Mật khẩu không đúng!";
+                // Kiểm tra mật khẩu
+                if (password_verify($password, $user["matKhau"]) || $password === $user["matKhau"]) {
+                    // Đăng nhập thành công → reset login_attempts và locked_until
+                    $stmt = $conn->prepare("UPDATE user SET login_attempts=0, locked_until=NULL WHERE userID=?");
+                    $stmt->bind_param("i", $user['userID']);
+                    $stmt->execute();
+
+                    $_SESSION["userID"] = $user["userID"];
+                    $_SESSION["hoVaTen"] = $user["hoVaTen"];
+                    $_SESSION["vaiTro"] = $user["vaiTro"];
+
+                     // --- Ghi lịch sử đăng nhập vào login_history ---
+                    $ip = $_SERVER['REMOTE_ADDR'];
+                    $browser = $_SERVER['HTTP_USER_AGENT'];
+                    $stmtLogin = $conn->prepare("INSERT INTO login_history (userID, ipAddress, browserInfo) VALUES (?, ?, ?)");
+                    $stmtLogin->bind_param("iss", $user['userID'], $ip, $browser);
+                    $stmtLogin->execute();
+
+                    // Chuyển hướng
+                    switch ($user["vaiTro"]) {
+                        case "Admin":
+                            header("Location: index.php");
+                            exit();
+                        case "GiaoVien":
+                            header("Location: ../pagegiaovien/ttcanhan.php");
+                            exit();
+                        case "HocSinh":
+                            header("Location: ../pagehocsinh/ttcanhan.php");
+                            exit();
+                    }
+                } else {
+                    // Mật khẩu sai → tăng login_attempts
+                    $attempts = $user['login_attempts'] + 1;
+                    $lockedUntil = null;
+
+                    if ($attempts >= 5) {
+                        // Khóa tài khoản 15 phút
+                        $lockedUntil = date('Y-m-d H:i:s', strtotime('+15 minutes'));
+                        $message = "Bạn đã nhập sai mật khẩu 5 lần. Tài khoản bị khóa 15 phút.";
+                    } else {
+                        $message = "Mật khẩu không đúng! Bạn còn " . (5 - $attempts) . " lần thử.";
+                    }
+
+                    $stmt = $conn->prepare("UPDATE user SET login_attempts=?, locked_until=? WHERE userID=?");
+                    $stmt->bind_param("isi", $attempts, $lockedUntil, $user['userID']);
+                    $stmt->execute();
+                }
             }
         } else {
             $message = "Không tìm thấy tài khoản với email này!";

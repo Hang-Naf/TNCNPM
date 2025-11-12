@@ -232,24 +232,48 @@ while ($r = $dsDiem->fetch_assoc()) {
                 <div class="section">
                     <div class="section-title">HỌC KỲ I</div>
                     <div class="row">
-                        <label>ĐIỂM MIỆNG: <input type="number" name="hk1_mieng" step="0.1" value="<?= $data['hk1_mieng'] ?? '' ?>"></label>
-                        <label>ĐIỂM THI GK: <input type="number" name="hk1_thiGK" step="0.1" value="<?= $data['hk1_thiGK'] ?? '' ?>"></label>
+                        <label>ĐIỂM MIỆNG:
+                            <input type="number" name="hk1_mieng" step="0.1"
+                                value="<?= $diemArr['hk1_mieng'] ?? '' ?>">
+                        </label>
+                        <label>ĐIỂM THI GK:
+                            <input type="number" name="hk1_thiGK" step="0.1"
+                                value="<?= $diemArr['hk1_thiGK'] ?? '' ?>">
+                        </label>
                     </div>
                     <div class="row">
-                        <label>ĐIỂM 1 TIẾT: <input type="number" name="hk1_1tiet" step="0.1" value="<?= $data['hk1_1tiet'] ?? '' ?>"></label>
-                        <label>ĐIỂM THI CK: <input type="number" name="hk1_thiCK" step="0.1" value="<?= $data['hk1_thiCK'] ?? '' ?>"></label>
+                        <label>ĐIỂM 1 TIẾT:
+                            <input type="number" name="hk1_1tiet" step="0.1"
+                                value="<?= $diemArr['hk1_1tiet'] ?? '' ?>">
+                        </label>
+                        <label>ĐIỂM THI CK:
+                            <input type="number" name="hk1_thiCK" step="0.1"
+                                value="<?= $diemArr['hk1_thiCK'] ?? '' ?>">
+                        </label>
                     </div>
                 </div>
 
                 <div class="section" style="margin-top:25px;">
                     <div class="section-title">HỌC KỲ II</div>
                     <div class="row">
-                        <label>ĐIỂM MIỆNG: <input type="number" name="hk2_mieng" step="0.1" value="<?= $data['hk2_mieng'] ?? '' ?>"></label>
-                        <label>ĐIỂM THI GK: <input type="number" name="hk2_thiGK" step="0.1" value="<?= $data['hk2_thiGK'] ?? '' ?>"></label>
+                        <label>ĐIỂM MIỆNG:
+                            <input type="number" name="hk2_mieng" step="0.1"
+                                value="<?= $diemArr['hk2_mieng'] ?? '' ?>">
+                        </label>
+                        <label>ĐIỂM THI GK:
+                            <input type="number" name="hk2_thiGK" step="0.1"
+                                value="<?= $diemArr['hk2_thiGK'] ?? '' ?>">
+                        </label>
                     </div>
                     <div class="row">
-                        <label>ĐIỂM 1 TIẾT: <input type="number" name="hk2_1tiet" step="0.1" value="<?= $data['hk2_1tiet'] ?? '' ?>"></label>
-                        <label>ĐIỂM THI CK: <input type="number" name="hk2_thiCK" step="0.1" value="<?= $data['hk2_thiCK'] ?? '' ?>"></label>
+                        <label>ĐIỂM 1 TIẾT:
+                            <input type="number" name="hk2_1tiet" step="0.1"
+                                value="<?= $diemArr['hk2_1tiet'] ?? '' ?>">
+                        </label>
+                        <label>ĐIỂM THI CK:
+                            <input type="number" name="hk2_thiCK" step="0.1"
+                                value="<?= $diemArr['hk2_thiCK'] ?? '' ?>">
+                        </label>
                     </div>
                 </div>
 

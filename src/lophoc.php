@@ -23,19 +23,47 @@ $action = $data['action'];
 switch ($action) {
     // ===== THÊM LỚP HỌC =====
     case 'add':
-        $tenLop = $conn->real_escape_string($data['tenLop'] ?? '');
+        $tenLop = trim($data['tenLop'] ?? '');
         $siSo = intval($data['siSo'] ?? 0);
         $maGV = isset($data['maGV']) && $data['maGV'] !== '' ? intval($data['maGV']) : 'NULL';
-        $namHoc = $conn->real_escape_string($data['namHoc'] ?? '');
-        $trangThai = $conn->real_escape_string($data['trangThai'] ?? '');
+        // Tự động tạo năm học theo năm hiện tại
+        $namHienTai = date("Y");
+        $namSau = $namHienTai + 1;
+        $namHoc = "$namHienTai-$namSau";
+        $trangThai = trim($data['trangThai'] ?? '');
 
+        // Kiểm tra dữ liệu trống
+        if ($tenLop === '' || $trangThai === '') {
+            echo json_encode(['error' => 'Vui lòng nhập đầy đủ thông tin lớp học (Tên lớp, Năm học, Trạng thái).']);
+            exit();
+        }
+
+        // Kiểm tra độ dài tên lớp
+        if (strlen($tenLop) > 50) {
+            echo json_encode(['error' => 'Tên lớp không được vượt quá 50 ký tự.']);
+            exit();
+        }
+
+        if ($siSo <= 0) {
+            echo json_encode(['error' => 'Sĩ số phải lớn hơn 0.']);
+            exit();
+        }
+
+        // Kiểm tra trùng tên lớp trong cùng năm học
+        $sqlCheck = "SELECT maLop FROM lophoc WHERE tenLop='$tenLop' AND namHoc='$namHoc'";
+        $rsCheck = $conn->query($sqlCheck);
+        if ($rsCheck && $rsCheck->num_rows > 0) {
+            echo json_encode(['error' => "Tên lớp '$tenLop' đã tồn tại trong năm học $namHoc!"]);
+            exit();
+        }
+
+        // Thêm lớp nếu hợp lệ
         $sql = "INSERT INTO lophoc (tenLop, siSo, maGV, namHoc, trangThai)
                 VALUES ('$tenLop', $siSo, $maGV, '$namHoc', '$trangThai')";
         if ($conn->query($sql)) {
             $maLopMoi = $conn->insert_id;
 
-            // === TỰ ĐỘNG GÁN CÁC MÔN HỌC MẶC ĐỊNH CHO LỚP MỚI ===
-            // Lấy danh sách môn học mặc định
+            // === GÁN CÁC MÔN HỌC MẶC ĐỊNH ===
             $sqlMon = "SELECT maMonHoc FROM monhoc";
             $rsMon = $conn->query($sqlMon);
             if ($rsMon && $rsMon->num_rows > 0) {
@@ -54,12 +82,39 @@ switch ($action) {
     // ===== CẬP NHẬT LỚP HỌC =====
     case 'update':
         $maLop = intval($data['maLop'] ?? 0);
-        $tenLop = $conn->real_escape_string($data['tenLop'] ?? '');
+        $tenLop = trim($data['tenLop'] ?? '');
         $siSo = intval($data['siSo'] ?? 0);
         $maGV = isset($data['maGV']) && $data['maGV'] !== '' ? intval($data['maGV']) : 'NULL';
-        $namHoc = $conn->real_escape_string($data['namHoc'] ?? '');
-        $trangThai = $conn->real_escape_string($data['trangThai'] ?? '');
+        $namHoc = trim($data['namHoc'] ?? '');
+        $trangThai = trim($data['trangThai'] ?? '');
 
+        // Kiểm tra dữ liệu trống
+        if ($tenLop === '' || $namHoc === '' || $trangThai === '') {
+            echo json_encode(['error' => 'Vui lòng nhập đầy đủ thông tin lớp học (Tên lớp, Năm học, Trạng thái).']);
+            exit();
+        }
+
+        // Kiểm tra độ dài tên lớp
+        if (strlen($tenLop) > 50) {
+            echo json_encode(['error' => 'Tên lớp không được vượt quá 50 ký tự.']);
+            exit();
+        }
+
+        if ($siSo <= 0) {
+            echo json_encode(['error' => 'Sĩ số phải lớn hơn 0.']);
+            exit();
+        }
+
+        // Kiểm tra trùng tên lớp (trừ lớp đang sửa)
+        $sqlCheck = "SELECT maLop FROM lophoc 
+                     WHERE tenLop='$tenLop' AND namHoc='$namHoc' AND maLop <> $maLop";
+        $rsCheck = $conn->query($sqlCheck);
+        if ($rsCheck && $rsCheck->num_rows > 0) {
+            echo json_encode(['error' => "Tên lớp '$tenLop' đã tồn tại trong năm học $namHoc!"]);
+            exit();
+        }
+
+        // Cập nhật lớp
         $sql = "UPDATE lophoc SET
                     tenLop='$tenLop',
                     siSo=$siSo,
@@ -77,6 +132,11 @@ switch ($action) {
     // ===== XÓA LỚP HỌC =====
     case 'delete':
         $maLop = intval($data['maLop'] ?? 0);
+        if ($maLop <= 0) {
+            echo json_encode(['error' => 'Thiếu mã lớp cần xóa.']);
+            exit();
+        }
+
         $sql = "DELETE FROM lophoc WHERE maLop=$maLop";
         if ($conn->query($sql)) {
             echo json_encode(['message' => 'Xóa lớp học thành công']);

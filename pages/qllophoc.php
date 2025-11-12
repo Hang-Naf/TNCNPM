@@ -294,13 +294,13 @@ $giaovien_rs = $conn->query("
                 <input type="text" name="tenLop" placeholder="Tên lớp (VD: 11A1)" required>
                 <input type="number" name="siSo" placeholder="Sĩ số" min="0">
                 <select name="maGV">
-                    <option value="">-- Chọn giáo viên phụ trách --</option>
+                    <!-- <option value="">-- Chọn giáo viên phụ trách --</option> -->
                     <?php $giaovien_rs->data_seek(0);
                     while ($gv = $giaovien_rs->fetch_assoc()): ?>
                         <option value="<?= $gv['maGV'] ?>"><?= htmlspecialchars($gv['hoVaTen']) ?></option>
                     <?php endwhile; ?>
                 </select>
-                <input type="text" name="namHoc" placeholder="VD: 2024-2025" required>
+                <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y')+1) ?>" readonly>
                 <select name="trangThai">
                     <option value="Đang học">Đang học</option>
                     <option value="Tạm dừng">Tạm dừng</option>
@@ -323,7 +323,7 @@ $giaovien_rs = $conn->query("
                 <input type="text" name="tenLop" id="editTenLop" required>
                 <input type="number" name="siSo" id="editSiSo" min="0">
                 <select name="maGV" id="editMaGV">
-                    <option value="">-- Chọn giáo viên phụ trách --</option>
+                    <!-- <option value="">-- Chọn giáo viên phụ trách --</option> -->
                     <?php
                     $giaovien_rs->data_seek(0);
                     while ($gv = $giaovien_rs->fetch_assoc()): ?>
