@@ -1,4 +1,5 @@
 <?php
+session_start();
 // Kết nối CSDL
 include("csdl/db.php");
 include("src/func.php");
@@ -26,11 +27,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $hashed = password_hash($newPass, PASSWORD_DEFAULT);
 
             // Cập nhật mật khẩu mới
-            $sqlUpdate = "UPDATE user SET password=? WHERE email=?";
+            $sqlUpdate = "UPDATE user SET matKhau=? WHERE email=?";
             $ok = executeSQL($sqlUpdate, [$hashed, $email], "ss");
 
             if ($ok) {
                 $message = "✅ Mật khẩu mới của bạn đã được tạo thành công!";
+                $_SESSION['email'] = $email;
             } else {
                 $message = "❌ Có lỗi khi cập nhật mật khẩu.";
             }
@@ -212,7 +214,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <b>Nhập địa chỉ email để đặt lại mật khẩu</b><br><br>
                 <form action="" method="POST">
                     <div class="form-group">
-                        <input type="email" name="email" placeholder="Email">
+                        <?php
+                        $emailValue = $_POST['email'] ?? $_GET['email'] ?? $_SESSION['email'] ?? '';
+                        ?>
+                        <input type="email" name="email" placeholder="Email"
+                            value="<?= htmlspecialchars($emailValue) ?>">
                     </div>
                     <button type="submit" class="btn btn-primary">Gửi</button>
                 </form>

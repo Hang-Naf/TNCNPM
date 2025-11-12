@@ -75,22 +75,39 @@ function isEmpty($value) {
 // Hàm lấy thông tin user theo email
 function getUserByEmail($email) {
     global $conn;
-    $stmt = $conn->prepare("SELECT userId, userName, password, vaiTro FROM user WHERE email = ?");
+    $stmt = $conn->prepare("SELECT userID, hoVaTen, matKhau AS password, vaiTro, email FROM user WHERE email = ?");
+    if (!$stmt) {
+        error_log("Lỗi prepare trong getUserByEmail: " . $conn->error);
+        return null;
+    }
     $stmt->bind_param("s", $email);
     $stmt->execute();
-    return $stmt->get_result()->fetch_assoc();
+    $result = $stmt->get_result();
+    $user = $result->fetch_assoc();
+    $stmt->close();
+    return $user;
 }
 
 // Hàm kiểm tra đăng nhập
-function loginUser($email, $password) {
-    $user = getUserByEmail($email);
-    if ($user && password_verify($password, $user['password'])) {
-        $_SESSION['userId']   = $user['userId'];
-        $_SESSION['userName'] = $user['userName'];
-        $_SESSION['vaiTro']   = $user['vaiTro'];
-        return true;
+// function loginUser($email, $password) {
+//     $user = getUserByEmail($email);
+//     if ($user && password_verify($password, $user['password'])) {
+//         $_SESSION['userID']   = $user['userID'];
+//         $_SESSION['hoVaTen']  = $user['hoVaTen'];
+//         $_SESSION['vaiTro']   = $user['vaiTro'];
+//         $_SESSION['email']    = $user['email']; // Lưu email vào session
+//         return true;
+//     }
+//     return false;
+// }
+if (!function_exists('checkLogin')) {
+    function checkLogin($email, $password) {
+        $user = getUserByEmail($email);
+        if ($user && password_verify($user['password'], $password)) {
+            return $user; // trả về dữ liệu user
+        }
+        return null; // đăng nhập thất bại
     }
-    return false;
 }
 
 
@@ -99,10 +116,13 @@ function getLastInsertId() {
     return $conn->insert_id;
 }
 
-// ===============================
 // Hàm ghi log dùng chung
 function write_log($conn, $userID, $action, $content, $type = 'Info') {
     $stmt = $conn->prepare("INSERT INTO ghilog (userID, hanhDong, noiDungLog, loaiLog) VALUES (?, ?, ?, ?)");
+    if (!$stmt) {
+        error_log("Lỗi prepare trong write_log: " . $conn->error);
+        return false;
+    }
     $stmt->bind_param("isss", $userID, $action, $content, $type);
     $stmt->execute();
     $stmt->close();

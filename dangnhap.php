@@ -40,6 +40,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_SESSION["userID"] = $user["userID"];
                     $_SESSION["hoVaTen"] = $user["hoVaTen"];
                     $_SESSION["vaiTro"] = $user["vaiTro"];
+                    $_SESSION["email"] = $user["email"];
 
                      // --- Ghi lịch sử đăng nhập vào login_history ---
                     $ip = $_SERVER['REMOTE_ADDR'];
@@ -84,7 +85,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -277,7 +277,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     <div class="form-group">
                         <input type="password" name="password" placeholder="Mật khẩu">
                     </div>
-                    <a href="quenmatkhau.php" class="forgot">Quên mật khẩu</a>
+                    <a href="quenmatkhau.php?email=<?= urlencode($_POST['username'] ?? '') ?>" class="forgot">Quên mật khẩu</a>
                     <button type="submit" class="btn btn-primary">Đăng nhập</button>
                 </form>
             </div>
