@@ -365,6 +365,7 @@ $result = $stmt3->get_result();
                             }
                             $hrefSua = "suadiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
                             $hrefXoa = "xoadiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
+                            $hrefCT = "chitietdiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
                             echo "
                         <tr>
                             <td>{$stt}</td>
@@ -375,6 +376,8 @@ $result = $stmt3->get_result();
                             <td>" . ($r['diemHK2'] ?? '-') . "</td>
                             <td><strong>{$tb}</strong></td>
                             <td>
+                                <a href='{$hrefCT}'><i class='fa-solid fa-eye' style='color:green'></i></a>
+                                &nbsp;
                                 <a href='{$hrefSua}'><i class='fa-solid fa-pen-to-square' style='color:black'></i></a>
                                 &nbsp;
                                 <a href='{$hrefXoa}' onclick=\"return confirm('Xóa toàn bộ điểm của học sinh này?');\">
