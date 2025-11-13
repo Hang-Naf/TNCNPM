@@ -15,66 +15,69 @@ if ($_SESSION["vaiTro"] !== "Admin") {
     header("Location: ../dangnhap.php");
     exit();
 }
-// ================== XỬ LÝ THÊM ==================
-if (isset($_POST['add'])) {
-    $maHS = $_POST['maHS'];
-    $maMonHoc = $_POST['maMonHoc'];
-    $loaiDiem = $_POST['loaiDiem'];
-    $diem = $_POST['diem'];
-    $nhanXet = $_POST['nhanXet'];
-    $ngayCapNhat = date('Y-m-d');
 
-    $sql = "INSERT INTO diemso (maHS, maMonHoc, loaiDiem, diem, ngayCapNhat, nhanXet)
-            VALUES ('$maHS', '$maMonHoc', '$loaiDiem', '$diem', '$ngayCapNhat', '$nhanXet')";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Thêm điểm thành công!'); window.location='qldiemso.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
+// ========= LỌC DỮ LIỆU =========
+$lopChon = $_GET['lop'] ?? '';
+$monChon = $_GET['mon'] ?? '';
+
+$dsLop = $conn->query("SELECT DISTINCT lopHocPhuTrach AS tenLop FROM hocsinh WHERE lopHocPhuTrach IS NOT NULL");
+$dsMon = $conn->query("SELECT * FROM monhoc ORDER BY tenMonHoc ASC");
+
+// ========= TRUY VẤN DỮ LIỆU CHÍNH =========
+$sql = "
+SELECT 
+    u.userID AS maHS,
+    u.hoVaTen,
+    h.lopHocPhuTrach,
+    m.tenMonHoc,
+
+    -- HỌC KỲ I
+    ROUND(
+        SUM(CASE 
+            WHEN d.loaiDiem = 'hk1_mieng' THEN d.diem * 1
+            WHEN d.loaiDiem = 'hk1_1tiet' THEN d.diem * 2
+            WHEN d.loaiDiem = 'hk1_thiGK' THEN d.diem * 2
+            WHEN d.loaiDiem = 'hk1_thiCK' THEN d.diem * 3
+            ELSE 0 END) /
+        NULLIF(SUM(CASE 
+            WHEN d.loaiDiem = 'hk1_mieng' THEN 1
+            WHEN d.loaiDiem = 'hk1_1tiet' THEN 2
+            WHEN d.loaiDiem = 'hk1_thiGK' THEN 2
+            WHEN d.loaiDiem = 'hk1_thiCK' THEN 3
+            ELSE 0 END), 0), 1
+    ) AS diemHK1,
+
+    -- HỌC KỲ II
+    ROUND(
+        SUM(CASE 
+            WHEN d.loaiDiem = 'hk2_mieng' THEN d.diem * 1
+            WHEN d.loaiDiem = 'hk2_1tiet' THEN d.diem * 2
+            WHEN d.loaiDiem = 'hk2_thiGK' THEN d.diem * 2
+            WHEN d.loaiDiem = 'hk2_thiCK' THEN d.diem * 3
+            ELSE 0 END) /
+        NULLIF(SUM(CASE 
+            WHEN d.loaiDiem = 'hk2_mieng' THEN 1
+            WHEN d.loaiDiem = 'hk2_1tiet' THEN 2
+            WHEN d.loaiDiem = 'hk2_thiGK' THEN 2
+            WHEN d.loaiDiem = 'hk2_thiCK' THEN 3
+            ELSE 0 END), 0), 1
+    ) AS diemHK2
+
+FROM hocsinh h
+JOIN user u ON h.maHS = u.userID
+LEFT JOIN diemso d ON d.maHS = h.maHS
+LEFT JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+WHERE 1=1
+";
+
+if ($lopChon != '') {
+    $sql .= " AND h.lopHocPhuTrach = '" . $conn->real_escape_string($lopChon) . "'";
+}
+if ($monChon != '') {
+    $sql .= " AND m.tenMonHoc = '" . $conn->real_escape_string($monChon) . "'";
 }
 
-// ================== XỬ LÝ XÓA ==================
-if (isset($_GET['delete'])) {
-    $maDiem = $_GET['delete'];
-    $sql = "DELETE FROM diemso WHERE maDiem = $maDiem";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Xóa thành công!'); window.location='qldiemso.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== XỬ LÝ CẬP NHẬT ==================
-if (isset($_POST['update'])) {
-    $maDiem = $_POST['maDiem'];
-    $maHS = $_POST['maHS'];
-    $maMonHoc = $_POST['maMonHoc'];
-    $loaiDiem = $_POST['loaiDiem'];
-    $diem = $_POST['diem'];
-    $nhanXet = $_POST['nhanXet'];
-
-    $sql = "UPDATE diemso 
-            SET maHS='$maHS', maMonHoc='$maMonHoc', loaiDiem='$loaiDiem', 
-                diem='$diem', nhanXet='$nhanXet'
-            WHERE maDiem='$maDiem'";
-    if ($conn->query($sql)) {
-        echo "<script>alert('Cập nhật thành công!'); window.location='qldiemso.php';</script>";
-    } else {
-        echo "Lỗi: " . $conn->error;
-    }
-}
-
-// ================== LẤY DỮ LIỆU ==================
-$hocsinh = $conn->query("SELECT h.maHS, u.hoVaTen FROM hocsinh h JOIN user u ON h.maHS = u.userID");
-$monhoc = $conn->query("SELECT * FROM monhoc ORDER BY tenMonHoc ASC");
-
-$sql = "SELECT d.maDiem, d.loaiDiem, d.diem, d.ngayCapNhat, d.nhanXet,
-               u.hoVaTen AS tenHS, m.tenMonHoc
-        FROM diemso d
-        LEFT JOIN hocsinh h ON d.maHS = h.maHS
-        LEFT JOIN user u ON h.maHS = u.userID
-        LEFT JOIN monhoc m ON d.maMonHoc = m.maMonHoc
-        ORDER BY d.ngayCapNhat DESC";
+$sql .= " GROUP BY u.userID, m.tenMonHoc ORDER BY h.lopHocPhuTrach, u.hoVaTen ASC";
 $result = $conn->query($sql);
 ?>
 
@@ -113,7 +116,6 @@ $result = $conn->query($sql);
             display: flex;
             align-items: center;
             gap: 6px;
-            width: 150px;
         }
 
         table {
@@ -241,6 +243,10 @@ $result = $conn->query($sql);
                         <h4>Thông báo</h4>
                         <ul id="notificationList"></ul>
                         <div class="no-noti" id="noNoti">Không có thông báo mới</div>
+                        <div id="xemChiTietThongBao"
+                            style="text-align:center;padding:10px;background:#f0f2f6;cursor:pointer;font-size:13px;font-weight:600;color:#0b3364;border-top:1px solid #ddd;">
+                            🔍 Xem chi tiết thông báo
+                        </div>
                     </div>
                 </div>
 
@@ -251,263 +257,226 @@ $result = $conn->query($sql);
                 </div>
                 <div class="user-menu" id="userMenu">
                     <ul>
-                        <li><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
                 </div>
             </div>
         </header>
-
-        <!-- <h3>Thêm điểm mới</h3>
-        <form method="POST">
-            <label>Học sinh:</label>
-            <select name="maHS" required>
-                <option value="">-- Chọn học sinh --</option>
-                <?php
-                $hs = $conn->query("SELECT h.maHS, u.hoVaTen FROM hocsinh h JOIN user u ON h.maHS=u.userID");
-                while ($r = $hs->fetch_assoc()) { ?>
-                    <option value="<?= $r['maHS'] ?>"><?= htmlspecialchars($r['hoVaTen']) ?></option>
-                <?php } ?>
-            </select>
-
-            <label>Môn học:</label>
-            <select name="maMonHoc" required>
-                <option value="">-- Chọn môn học --</option>
-                <?php
-                $mh = $conn->query("SELECT * FROM monhoc");
-                while ($r = $mh->fetch_assoc()) { ?>
-                    <option value="<?= $r['maMonHoc'] ?>"><?= htmlspecialchars($r['tenMonHoc']) ?></option>
-                <?php } ?>
-            </select>
-
-            <label>Loại điểm:</label>
-            <select name="loaiDiem" required>
-                <option value="Miệng">Miệng</option>
-                <option value="15 phút">15 phút</option>
-                <option value="1 tiết">1 tiết</option>
-                <option value="Giữa kỳ">Giữa kỳ</option>
-                <option value="Cuối kỳ">Cuối kỳ</option>
-            </select>
-
-            <label>Điểm:</label>
-            <input type="number" name="diem" step="0.1" min="0" max="10" required>
-
-            <label>Nhận xét:</label>
-            <textarea name="nhanXet" rows="2"></textarea>
-
-            <button type="submit" name="add">Thêm</button>
-        </form> -->
         <div id="main-container">
+
+
+
             <h1>BẢNG ĐIỂM</h1>
-            <div class="row">
+            <button class="add-btn" onclick="window.location.href='../pages/nhapdiem.php'"><i
+                    class="fa-solid fa-plus"></i>
+                Thêm </button>
+
+            <form method="GET" class="filter-box row">
                 <div class="form-group">
-                    <label>Năm học:</label>
-                    <select></select>
+                    <label for="lop"><strong>Lớp:</strong></label>
+                    <select name="lop" id="lop" onchange="this.form.submit()">
+                        <option value="">Tất cả lớp</option>
+                        <?php while ($l = $dsLop->fetch_assoc()) {
+                            $sel = ($l['tenLop'] == $lopChon) ? "selected" : "";
+                            echo "<option value='{$l['tenLop']}' $sel>{$l['tenLop']}</option>";
+                        } ?>
+                    </select>
                 </div>
+
                 <div class="form-group">
-                    <label>Lớp:</label>
-                    <select></select>
+                    <label for="mon"><strong>Môn:</strong></label>
+                    <select name="mon" id="mon" onchange="this.form.submit()">
+                        <option value="">Tất cả môn</option>
+                        <?php while ($m = $dsMon->fetch_assoc()) {
+                            $sel = ($m['tenMonHoc'] == $monChon) ? "selected" : "";
+                            echo "<option value='{$m['tenMonHoc']}' $sel>{$m['tenMonHoc']}</option>";
+                        } ?>
+                    </select>
                 </div>
-            </div>
+            </form>
+
             <table>
                 <thead>
                     <tr>
-                        <th>Mã</th>
-                        <th>Học sinh</th>
-                        <th>Môn học</th>
-                        <th>Loại điểm</th>
-                        <th>Điểm</th>
-                        <th>Ngày cập nhật</th>
-                        <th>Nhận xét</th>
-                        <th>Hành động</th>
+                        <th>STT</th>
+                        <th>MÃ HS</th>
+                        <th>HỌ TÊN</th>
+                        <th>MÔN HỌC</th>
+                        <th>ĐIỂM HK I</th>
+                        <th>ĐIỂM HK II</th>
+                        <th>TRUNG BÌNH MÔN</th>
+                        <th>TÁC VỤ</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $result->fetch_assoc()) { ?>
+                    <?php
+                    if ($result && $result->num_rows > 0) {
+                        $stt = 1;
+                        while ($row = $result->fetch_assoc()) {
+                            $tb = "-";
+                            if (is_numeric($row['diemHK1']) || is_numeric($row['diemHK2'])) {
+                                $tong = 0;
+                                $dem = 0;
+                                foreach (['diemHK1', 'diemHK2'] as $c) {
+                                    if (is_numeric($row[$c])) {
+                                        $tong += $row[$c];
+                                        $dem++;
+                                    }
+                                }
+                                $tb = $dem ? round($tong / $dem, 1) : "-";
+                            }
+
+                            $hrefSua = "../pages/suadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
+                            $hrefXoa = "../pages/xoadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
+
+                            echo "
                         <tr>
-                            <td><?= $row['maDiem'] ?></td>
-                            <td><?= htmlspecialchars($row['tenHS']) ?></td>
-                            <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
-                            <td><?= htmlspecialchars($row['loaiDiem']) ?></td>
-                            <td><?= $row['diem'] ?></td>
-                            <td><?= $row['ngayCapNhat'] ?></td>
-                            <td><?= htmlspecialchars($row['nhanXet']) ?></td>
+                            <td>{$stt}</td>
+                            <td>K" . str_pad($row['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
+                            <td>" . htmlspecialchars($row['hoVaTen']) . "</td>
+                            <td>" . htmlspecialchars($row['tenMonHoc'] ?? '-') . "</td>
+                            <td>" . ($row['diemHK1'] ?? '-') . "</td>
+                            <td>" . ($row['diemHK2'] ?? '-') . "</td>
+                            <td><strong>$tb</strong></td>
                             <td>
-                                <a href="?edit=<?= $row['maDiem'] ?>">Sửa</a> |
-                                <a href="?delete=<?= $row['maDiem'] ?>"
-                                    onclick="return confirm('Bạn có chắc muốn xóa không?')">Xóa</a>
+                                <a href='{$hrefSua}' title='Sửa điểm'><i class='fa-solid fa-pen-to-square' style='color:#0b3364;'></i></a>
+                                &nbsp;
+                                <a href='{$hrefXoa}' onclick=\"return confirm('Bạn có chắc muốn xóa toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($row['tenMonHoc']) . " không?');\" title='Xóa điểm'>
+                                    <i class='fa-solid fa-trash' style='color:black;'></i>
+                                </a>
                             </td>
-                        </tr>
-                    <?php } ?>
+                        </tr>";
+                            $stt++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='10'>Không có dữ liệu phù hợp.</td></tr>";
+                    }
+                    ?>
                 </tbody>
             </table>
-
         </div>
+    </div>
+    <script>
+        document.getElementById("bellIcon").addEventListener("click", function () {
+            const dropdown = document.getElementById("notificationDropdown");
+            // Hiện/ẩn menu
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
 
-        <?php
-        // ================== FORM SỬA ==================
-        if (isset($_GET['edit'])) {
-            $id = $_GET['edit'];
-            $edit = $conn->query("SELECT * FROM diemso WHERE maDiem = $id")->fetch_assoc();
-            ?>
-            <h3>Chỉnh sửa điểm</h3>
-            <form method="POST">
-                <input type="hidden" name="maDiem" value="<?= $edit['maDiem'] ?>">
+            // Gọi AJAX lấy thông báo
+            fetch("../get_thongbao.php")
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById("notificationList");
+                    const noNoti = document.getElementById("noNoti");
+                    const badge = document.getElementById("notiBadge");
+                    list.innerHTML = "";
 
-                <label>Học sinh:</label>
-                <select name="maHS" required>
-                    <?php
-                    $hs2 = $conn->query("SELECT h.maHS, u.hoVaTen FROM hocsinh h JOIN user u ON h.maHS=u.userID");
-                    while ($r = $hs2->fetch_assoc()) {
-                        $sel = $r['maHS'] == $edit['maHS'] ? "selected" : "";
-                        echo "<option value='{$r['maHS']}' $sel>{$r['hoVaTen']}</option>";
-                    } ?>
-                </select>
+                    let unreadCount = 0;
 
-                <label>Môn học:</label>
-                <select name="maMonHoc" required>
-                    <?php
-                    $mh2 = $conn->query("SELECT * FROM monhoc");
-                    while ($r = $mh2->fetch_assoc()) {
-                        $sel = $r['maMonHoc'] == $edit['maMonHoc'] ? "selected" : "";
-                        echo "<option value='{$r['maMonHoc']}' $sel>{$r['tenMonHoc']}</option>";
-                    } ?>
-                </select>
+                    if (data.length > 0) {
+                        noNoti.style.display = "none";
+                        data.forEach(tb => {
+                            const li = document.createElement("li");
+                            li.style.padding = "10px 8px";
+                            li.style.borderBottom = "1px solid #eee";
+                            li.style.cursor = "pointer";
 
-                <label>Loại điểm:</label>
-                <select name="loaiDiem">
-                    <option <?= $edit['loaiDiem'] == 'Miệng' ? 'selected' : '' ?>>Miệng</option>
-                    <option <?= $edit['loaiDiem'] == '15 phút' ? 'selected' : '' ?>>15 phút</option>
-                    <option <?= $edit['loaiDiem'] == '1 tiết' ? 'selected' : '' ?>>1 tiết</option>
-                    <option <?= $edit['loaiDiem'] == 'Giữa kỳ' ? 'selected' : '' ?>>Giữa kỳ</option>
-                    <option <?= $edit['loaiDiem'] == 'Cuối kỳ' ? 'selected' : '' ?>>Cuối kỳ</option>
-                </select>
-
-                <label>Điểm:</label>
-                <input type="number" name="diem" step="0.1" min="0" max="10" value="<?= $edit['diem'] ?>" required>
-
-                <label>Nhận xét:</label>
-                <textarea name="nhanXet" rows="2"><?= htmlspecialchars($edit['nhanXet']) ?></textarea>
-
-                <button type="submit" name="update">Cập nhật</button>
-            </form>
-        <?php } ?>
-        <script>
-            document.getElementById("bellIcon").addEventListener("click", function () {
-                const dropdown = document.getElementById("notificationDropdown");
-                // Hiện/ẩn menu
-                dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
-
-                // Gọi AJAX lấy thông báo
-                fetch("../get_thongbao.php")
-                    .then(res => res.json())
-                    .then(data => {
-                        const list = document.getElementById("notificationList");
-                        const noNoti = document.getElementById("noNoti");
-                        const badge = document.getElementById("notiBadge");
-                        list.innerHTML = "";
-
-                        let unreadCount = 0;
-
-                        if (data.length > 0) {
-                            noNoti.style.display = "none";
-                            data.forEach(tb => {
-                                const li = document.createElement("li");
-                                li.style.padding = "10px 8px";
-                                li.style.borderBottom = "1px solid #eee";
-                                li.style.cursor = "pointer";
-
-                                if (tb.trangThai === "Chưa đọc") {
-                                    unreadCount++;
-                                    li.style.background = "#f0f8ff";
-                                    li.innerHTML = `
+                            if (tb.trangThai === "Chưa đọc") {
+                                unreadCount++;
+                                li.style.background = "#f0f8ff";
+                                li.innerHTML = `
                         <strong style="color:#0b3364;">${tb.tieuDe} 🔵</strong><br>
                         <span>${tb.noiDung}</span><br>
                         <small>${tb.ngayGui}</small>
                     `;
-                                } else {
-                                    li.style.opacity = "0.7";
-                                    li.innerHTML = `
+                            } else {
+                                li.style.opacity = "0.7";
+                                li.innerHTML = `
                         <strong>${tb.tieuDe}</strong><br>
                         <span>${tb.noiDung}</span><br>
                         <small>${tb.ngayGui}</small>
                     `;
-                                }
-
-                                li.addEventListener("click", () => markAsRead(tb.maThongBao, li));
-                                list.appendChild(li);
-                            });
-                        } else {
-                            noNoti.style.display = "block";
-                        }
-
-                        // Cập nhật badge
-                        if (unreadCount > 0) {
-                            badge.textContent = unreadCount;
-                            badge.style.display = "block";
-                        } else {
-                            badge.style.display = "none";
-                        }
-                    })
-                    .catch(err => console.error("Lỗi tải thông báo:", err));
-
-
-                function markAsRead(maThongBao, element) {
-                    fetch("../update_trangthai.php", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/x-www-form-urlencoded"
-                        },
-                        body: "maThongBao=" + encodeURIComponent(maThongBao)
-                    })
-                        .then(res => res.text())
-                        .then(response => {
-                            if (response === "OK") {
-                                element.style.background = "transparent";
-                                element.style.opacity = "0.7";
-                                element.querySelector("strong").innerHTML = element.querySelector("strong").innerText;
-
-                                // Giảm số badge đi 1
-                                const badge = document.getElementById("notiBadge");
-                                let current = parseInt(badge.textContent || "0");
-                                if (current > 1) badge.textContent = current - 1;
-                                else badge.style.display = "none";
                             }
+
+                            li.addEventListener("click", () => markAsRead(tb.maThongBao, li));
+                            list.appendChild(li);
                         });
-                }
+                    } else {
+                        noNoti.style.display = "block";
+                    }
 
-            });
+                    // Cập nhật badge
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount;
+                        badge.style.display = "block";
+                    } else {
+                        badge.style.display = "none";
+                    }
+                })
+                .catch(err => console.error("Lỗi tải thông báo:", err));
 
-            // Ẩn dropdown khi click ra ngoài
-            document.addEventListener("click", function (e) {
-                const dropdown = document.getElementById("notificationDropdown");
-                const bell = document.getElementById("bellIcon");
-                if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
-                    dropdown.style.display = "none";
-                }
-            });
 
-            function toggleUserMenu() {
-                const menu = document.getElementById("userMenu");
-                menu.style.display = (menu.style.display === "block") ? "none" : "block";
+            function markAsRead(maThongBao, element) {
+                fetch("../update_trangthai.php", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded"
+                    },
+                    body: "maThongBao=" + encodeURIComponent(maThongBao)
+                })
+                    .then(res => res.text())
+                    .then(response => {
+                        if (response === "OK") {
+                            element.style.background = "transparent";
+                            element.style.opacity = "0.7";
+                            element.querySelector("strong").innerHTML = element.querySelector("strong").innerText;
+
+                            // Giảm số badge đi 1
+                            const badge = document.getElementById("notiBadge");
+                            let current = parseInt(badge.textContent || "0");
+                            if (current > 1) badge.textContent = current - 1;
+                            else badge.style.display = "none";
+                        }
+                    });
             }
 
-            // Đóng menu nếu click ra ngoài
-            document.addEventListener("click", function (e) {
-                const menu = document.getElementById("userMenu");
-                const userInfo = document.querySelector(".user-info");
-                if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
-                    menu.style.display = "none";
-                }
-            });
+        });
 
-            // Xử lý đăng xuất
-            function logout() {
-                if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                    window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
-                }
+        // Ẩn dropdown khi click ra ngoài
+        document.addEventListener("click", function (e) {
+            const dropdown = document.getElementById("notificationDropdown");
+            const bell = document.getElementById("bellIcon");
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = "none";
             }
-        </script>
+        });
+
+        function toggleUserMenu() {
+            const menu = document.getElementById("userMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+
+        // Đóng menu nếu click ra ngoài
+        document.addEventListener("click", function (e) {
+            const menu = document.getElementById("userMenu");
+            const userInfo = document.querySelector(".user-info");
+            if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = "none";
+            }
+        });
+
+        // Khi click vào "Xem chi tiết thông báo"
+        document.getElementById("xemChiTietThongBao").addEventListener("click", function () {
+            window.location.href = "../pages/qlthongbao.php";
+        });
+
+        // Xử lý đăng xuất
+        function logout() {
+            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
+                window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
+            }
+        }
+    </script>
 </body>
 
 </html>
