@@ -50,7 +50,8 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             background: #f8f9fb;
             margin: 0;
         }
-        .header{
+
+        .header {
             padding: 0px 25px;
         }
 
@@ -192,7 +193,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -666,11 +667,47 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             }
         });
 
+        // === TÌM KIẾM GIÁO VIÊN THEO TÊN, MÃ, HOẶC BỘ MÔN ===
+        const searchInput = document.querySelector('.search-box input');
+        const tableRows = document.querySelectorAll('tbody tr');
+
+        searchInput.addEventListener('input', () => {
+            const keyword = searchInput.value.trim().toLowerCase();
+            let found = 0;
+
+            tableRows.forEach(row => {
+                const maGV = row.children[2]?.innerText.toLowerCase() || "";
+                const hoTen = row.children[3]?.innerText.toLowerCase() || "";
+                const boMon = row.children[7]?.innerText.toLowerCase() || "";
+
+                // So khớp nếu có chứa từ khóa trong mã GV, tên hoặc bộ môn
+                if (maGV.includes(keyword) || hoTen.includes(keyword) || boMon.includes(keyword)) {
+                    row.style.display = "";
+                    found++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Xóa dòng "Không tìm thấy..." cũ nếu có
+            const oldRow = document.getElementById('noResultRow');
+            if (oldRow) oldRow.remove();
+
+            // Nếu không tìm thấy kết quả
+            if (found === 0) {
+                const tbody = document.querySelector('tbody');
+                const tr = document.createElement('tr');
+                tr.id = "noResultRow";
+                tr.innerHTML = `<td colspan="14" style="text-align:center; color:gray;">Không tìm thấy giáo viên phù hợp.</td>`;
+                tbody.appendChild(tr);
+            }
+        });
+
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
             window.location.href = "../pages/qlthongbao.php";
         });
-        
+
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {

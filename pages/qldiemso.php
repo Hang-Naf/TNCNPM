@@ -200,7 +200,7 @@ $result = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -430,6 +430,51 @@ $result = $conn->query($sql);
                 menu.style.display = "none";
             }
         });
+
+        // === TÌM KIẾM ĐIỂM SỐ ===
+        const searchInput = document.getElementById("searchBox");
+        const searchIcon = document.querySelector(".search-box i");
+
+        function timKiemBangDiem() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            const rows = document.querySelectorAll("tbody tr");
+            let found = 0;
+
+            rows.forEach(row => {
+                const maHS = row.children[1]?.innerText.toLowerCase() || "";
+                const hoTen = row.children[2]?.innerText.toLowerCase() || "";
+                const monHoc = row.children[3]?.innerText.toLowerCase() || "";
+
+                if (
+                    maHS.includes(keyword) ||
+                    hoTen.includes(keyword) ||
+                    monHoc.includes(keyword)
+                ) {
+                    row.style.display = "";
+                    found++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Xóa dòng "Không tìm thấy" cũ nếu có
+            const oldRow = document.getElementById("noResultRow");
+            if (oldRow) oldRow.remove();
+
+            // Nếu không có kết quả
+            if (found === 0) {
+                const tbody = document.querySelector("tbody");
+                const tr = document.createElement("tr");
+                tr.id = "noResultRow";
+                tr.innerHTML = `
+            <td colspan="8" style="text-align:center;color:gray;">Không tìm thấy kết quả phù hợp</td>
+        `;
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Tự động lọc khi gõ
+        searchInput.addEventListener("input", timKiemBangDiem);
 
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {

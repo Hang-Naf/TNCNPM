@@ -305,7 +305,7 @@ $result = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -548,6 +548,50 @@ $result = $conn->query($sql);
                 menu.style.display = "none";
             }
         });
+
+        const searchInput = document.getElementById("searchBox");
+        const searchIcon = document.querySelector(".search-box i");
+        const tableRows = document.querySelectorAll(".table-container tbody tr");
+
+        function thucHienTimKiem() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            let found = 0;
+
+            tableRows.forEach(row => {
+                const tieuDe = row.children[1]?.innerText.toLowerCase() || "";
+                const noiDung = row.children[2]?.innerText.toLowerCase() || "";
+                const monHoc = row.children[3]?.innerText.toLowerCase() || "";
+
+                if (tieuDe.includes(keyword) || noiDung.includes(keyword) || monHoc.includes(keyword)) {
+                    row.style.display = "";
+                    found++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Nếu không có kết quả, hiển thị dòng thông báo
+            const oldRow = document.getElementById("noResultRow");
+            if (oldRow) oldRow.remove();
+
+            if (found === 0) {
+                const tbody = document.querySelector(".table-container tbody");
+                const tr = document.createElement("tr");
+                tr.id = "noResultRow";
+                tr.innerHTML = `<td colspan="6" style="text-align:center;color:gray;">Không tìm thấy tài liệu phù hợp.</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Kích hoạt tìm kiếm khi nhập hoặc nhấn Enter
+        searchInput.addEventListener("input", thucHienTimKiem);
+        searchInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                thucHienTimKiem();
+            }
+        });
+        searchIcon.addEventListener("click", thucHienTimKiem);
 
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {

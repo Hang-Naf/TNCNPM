@@ -189,7 +189,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -207,7 +207,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -316,7 +316,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                     <?php endforeach; ?>
                 </select>
 
-                <input type="text" name="chucVu" placeholder="Chức vụ" >
+                <input type="text" name="chucVu" placeholder="Chức vụ">
 
                 <input type="text" name="namHoc" id="addNamHoc" placeholder="VD: 2022-2025" required readonly>
                 <select name="hocKy" id="addHocKy" readonly>
@@ -629,6 +629,63 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         //     }
         // });
 
+        // === TÌM KIẾM HỌC SINH ===
+        // === TÌM KIẾM HỌC SINH (TỰ ĐỘNG + ENTER + ICON) ===
+        const searchInput = document.getElementById("searchBox");
+        const searchIcon = document.querySelector(".search-box i");
+        const tableRows = document.querySelectorAll("tbody tr");
+
+        function thucHienTimKiem() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            let found = 0;
+
+            tableRows.forEach(row => {
+                const maHS = row.children[2]?.innerText.toLowerCase() || "";
+                const hoTen = row.children[3]?.innerText.toLowerCase() || "";
+                const lop = row.children[7]?.innerText.toLowerCase() || "";
+                const chucVu = row.children[8]?.innerText.toLowerCase() || "";
+
+                if (
+                    maHS.includes(keyword) ||
+                    hoTen.includes(keyword) ||
+                    lop.includes(keyword) ||
+                    chucVu.includes(keyword)
+                ) {
+                    row.style.display = "";
+                    found++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Xóa dòng thông báo cũ nếu có
+            const oldRow = document.getElementById("noResultRow");
+            if (oldRow) oldRow.remove();
+
+            // Nếu không tìm thấy kết quả
+            if (found === 0) {
+                const tbody = document.querySelector("tbody");
+                const tr = document.createElement("tr");
+                tr.id = "noResultRow";
+                tr.innerHTML = `<td colspan="13" style="text-align:center;color:gray;">Không tìm thấy học sinh phù hợp.</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        // === Kích hoạt tìm kiếm ===
+        // Gõ tự động
+        searchInput.addEventListener("input", thucHienTimKiem);
+
+        // Nhấn Enter
+        searchInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                thucHienTimKiem();
+            }
+        });
+
+        // Click icon kính lúp
+        searchIcon.addEventListener("click", thucHienTimKiem);
 
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");

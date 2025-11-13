@@ -188,7 +188,7 @@ $giaovien_rs = $conn->query("
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -206,7 +206,7 @@ $giaovien_rs = $conn->query("
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -300,7 +300,7 @@ $giaovien_rs = $conn->query("
                         <option value="<?= $gv['maGV'] ?>"><?= htmlspecialchars($gv['hoVaTen']) ?></option>
                     <?php endwhile; ?>
                 </select>
-                <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y')+1) ?>" readonly>
+                <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" readonly>
                 <select name="trangThai">
                     <option value="Đang học">Đang học</option>
                     <option value="Tạm dừng">Tạm dừng</option>
@@ -518,6 +518,7 @@ $giaovien_rs = $conn->query("
                 }
             }
         });
+
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
@@ -536,7 +537,47 @@ $giaovien_rs = $conn->query("
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
             window.location.href = "../pages/qlthongbao.php";
         });
-        
+
+        // === TÌM KIẾM LỚP HỌC THEO MÃ, TÊN, GIÁO VIÊN ===
+        document.getElementById("searchBox").addEventListener("input", function() {
+            const keyword = this.value.toLowerCase();
+            const rows = document.querySelectorAll("tbody tr");
+            let found = false;
+
+            rows.forEach(row => {
+                // Bỏ qua dòng "Không có dữ liệu"
+                if (row.children.length < 10) return;
+
+                const maLop = row.children[2]?.innerText.toLowerCase() || "";
+                const tenLop = row.children[3]?.innerText.toLowerCase() || "";
+                const giaoVien = row.children[6]?.innerText.toLowerCase() || "";
+
+                if (maLop.includes(keyword) || tenLop.includes(keyword) || giaoVien.includes(keyword)) {
+                    row.style.display = "";
+                    found = true;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Nếu không tìm thấy kết quả → thêm dòng thông báo
+            let noResultRow = document.getElementById("noResultRow");
+            if (!found) {
+                if (!noResultRow) {
+                    noResultRow = document.createElement("tr");
+                    noResultRow.id = "noResultRow";
+                    noResultRow.innerHTML = `
+                <td colspan="10" style="text-align:center;color:gray;">
+                    Không tìm thấy kết quả phù hợp
+                </td>
+            `;
+                    document.querySelector("tbody").appendChild(noResultRow);
+                }
+            } else if (noResultRow) {
+                noResultRow.remove();
+            }
+        });
+
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {

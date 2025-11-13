@@ -192,7 +192,7 @@ $giaoviens = $conn->query("
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -210,7 +210,7 @@ $giaoviens = $conn->query("
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -552,6 +552,7 @@ $giaoviens = $conn->query("
                 }
             }
         });
+
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
@@ -566,11 +567,61 @@ $giaoviens = $conn->query("
             }
         });
 
+        // === TÌM KIẾM PHÂN CÔNG GIẢNG DẠY ===
+        const searchInput = document.getElementById("searchBox");
+        const searchIcon = document.querySelector(".search-box i");
+        const tableRows = document.querySelectorAll("tbody tr");
+
+        function thucHienTimKiem() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            let found = 0;
+
+            tableRows.forEach(row => {
+                const tenLop = row.children[1]?.innerText.toLowerCase() || "";
+                const tenMon = row.children[3]?.innerText.toLowerCase() || "";
+                const tenGV = row.children[4]?.innerText.toLowerCase() || "";
+
+                if (
+                    tenLop.includes(keyword) ||
+                    tenMon.includes(keyword) ||
+                    tenGV.includes(keyword)
+                ) {
+                    row.style.display = "";
+                    found++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Xóa dòng thông báo cũ nếu có
+            const oldRow = document.getElementById("noResultRow");
+            if (oldRow) oldRow.remove();
+
+            // Nếu không có kết quả
+            if (found === 0) {
+                const tbody = document.querySelector("tbody");
+                const tr = document.createElement("tr");
+                tr.id = "noResultRow";
+                tr.innerHTML = `<td colspan="6" style="text-align:center;color:gray;">Không tìm thấy phân công phù hợp.</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Kích hoạt tìm kiếm khi nhập, nhấn Enter hoặc bấm icon
+        searchInput.addEventListener("input", thucHienTimKiem);
+        searchInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                thucHienTimKiem();
+            }
+        });
+        searchIcon.addEventListener("click", thucHienTimKiem);
+
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
             window.location.href = "../pages/qlthongbao.php";
         });
-        
+
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {

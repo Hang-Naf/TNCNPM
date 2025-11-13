@@ -200,7 +200,7 @@ $gv_rs = $conn->query("
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li  onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
@@ -218,7 +218,7 @@ $gv_rs = $conn->query("
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -554,6 +554,7 @@ $gv_rs = $conn->query("
                 }
             }
         });
+
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
@@ -567,12 +568,51 @@ $gv_rs = $conn->query("
                 menu.style.display = "none";
             }
         });
-        
+
+        // === TÌM KIẾM MÔN HỌC THEO MÃ HOẶC TÊN ===
+        document.getElementById("searchBox").addEventListener("input", function() {
+            const keyword = this.value.toLowerCase().trim();
+            const rows = document.querySelectorAll("tbody tr");
+            let found = false;
+
+            rows.forEach(row => {
+                // Bỏ qua dòng "Không có dữ liệu"
+                if (row.children.length < 10) return;
+
+                const maMH = row.children[1]?.innerText.toLowerCase() || "";
+                const tenMH = row.children[2]?.innerText.toLowerCase() || "";
+
+                if (maMH.includes(keyword) || tenMH.includes(keyword)) {
+                    row.style.display = "";
+                    found = true;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Nếu không tìm thấy kết quả → thêm dòng thông báo
+            let noResultRow = document.getElementById("noResultRow");
+            if (!found) {
+                if (!noResultRow) {
+                    noResultRow = document.createElement("tr");
+                    noResultRow.id = "noResultRow";
+                    noResultRow.innerHTML = `
+                <td colspan="10" style="text-align:center;color:gray;">
+                    Không tìm thấy môn học phù hợp.
+                </td>
+            `;
+                    document.querySelector("tbody").appendChild(noResultRow);
+                }
+            } else if (noResultRow) {
+                noResultRow.remove();
+            }
+        });
+
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
             window.location.href = "../pages/qlthongbao.php";
         });
-        
+
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {

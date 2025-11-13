@@ -255,7 +255,7 @@ if (!empty($loc_mon)) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -518,6 +518,43 @@ if (!empty($loc_mon)) {
                 })
                 .catch(err => console.error('Lỗi kết nối:', err));
         }
+
+        // === TÌM KIẾM HỌC SINH TRONG BẢNG CHUYÊN CẦN ===
+        const searchInput = document.getElementById("searchBox");
+        const tableRows = document.querySelectorAll("tbody tr");
+
+        function timKiemChuyenCan() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            let found = 0;
+
+            tableRows.forEach(row => {
+                const tenHS = row.children[1]?.innerText.toLowerCase() || "";
+                const tenLop = row.children[2]?.innerText.toLowerCase() || "";
+
+                if (tenHS.includes(keyword) || tenLop.includes(keyword)) {
+                    row.style.display = "";
+                    found++;
+                } else {
+                    row.style.display = "none";
+                }
+            });
+
+            // Xóa dòng thông báo cũ nếu có
+            const oldRow = document.getElementById("noResultRow");
+            if (oldRow) oldRow.remove();
+
+            // Nếu không có kết quả
+            if (found === 0) {
+                const tbody = document.querySelector("tbody");
+                const tr = document.createElement("tr");
+                tr.id = "noResultRow";
+                tr.innerHTML = `<td colspan="4" style="text-align:center;color:gray;">Không tìm thấy học sinh phù hợp</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Gõ đến đâu lọc đến đó
+        searchInput.addEventListener("input", timKiemChuyenCan);
 
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
