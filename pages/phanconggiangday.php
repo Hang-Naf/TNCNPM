@@ -482,7 +482,7 @@ $giaoviens = $conn->query("
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                window.location.href = "dangxuat.php"; // hoặc logout.php nếu có xử lý session
+                window.location.href = "dangnhap.php"; // hoặc logout.php nếu có xử lý session
             }
         }
     </script>

@@ -296,6 +296,12 @@ if (!$result) {
                         </div>
                         <div class="row">
                             <div class="form-group-horizontal">
+                                <label>Thời gian gửi thông báo:</label>
+                                <input type="date">
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="form-group-horizontal">
                                 <label>Người nhận:</label>
                                 <input type="radio" name="nguoiNhan" value="Toàn hệ thống"> Toàn hệ thống
                                 <input type="radio" name="nguoiNhan" value="Giáo viên"> Giáo viên

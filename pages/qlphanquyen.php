@@ -284,6 +284,7 @@ $result = $conn->query($sql);
                 <thead>
                     <tr>
                         <th><input type="checkbox"></th>
+                        <th>STT</th>
                         <th>Mã</th>
                         <th>Họ và tên</th>
                         <th>Email</th>
@@ -296,36 +297,44 @@ $result = $conn->query($sql);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php while ($row = $result->fetch_assoc()) { ?>
+                    <?php if ($result->num_rows > 0):
+                        $stt = 1;
+                        while ($row = $result->fetch_assoc()): ?>
+                            <tr>
+                                <td><input type="checkbox"></td>
+                                <td><?= $stt++ ?></td>
+                                <td><?= $row['userID'] ?></td>
+                                <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
+                                <td><?= htmlspecialchars($row['email']) ?></td>
+                                <td><?= htmlspecialchars($row['sdt']) ?></td>
+                                <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
+                                <td class="hide-column"><?= $row['ngaySinh'] ?></td>
+                                <td><?= $row['vaiTro'] ?></td>
+                                <td class="hide-column">
+                                    <form method="POST" style="display:inline;">
+                                        <input type="hidden" name="userID" value="<?= $row['userID'] ?>">
+                                        <select name="vaiTro">
+                                            <option value="Admin" <?= $row['vaiTro'] == 'Admin' ? 'selected' : '' ?>>Admin</option>
+                                            <option value="GiaoVien" <?= $row['vaiTro'] == 'GiaoVien' ? 'selected' : '' ?>>Giáo
+                                                viên
+                                            </option>
+                                            <option value="HocSinh" <?= $row['vaiTro'] == 'HocSinh' ? 'selected' : '' ?>>Học sinh
+                                            </option>
+                                        </select>
+                                        <button type="submit" name="updateRole">Lưu</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <a href="?delete=<?= $row['userID'] ?>"
+                                        onclick="return confirm('Xóa người dùng này?')">Xóa</a>
+                                </td>
+                            </tr>
+                        <?php endwhile;
+                    else: ?>
                         <tr>
-                            <td><input type="checkbox"></td>
-                            <td><?= $row['userID'] ?></td>
-                            <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
-                            <td><?= htmlspecialchars($row['email']) ?></td>
-                            <td><?= htmlspecialchars($row['sdt']) ?></td>
-                            <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
-                            <td class="hide-column"><?= $row['ngaySinh'] ?></td>
-                            <td><?= $row['vaiTro'] ?></td>
-                            <td class="hide-column">
-                                <form method="POST" style="display:inline;">
-                                    <input type="hidden" name="userID" value="<?= $row['userID'] ?>">
-                                    <select name="vaiTro">
-                                        <option value="Admin" <?= $row['vaiTro'] == 'Admin' ? 'selected' : '' ?>>Admin</option>
-                                        <option value="GiaoVien" <?= $row['vaiTro'] == 'GiaoVien' ? 'selected' : '' ?>>Giáo
-                                            viên
-                                        </option>
-                                        <option value="HocSinh" <?= $row['vaiTro'] == 'HocSinh' ? 'selected' : '' ?>>Học sinh
-                                        </option>
-                                    </select>
-                                    <button type="submit" name="updateRole">Lưu</button>
-                                </form>
-                            </td>
-                            <td>
-                                <a href="?delete=<?= $row['userID'] ?>"
-                                    onclick="return confirm('Xóa người dùng này?')">Xóa</a>
-                            </td>
+                            <td colspan="14" style="text-align:center;">Không có dữ liệu</td>
                         </tr>
-                    <?php } ?>
+                    <?php endif; ?>
                 </tbody>
             </table>
 

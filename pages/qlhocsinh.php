@@ -590,7 +590,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         // === Đăng xuất ===
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                window.location.href = "dangxuat.php";
+                window.location.href = "dangnhap.php";
             }
         }
     </script>

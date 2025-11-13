@@ -156,6 +156,10 @@ $result = $conn->query($sql);
         .hide-column {
             display: none;
         }
+
+        input[type="file"] {
+            border: none;
+        }
     </style>
 </head>
 
@@ -203,7 +207,8 @@ $result = $conn->query($sql);
             <div class="menu-section">
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông
+                        báo</li>
                 </ul>
             </div>
 
@@ -337,6 +342,14 @@ $result = $conn->query($sql);
                                     <option value="Riêng tư">Riêng tư</option>
                                 </select>
                             </div>
+                        </div>
+                        <br><br>
+                        <div class="row">
+                            <div class="form-group">
+                                <label>File tài liệu:</label>
+                                <input type="file" name="fileTaiLieu" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
+                            </div>
+
                         </div>
                         <div class="buttons">
                             <button type="button" class="btn-secondary"
