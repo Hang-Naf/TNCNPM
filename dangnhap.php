@@ -9,47 +9,53 @@ $message = "";
 
 // Khi người dùng nhấn nút Đăng nhập
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = trim($_POST["username"]);
+    $email = trim($_POST["username"]); // đổi biến cho dễ hiểu
     $password = trim($_POST["password"]);
 
-    if (empty($username) || empty($password)) {
+    if (empty($email) || empty($password)) {
         $message = "Vui lòng nhập đầy đủ thông tin!";
     } else {
-        // Kiểm tra tài khoản trong bảng user
-        $sql = "SELECT * FROM user WHERE hoVaTen = ? AND matKhau = ?";
+        // Kiểm tra tài khoản trong bảng user theo email
+        $sql = "SELECT * FROM user WHERE email = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("ss", $username, $password);
+        $stmt->bind_param("s", $email);
         $stmt->execute();
         $result = $stmt->get_result();
 
         if ($result->num_rows > 0) {
             $user = $result->fetch_assoc();
 
-            // Lưu thông tin vào session
-            $_SESSION["userID"] = $user["userID"];
-            $_SESSION["hoVaTen"] = $user["hoVaTen"];
-            $_SESSION["vaiTro"] = $user["vaiTro"];
+            // Kiểm tra mật khẩu
+            if (password_verify($password, $user["matKhau"]) || $password === $user["matKhau"]) {
+                // Lưu thông tin vào session
+                $_SESSION["userID"] = $user["userID"];
+                $_SESSION["hoVaTen"] = $user["hoVaTen"];
+                $_SESSION["vaiTro"] = $user["vaiTro"];
 
-            // Chuyển hướng theo vai trò
-            switch ($user["vaiTro"]) {
-                case "Admin":
-                    header("Location: index.php");
-                    exit();
-                case "GiaoVien":
-                    header("Location: qlgiaovien.php");
-                    exit();
-                case "HocSinh":
-                    header("Location: qlhocsinh.php");
-                    exit();
-                default:
-                    $message = "Vai trò không hợp lệ!";
+                // Chuyển hướng theo vai trò
+                switch ($user["vaiTro"]) {
+                    case "Admin":
+                        header("Location: index.php");
+                        exit();
+                    case "GiaoVien":
+                        header("Location: pagegiaovien/ttcanhan.php");
+                        exit();
+                    case "HocSinh":
+                        header("Location: ../pagehocsinh/ttcanhan.php");
+                        exit();
+                    default:
+                        $message = "Vai trò không hợp lệ!";
+                }
+            } else {
+                $message = "Mật khẩu không đúng!";
             }
         } else {
-            $message = "Email hoặc mật khẩu không đúng!";
+            $message = "Không tìm thấy tài khoản với email này!";
         }
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="vi">
@@ -75,6 +81,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             justify-content: center;
             align-items: center;
             height: 100vh;
+            overflow-x: hidden;
+            transition: transform 0.6s ease-in-out;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUp 1s ease forwards;
+        }
+
+        .slide-in-left {
+            opacity: 0;
+            transform: translateX(100px);
+            animation: slideInLeft 1s ease forwards;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(100px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
         }
 
         .container {
@@ -199,11 +243,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="right">
             <div class="right-container">
                 <h2>Đăng Nhập</h2>
-                <?php if (!empty($message))
-                    echo "<div class='message'>$message</div>"; ?>
+                <?php if (!empty($message)) echo "<div class='message'>$message</div>"; ?>
                 <form method="POST">
                     <div class="form-group">
-                        <input type="text" name="username" placeholder="Tên Đăng nhập">
+                        <input type="text" name="username" placeholder="">
                     </div>
                     <div class="form-group">
                         <input type="password" name="password" placeholder="Mật khẩu">
