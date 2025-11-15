@@ -89,10 +89,35 @@ switch ($action) {
             exit;
         }
 
-        $stmt = $conn->prepare("DELETE FROM lophoc_monhoc WHERE id=?");
+        // 1. Lấy thông tin maLop, maMonHoc trước khi xóa
+        $stmt = $conn->prepare("SELECT maLop, maMonHoc FROM lophoc_monhoc WHERE id=?");
         $stmt->bind_param("i", $id);
-        if ($stmt->execute()) {
-            echo json_encode(["message" => "Xóa phân công thành công!"]);
+        $stmt->execute();
+        $res = $stmt->get_result();
+        if ($res->num_rows === 0) {
+            echo json_encode(["error" => "Phân công không tồn tại"]);
+            exit;
+        }
+        $row = $res->fetch_assoc();
+        $maLop = $row['maLop'];
+        $maMonHoc = $row['maMonHoc'];
+
+        // 2. Xóa điểm liên quan của học sinh trong lớp đó và môn đó
+        // Giả sử bảng diemso có cột maHS, maMonHoc, loaiDiem
+        // Bạn có thể tùy chỉnh loaiDiem nếu muốn xóa chỉ 1 loại điểm
+        $stmtDelDiem = $conn->prepare("
+        DELETE ds FROM diemso ds
+        JOIN hocsinh_lophoc hl ON ds.maHS = hl.maHS
+        WHERE hl.maLop=? AND ds.maMonHoc=?
+    ");
+        $stmtDelDiem->bind_param("ss", $maLop, $maMonHoc);
+        $stmtDelDiem->execute();
+
+        // 3. Xóa phân công
+        $stmtDel = $conn->prepare("DELETE FROM lophoc_monhoc WHERE id=?");
+        $stmtDel->bind_param("i", $id);
+        if ($stmtDel->execute()) {
+            echo json_encode(["message" => "Xóa phân công và dữ liệu điểm liên quan thành công!"]);
         } else {
             echo json_encode(["error" => "Lỗi khi xóa: " . $conn->error]);
         }

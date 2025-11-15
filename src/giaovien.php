@@ -11,9 +11,16 @@ if (!$data || !isset($data["action"])) {
 $action = $data["action"];
 date_default_timezone_set("Asia/Ho_Chi_Minh");
 
-// ======= THÊM GIÁO VIÊN =======
+
+// ======================== THÊM GIÁO VIÊN ========================
 if ($action === "add") {
     $hoVaTen   = trim($data["hoVaTen"] ?? '');
+
+    if (strlen($hoVaTen) > 255) {
+        echo json_encode(["error" => "Họ và tên không được vượt quá 255 ký tự!"]);
+        exit();
+    }
+
     $email     = trim($data["email"] ?? '');
     $sdt       = trim($data["sdt"] ?? '');
     $gioiTinh  = $data["gioiTinh"] ?? 'Nam';
@@ -25,7 +32,7 @@ if ($action === "add") {
     $trangThai = $data["trangThai"] ?? 'active';
     $matKhau   = password_hash("12345678", PASSWORD_DEFAULT);
 
-    // Kiểm tra email trùng
+    // ---- Kiểm tra email trùng ----
     $check = $conn->prepare("SELECT userID FROM user WHERE email=?");
     $check->bind_param("s", $email);
     $check->execute();
@@ -35,7 +42,7 @@ if ($action === "add") {
         exit();
     }
 
-    //  Thêm user mới (trigger sẽ tự ghi log và tạo thông báo)
+    // ---- Thêm vào bảng user ----
     $stmt = $conn->prepare("
         INSERT INTO user (hoVaTen, matKhau, sdt, gioiTinh, email, vaiTro) 
         VALUES (?, ?, ?, ?, ?, 'GiaoVien')
@@ -49,16 +56,16 @@ if ($action === "add") {
 
     $newUserId = $conn->insert_id;
 
-    // Chờ 1 chút để trigger xử lý (phòng trễ)
-    usleep(200000);
+    usleep(200000); // tránh trễ trigger
 
-    // Nếu trigger chưa tạo dòng trong giaovien thì tự chèn
+    // ---- Kiểm tra trigger đã tạo giáo viên chưa ----
     $checkGV = $conn->prepare("SELECT maGV FROM giaovien WHERE maGV=?");
     $checkGV->bind_param("i", $newUserId);
     $checkGV->execute();
     $rs = $checkGV->get_result();
 
     if ($rs->num_rows === 0) {
+        // Nếu trigger không tạo, tự chèn
         $stmt2 = $conn->prepare("
             INSERT INTO giaovien (maGV, boMon, trinhDo, phongBan, namHoc, hocKy, trangThai)
             VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -66,6 +73,7 @@ if ($action === "add") {
         $stmt2->bind_param("issssss", $newUserId, $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai);
         $stmt2->execute();
     } else {
+        // Nếu trigger tạo rồi → cập nhật lại
         $stmt2 = $conn->prepare("
             UPDATE giaovien 
             SET boMon=?, trinhDo=?, phongBan=?, namHoc=?, hocKy=?, trangThai=? 
@@ -75,11 +83,23 @@ if ($action === "add") {
         $stmt2->execute();
     }
 
-    echo json_encode(["message" => " Thêm giáo viên thành công!"]);
+    // ---- Cập nhật bảng giaovien_monhoc ----
+    $stmt3 = $conn->prepare("
+        INSERT INTO giaovien_monhoc (maGV, maMonHoc)
+        SELECT ?, maMonHoc 
+        FROM monhoc 
+        WHERE tenMonHoc = ?
+    ");
+    $stmt3->bind_param("is", $newUserId, $boMon);
+    $stmt3->execute();
+
+    echo json_encode(["message" => "Thêm giáo viên thành công!"]);
     exit();
 }
 
-// ======= CẬP NHẬT GIÁO VIÊN =======
+
+
+// ======================== CẬP NHẬT GIÁO VIÊN ========================
 if ($action === "update") {
     $userId    = (int)($data["userId"] ?? 0);
     $hoVaTen   = $data["hoVaTen"] ?? '';
@@ -93,7 +113,7 @@ if ($action === "update") {
     $hocKy     = $data["hocKy"] ?? 'Chưa cập nhật';
     $trangThai = $data["trangThai"] ?? 'active';
 
-    // ✅ Cập nhật bảng user (trigger tự ghi log và tạo thông báo)
+    // ---- Cập nhật user ----
     $stmt = $conn->prepare("
         UPDATE user 
         SET hoVaTen=?, email=?, sdt=?, gioiTinh=? 
@@ -106,7 +126,7 @@ if ($action === "update") {
         exit();
     }
 
-    // Cập nhật thông tin phụ
+    // ---- Cập nhật bảng giaovien ----
     $stmt2 = $conn->prepare("
         UPDATE giaovien 
         SET boMon=?, trinhDo=?, phongBan=?, namHoc=?, hocKy=?, trangThai=? 
@@ -115,20 +135,34 @@ if ($action === "update") {
     $stmt2->bind_param("ssssssi", $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai, $userId);
     $stmt2->execute();
 
-    echo json_encode(["message" => " Cập nhật giáo viên thành công!"]);
+    // ---- Xóa phân công môn cũ ----
+    $conn->query("DELETE FROM giaovien_monhoc WHERE maGV = $userId");
+
+    // ---- Thêm phân công môn mới ----
+    $stmt3 = $conn->prepare("
+        INSERT INTO giaovien_monhoc (maGV, maMonHoc)
+        SELECT ?, maMonHoc 
+        FROM monhoc 
+        WHERE tenMonHoc = ?
+    ");
+    $stmt3->bind_param("is", $userId, $boMon);
+    $stmt3->execute();
+
+    echo json_encode(["message" => "Cập nhật giáo viên thành công!"]);
     exit();
 }
 
-// ======= XÓA GIÁO VIÊN =======
+
+
+// ======================== XÓA GIÁO VIÊN ========================
 if ($action === "delete") {
     $userId = (int)($data["userId"] ?? 0);
 
-    //  Xóa từ bảng user (trigger tự xử lý log & thông báo)
     $stmt = $conn->prepare("DELETE FROM user WHERE userID=? AND vaiTro='GiaoVien'");
     $stmt->bind_param("i", $userId);
 
     if ($stmt->execute()) {
-        echo json_encode(["message" => " Xóa giáo viên thành công!"]);
+        echo json_encode(["message" => "Xóa giáo viên thành công!"]);
     } else {
         echo json_encode(["error" => "Không thể xóa giáo viên: " . $conn->error]);
     }

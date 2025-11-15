@@ -300,7 +300,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             <h3>Thêm học sinh</h3>
             <form id="addForm">
                 <input type="hidden" name="action" value="add">
-                <input type="text" name="hoVaTen" placeholder="Họ tên" required>
+                <input type="text" name="hoVaTen" placeholder="Họ tên" required maxlength="255">
                 <input type="email" name="email" placeholder="Email" required>
                 <input type="text" name="sdt" placeholder="Số điện thoại">
                 <select name="gioiTinh">
@@ -341,7 +341,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             <form id="editForm">
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="userId" id="editId">
-                <input type="text" name="hoVaTen" id="editHoTen" placeholder="Họ và tên" required>
+                <input type="text" name="hoVaTen" id="editHoTen" placeholder="Họ và tên" required maxlength="255">
                 <input type="email" name="email" id="editEmail" placeholder="Email" required>
                 <input type="text" name="sdt" id="editSdt" placeholder="Số điện thoại">
                 <select name="gioiTinh" id="editGioiTinh">
@@ -498,6 +498,13 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             const json = await res.json();
             alert(json.message || json.error);
             if (json.message) location.reload();
+
+            const hoTen = e.target.hoVaTen.value.trim();
+            if (hoTen.length > 255) {
+                alert("Họ và tên không được vượt quá 255 ký tự!");
+                return;
+            }
+
         });
 
         // === Mở popup sửa ===
@@ -534,6 +541,12 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             const json = await res.json();
             alert(json.message || json.error);
             if (json.message) location.reload();
+
+            const hoTen = e.target.hoVaTen.value.trim();
+            if (hoTen.length > 255) {
+                alert("Họ và tên không được vượt quá 255 ký tự!");
+                return;
+            }
         });
 
         // === Xóa học sinh ===

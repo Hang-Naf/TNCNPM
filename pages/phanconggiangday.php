@@ -43,8 +43,11 @@ $giaoviens = $conn->query("
     SELECT g.maGV, g.boMon, u.hoVaTen 
     FROM giaovien g
     JOIN user u ON g.maGV = u.userID
-    WHERE u.vaiTro = 'GiaoVien'
+    WHERE u.vaiTro = 'GiaoVien' AND g.trangThai='active'
 ");
+if(!$giaoviens) {
+    die("Lỗi truy vấn giáo viên: " . $conn->error);
+}
 ?>
 
 <!DOCTYPE html>
@@ -510,6 +513,16 @@ $giaoviens = $conn->query("
                 document.getElementById("editLop").value = tr.dataset.malop;
                 document.getElementById("editMon").value = tr.dataset.mamonhoc;
                 document.getElementById("editGV").value = tr.dataset.magv || "";
+
+                // === Lọc giáo viên theo môn ngay khi mở popup sửa ===
+                const monSelect = document.getElementById("editMon");
+                const gvSelect = document.getElementById("editGV");
+                const monName = monSelect.options[monSelect.selectedIndex]?.dataset.bomon?.trim().toLowerCase() || "";
+                for (let opt of gvSelect.options) {
+                    const gvMon = opt.dataset.bomon?.trim().toLowerCase() || "";
+                    opt.style.display = (monName === "" || gvMon === "" || gvMon === monName) ? "block" : "none";
+                }
+
                 document.getElementById("editPopup").style.display = "flex";
             }
         });

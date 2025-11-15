@@ -153,6 +153,11 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             padding: 8px 14px;
             border-radius: 6px;
         }
+
+        #counter {
+            font-size: 0.9em;
+            color: #555;
+        }
     </style>
 </head>
 
@@ -308,7 +313,8 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <input type="hidden" name="action" value="add">
 
                 <label>Họ và tên:</label>
-                <input type="text" name="hoVaTen" required>
+                <input type="text" name="hoVaTen" id="addHoTen" required maxlength="255">
+                <div id="addCounter">0 / 255 ký tự</div><br>
 
                 <label>Email:</label>
                 <input type="email" name="email" required>
@@ -337,10 +343,10 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <input type="text" name="phongBan" placeholder="Phòng ban (VD: Tổ Toán)">
 
                 <label>Năm học:</label>
-                <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học" readonly>
+                <input type="text" name="namHoc" id="addNamHoc" placeholder="Năm học">
 
                 <label>Học kỳ:</label>
-                <select name="hocKy" id="addHocKy" readonly>
+                <select name="hocKy" id="addHocKy">
                     <option value="">-- Học kỳ tự động --</option>
                 </select>
 
@@ -365,7 +371,8 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             <form id="editForm">
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="userId" id="editId">
-                <input type="text" name="hoVaTen" id="editHoTen" placeholder="Họ và tên" required>
+                <input type="text" name="hoVaTen" id="editHoTen" placeholder="Họ và tên" required maxlength="255">
+                <div id="editCounter">0 / 255 ký tự</div>
                 <input type="email" name="email" id="editEmail" placeholder="Email" required>
                 <input type="text" name="sdt" id="editSdt" placeholder="Số điện thoại">
                 <select name="gioiTinh" id="editGioiTinh">
@@ -500,17 +507,52 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         const apiGiaoVien = "../src/giaovien.php";
         let currentId = null;
 
-        function showAddPopup() {
-            document.getElementById("addPopup").style.display = "flex";
-        }
 
         function closePopup(id) {
             document.getElementById(id).style.display = "none";
         }
 
+        // Hàm đếm ký tự Unicode chính xác
+        function countChars(str) {
+            return [...str].length;
+        }
+
+        // === Popup Thêm giáo viên ===
+        const addInput = document.getElementById("addHoTen");
+        const addCounter = document.getElementById("addCounter");
+
+        addInput.addEventListener("input", () => {
+            let len = countChars(addInput.value);
+            if (len > 255) {
+                addInput.value = [...addInput.value].slice(0, 255).join('');
+                len = 255;
+            }
+            addCounter.textContent = `${len} / 255 ký tự`;
+        });
+
+        // === Popup Sửa giáo viên ===
+        const editInput = document.getElementById("editHoTen");
+        const editCounter = document.getElementById("editCounter");
+
+        editInput.addEventListener("input", () => {
+            let len = countChars(editInput.value);
+            if (len > 255) {
+                editInput.value = [...editInput.value].slice(0, 255).join('');
+                len = 255;
+            }
+            editCounter.textContent = `${len} / 255 ký tự`;
+        });
+
         // Thêm giáo viên
         document.getElementById("addForm").addEventListener("submit", async (e) => {
             e.preventDefault();
+
+            const hoTen = e.target.hoVaTen.value.trim();
+            if (hoTen.length > 255) {
+                alert("Họ và tên không được vượt quá 255 ký tự!");
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch(apiGiaoVien, {
                 method: "POST",
@@ -522,6 +564,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             const json = await res.json();
             alert(json.message || json.error);
             if (json.message) location.reload();
+
         });
 
         // Mở popup sửa
@@ -548,6 +591,13 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         // Cập nhật giáo viên
         document.getElementById("editForm").addEventListener("submit", async (e) => {
             e.preventDefault();
+
+            const hoTen = e.target.hoVaTen.value.trim();
+            if (hoTen.length > 255) {
+                alert("Họ và tên không được vượt quá 255 ký tự!");
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch(apiGiaoVien, {
                 method: "POST",
@@ -559,6 +609,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             const json = await res.json();
             alert(json.message || json.error);
             if (json.message) location.reload();
+
         });
 
         // Xóa giáo viên
@@ -612,46 +663,15 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             };
         }
 
-        // Gán tự động khi mở form thêm
-        // function showAddPopup() {
-        //     const {
-        //         hocKy,
-        //         namHoc
-        //     } = getHocKyVaNamHoc();
-        //     document.getElementById("addNamHoc").value = namHoc;
-        //     document.getElementById("addHocKy").innerHTML = `<option value="${hocKy}" selected>${hocKy}</option>`;
-        //     document.getElementById("addPopup").style.display = "flex";
-        // }
-
-        // Khi mở popup sửa, nếu dữ liệu trống thì cũng tự động set lại
-        // document.addEventListener("click", (e) => {
-        //     if (e.target.classList.contains("edit-btn")) {
-        //         const tr = e.target.closest("tr");
-        //         currentId = tr.dataset.id;
-        //         document.getElementById("editId").value = currentId;
-        //         document.getElementById("editHoTen").value = tr.children[3].innerText;
-        //         document.getElementById("editGioiTinh").value = tr.children[4].innerText;
-        //         document.getElementById("editEmail").value = tr.children[5].innerText;
-        //         document.getElementById("editSdt").value = tr.children[6].innerText;
-        //         document.getElementById("editBoMon").value = tr.children[7].innerText;
-        //         document.getElementById("editTrinhDo").value = tr.children[8].innerText;
-        //         document.getElementById("editPhongBan").value = tr.children[9].innerText;
-
-        //         // ✅ Nếu năm học và học kỳ chưa có, tự động điền
-        //         const {
-        //             hocKy,
-        //             namHoc
-        //         } = getHocKyVaNamHoc();
-        //         const editNamHoc = tr.children[10].innerText || namHoc;
-        //         const editHocKy = tr.children[11].innerText || hocKy;
-        //         document.getElementById("editNamHoc").value = editNamHoc;
-        //         document.getElementById("editHocKy").innerHTML = `<option value="${editHocKy}" selected>${editHocKy}</option>`;
-
-        //         const active = tr.children[12].innerText.includes("Hoạt");
-        //         document.getElementById(active ? "editActive" : "editInactive").checked = true;
-        //         document.getElementById("editPopup").style.display = "flex";
-        //     }
-        // });
+        function showAddPopup() {
+            const {
+                hocKy,
+                namHoc
+            } = getHocKyVaNamHoc();
+            document.getElementById("addNamHoc").value = namHoc;
+            document.getElementById("addHocKy").innerHTML = `<option value="${hocKy}" selected>${hocKy}</option>`;
+            document.getElementById("addPopup").style.display = "flex";
+        }
 
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");

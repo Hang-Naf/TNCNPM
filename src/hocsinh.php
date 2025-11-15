@@ -16,6 +16,12 @@ $action = $data['action'] ?? '';
 try {
     if ($action === 'add') {
         $hoVaTen   = $conn->real_escape_string($data['hoVaTen']);
+
+        if (strlen($hoVaTen) > 255) {
+            echo json_encode(["error" => "Họ và tên không được vượt quá 255 ký tự!"]);
+            exit();
+        }
+
         $email     = $conn->real_escape_string($data['email']);
         $sdt       = $conn->real_escape_string($data['sdt']);
         $gioiTinh  = $conn->real_escape_string($data['gioiTinh']);
@@ -47,10 +53,15 @@ try {
         } else {
             echo json_encode(['error' => $conn->error]);
         }
-
     } elseif ($action === 'update') {
         $userId    = (int)$data['userId'];
         $hoVaTen   = $conn->real_escape_string($data['hoVaTen']);
+        
+        if (strlen($hoVaTen) > 255) {
+            echo json_encode(["error" => "Họ và tên không được vượt quá 255 ký tự!"]);
+            exit();
+        }
+
         $email     = $conn->real_escape_string($data['email']);
         $sdt       = $conn->real_escape_string($data['sdt']);
         $gioiTinh  = $conn->real_escape_string($data['gioiTinh']);
@@ -72,7 +83,6 @@ try {
         } else {
             echo json_encode(['error' => $conn->error]);
         }
-
     } elseif ($action === 'delete') {
         $userId = (int)$data['userId'];
         if ($conn->query("DELETE FROM user WHERE userID=$userId")) {
@@ -80,11 +90,9 @@ try {
         } else {
             echo json_encode(['error' => $conn->error]);
         }
-
     } else {
         echo json_encode(['error' => 'Hành động không hợp lệ']);
     }
 } catch (Exception $e) {
     echo json_encode(['error' => $e->getMessage()]);
 }
-?>

@@ -9,72 +9,24 @@ if (!isset($_SESSION["userID"])) {
     exit();
 }
 
-// ==== Chỉ cho phép Giáo viên ====
+// ==== Chỉ cho phép GiaoVien ====
 if ($_SESSION["vaiTro"] !== "GiaoVien") {
+    session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
-
+$userID = $_SESSION["userID"];
 $maGV = $_SESSION["userID"];
-$today = date('Y-m-d');
 
 // ==== Lấy thông tin giáo viên ====
 $sqlGV = "SELECT u.hoVaTen 
            FROM user u 
            JOIN giaovien g ON u.userID = g.maGV 
-           WHERE g.maGV = '$maGV' LIMIT 1";
+           WHERE g.maGV = '$maGV' 
+           LIMIT 1";
 $resultGV = $conn->query($sqlGV);
 $gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTen' => 'Giáo viên'];
 
-// ==== Lấy danh sách lớp học mà GV được phân công ====
-$sqlLop = "SELECT DISTINCT l.maLop, l.tenLop 
-           FROM lophoc_monhoc lm
-           JOIN lophoc l ON lm.maLop = l.maLop
-           WHERE lm.maGV = '$maGV'";
-$lopList = $conn->query($sqlLop);
-
-// ==== Xử lý thêm tài liệu ====
-if (isset($_POST['add'])) {
-    $maLop = $_POST['maLop'];
-    $tieuDe = trim($_POST['tieuDe']);
-    $moTa = trim($_POST['moTa']);
-    $trangThai = $_POST['trangThai'] ?? 'Công khai';
-    $ngayTai = $today;
-    $fileName = '';
-
-    // ==== Lấy mã môn học mà GV dạy lớp này (để lưu đúng môn) ====
-    $sqlMonHoc = "SELECT maMonHoc FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop' LIMIT 1";
-    $resultMon = $conn->query($sqlMonHoc);
-    if ($resultMon && $resultMon->num_rows > 0) {
-        $maMonHoc = $resultMon->fetch_assoc()['maMonHoc'];
-    } else {
-        echo "<script>alert('Không tìm thấy môn học bạn phụ trách trong lớp này!');</script>";
-        exit;
-    }
-
-    // ==== Upload file nếu có ====
-    if (!empty($_FILES['fileTaiLieu']['name'])) {
-        $targetDir = "../uploads/tailieu/";
-        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
-        $fileName = time() . "_" . basename($_FILES["fileTaiLieu"]["name"]);
-        $targetFile = $targetDir . $fileName;
-        move_uploaded_file($_FILES["fileTaiLieu"]["tmp_name"], $targetFile);
-    }
-
-    // ==== Kiểm tra quyền phân công ====
-    $kiemtra = $conn->query("SELECT * FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop'");
-    if ($kiemtra->num_rows == 0) {
-        echo "<script>alert('Bạn không được phân công dạy lớp này!');</script>";
-    } else {
-        $sql = "INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai, tepDinhKem)
-                VALUES ('$maMonHoc', '$maLop', '$tieuDe', '$moTa', '$ngayTai', '$maGV', '$trangThai', '$fileName')";
-        if ($conn->query($sql)) {
-            echo "<script>alert('Thêm tài liệu thành công!'); window.location='tlhoctap.php';</script>";
-        } else {
-            echo "Lỗi: " . $conn->error;
-        }
-    }
-}
 ?>
 
 <!DOCTYPE html>
@@ -82,112 +34,82 @@ if (isset($_POST['add'])) {
 
 <head>
     <meta charset="UTF-8">
-    <title>Thêm tài liệu học tập</title>
+    <title>Quản lý lớp học</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
         body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #fff;
-            margin: 0;
-            padding: 0;
-        }
-
-        .content-area {
-            padding: 30px;
-        }
-
-        h1 {
-            font-size: 22px;
-            font-weight: 700;
-            color: #111;
-            margin-bottom: 25px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 100px;
-            margin-bottom: 20px;
-        }
-
-        .form-section {
+            font-family: "Segoe UI", sans-serif;
             background: #f8f9fb;
+            margin: 0;
+        }
+
+        .header {
+            padding: 0px 25px;
+        }
+
+        .container {
             padding: 20px;
-            border-radius: 8px;
         }
 
-        label {
-            font-weight: 600;
-            color: #333;
-            display: block;
-            margin-bottom: 5px;
-        }
-
-        input[type=text],
-        select,
-        textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 15px;
-        }
-
-        textarea {
-            resize: none;
-            height: 80px;
-        }
-
-        .status-group {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-top: 8px;
-        }
-
-        .file-upload {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            border: 1px solid #eee;
-        }
-
-        .file-upload input[type=file] {
-            border: 1px solid #ccc;
-            padding: 8px;
-            width: 100%;
-            border-radius: 6px;
-        }
-
-        .buttons {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
-
-        .btn {
-            padding: 10px 18px;
+        .add-btn {
+            background: #0b1e6b;
+            color: white;
             border: none;
+            padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
 
-        .btn-primary {
-            background: #0b3364;
-            color: #fff;
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
         }
 
-        .btn-secondary {
-            background: #e0e0e0;
-            color: #333;
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
         }
 
-        .btn-primary:hover {
-            background: #124b8a;
+        th {
+            background: #f1f3f8;
+        }
+
+        .status.active {
+            color: green;
+            font-weight: 500;
+        }
+
+        .status.inactive {
+            color: gray;
+        }
+
+        .action i {
+            cursor: pointer;
+            margin: 0 6px;
+        }
+
+        select {
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
     </style>
 </head>
@@ -205,15 +127,14 @@ if (isset($_POST['add'])) {
                 <ul>
                     <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
                     <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li onclick="window.location.href='../pagegiaovien/lophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li class="active" onclick="window.location.href='../pagegiaovien/lophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li onclick="window.location.href='../pagegiaovien/kqhoctap.php'"><i class="fa-solid fa-book"></i> Môn học</li>
-                    <li class="active" onclick="window.location.href='../pagegiaovien/tlhoctap.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
+                    <li onclick="window.location.href='../pagegiaovien/tlhoctap.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
 
@@ -267,49 +188,62 @@ if (isset($_POST['add'])) {
                 </div>
             </div>
         </header>
-        <div class="content-area">
-            <h1>THÊM TÀI LIỆU</h1>
-            <form method="POST" enctype="multipart/form-data">
-                <div class="form-grid">
-                    <div>
-                        <label>TIÊU ĐỀ</label>
-                        <input type="text" name="tieuDe" required>
-                    </div>
-                    <div>
-                        <label>LỚP HỌC</label>
-                        <select name="maLop" required>
-                            <option value="">-- Chọn lớp được phân công --</option>
-                            <?php while ($lop = $lopList->fetch_assoc()): ?>
-                                <option value="<?= $lop['maLop'] ?>"><?= htmlspecialchars($lop['tenLop']) ?></option>
-                            <?php endwhile; ?>
-                        </select>
-                    </div>
-                    <div>
-                        <label>MÔ TẢ</label>
-                        <input type="text" name="moTa" required>
-                    </div>
-                    <div>
-                        <label>TRẠNG THÁI</label>
-                        <div class="status-group">
-                            <label><input type="radio" name="trangThai" value="Công khai" checked> Công khai</label>
-                            <label><input type="radio" name="trangThai" value="Riêng tư"> Riêng tư</label>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="file-upload">
-                    <label>FILE TÀI LIỆU</label>
-                    <input type="file" name="fileTaiLieu" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
-                </div>
+        <div class="container">
+            <h1>QUẢN LÝ LỚP HỌC</h1>
 
-                <div class="buttons">
-                    <button type="button" class="btn btn-secondary" onclick="window.location='tlhoctap.php'">Quay lại</button>
-                    <button type="submit" name="add" class="btn btn-primary">Thêm mới</button>
-                </div>
-            </form>
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Mã lớp</th>
+                        <th>Tên lớp</th>
+                        <th>Giáo viên chủ nhiệm</th>
+                        <th>Sĩ số</th>
+                        <th>Trạng thái</th>
+                        <th>Tác vụ</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $sqlLop = "SELECT l.maLop, l.tenLop, l.trangThai,
+                              u.hoVaTen AS giaoVien,
+                              COUNT(hl.maHS) AS siSo
+                       FROM lophoc l
+                       LEFT JOIN giaovien g ON l.maGV = g.maGV
+                       LEFT JOIN user u ON g.maGV = u.userID
+                       LEFT JOIN hocsinh_lophoc hl ON l.maLop = hl.maLop
+                       WHERE l.maGV = '$maGV'
+                       GROUP BY l.maLop, l.tenLop, l.trangThai, u.hoVaTen
+                       ORDER BY l.maLop ASC";
+                    $resultLop = $conn->query($sqlLop);
+                    $stt = 1;
+                    if ($resultLop && $resultLop->num_rows > 0) {
+                        while ($row = $resultLop->fetch_assoc()) {
+                            echo "<tr>
+                        <td>{$stt}</td>
+                        <td>{$row['maLop']}</td>
+                        <td>" . htmlspecialchars($row['tenLop']) . "</td>
+                        <td>" . htmlspecialchars($row['giaoVien'] ?? 'Chưa phân công') . "</td>
+                        <td>{$row['siSo']}</td>
+                        <td class='status " . ($row['trangThai'] == 'Đang học' ? 'Đang học' : 'Tạm dừng') . "'>" . ($row['trangThai'] == 'Đang học' ? 'Active' : 'Inactive') . "</td>
+                        <td class='action'><i class='fa-solid fa-eye' title='Xem chi tiết' onclick=\"window.location.href='chitietlop.php?maLop={$row['maLop']}'\"></i></td>
+                    </tr>";
+                            $stt++;
+                        }
+                    } else {
+                        echo "<tr><td colspan='7' style='text-align:center'>Không có lớp học</td></tr>";
+                    }
+                    ?>
+                </tbody>
+            </table>
         </div>
     </div>
+
     <script>
+        function changeClass(maLop) {
+            window.location.href = "?lop=" + maLop;
+        }
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu
