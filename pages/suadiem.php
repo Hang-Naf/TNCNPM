@@ -1,96 +1,95 @@
 <?php
-include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
-session_start();
 
-// ==== Kiểm tra đăng nhập ====
-if (!isset($_SESSION["userID"])) {
-    header("Location: ../dangnhap.php");
+// ==== LẤY DỮ LIỆU ====
+$maHS = $_GET['maHS'] ?? '';
+$tenMon = $_GET['mon'] ?? '';
+
+if ($maHS === '' || $tenMon === '') {
+    die("Thiếu thông tin học sinh hoặc môn học.");
+}
+
+// ==== CẬP NHẬT (KHI SUBMIT) ====
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $hocKy = ['hk1', 'hk2'];
+    $loai = ['mieng', '1tiet', 'thiGK', 'thiCK'];
+
+    // Lấy mã môn học
+    $getMon = $conn->prepare("SELECT maMonHoc FROM monhoc WHERE tenMonHoc = ?");
+    $getMon->bind_param("s", $tenMon);
+    $getMon->execute();
+    $getMon->bind_result($maMonHoc);
+    $getMon->fetch();
+    $getMon->close();
+
+    if (!$maMonHoc)
+        die("Không tìm thấy môn học trong CSDL!");
+
+    foreach ($hocKy as $hk) {
+        foreach ($loai as $l) {
+            $field = $hk . '_' . $l;
+            if (isset($_POST[$field]) && $_POST[$field] !== '') {
+                $diem = floatval($_POST[$field]);
+
+                // Kiểm tra xem điểm đã có chưa
+                $check = $conn->prepare("SELECT maDiem FROM diemso WHERE maHS=? AND maMonHoc=? AND loaiDiem=?");
+                $check->bind_param("iis", $maHS, $maMonHoc, $field);
+                $check->execute();
+                $check->store_result();
+
+                if ($check->num_rows > 0) {
+                    // Cập nhật
+                    $sql = "UPDATE diemso SET diem=?, ngayCapNhat=NOW() WHERE maHS=? AND maMonHoc=? AND loaiDiem=?";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("diis", $diem, $maHS, $maMonHoc, $field);
+                    $stmt->execute();
+                    $stmt->close();
+                } else {
+                    // Thêm mới nếu chưa có
+                    $sql = "INSERT INTO diemso(maHS, maMonHoc, loaiDiem, diem, ngayCapNhat)
+                            VALUES(?, ?, ?, ?, NOW())";
+                    $stmt = $conn->prepare($sql);
+                    $stmt->bind_param("iisd", $maHS, $maMonHoc, $field, $diem);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+                $check->close();
+            }
+        }
+    }
+
+    echo "<script>alert('Cập nhật điểm thành công!');window.location.href='qldiemso.php';</script>";
     exit();
 }
 
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
-    session_destroy();
-    header("Location: ../dangnhap.php");
-    exit();
+// ==== LẤY THÔNG TIN HỌC SINH + ĐIỂM ====
+$sql = "SELECT u.hoVaTen, d.loaiDiem, d.diem
+        FROM diemso d
+        JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+        JOIN hocsinh h ON d.maHS = h.maHS
+        JOIN user u ON h.maHS = u.userID
+        WHERE d.maHS = ? AND m.tenMonHoc = ?";
+$stmt = $conn->prepare($sql);
+$stmt->bind_param("is", $maHS, $tenMon);
+$stmt->execute();
+$res = $stmt->get_result();
+$data = [];
+$tenHS = "";
+while ($r = $res->fetch_assoc()) {
+    $data[$r['loaiDiem']] = $r['diem'];
+    $tenHS = $r['hoVaTen'];
 }
-
-// ========= LỌC DỮ LIỆU =========
-$lopChon = $_GET['lop'] ?? '';
-$monChon = $_GET['mon'] ?? '';
-
-$dsLop = $conn->query("SELECT DISTINCT lopHocPhuTrach AS tenLop FROM hocsinh WHERE lopHocPhuTrach IS NOT NULL");
-$dsMon = $conn->query("SELECT * FROM monhoc ORDER BY tenMonHoc ASC");
-
-// ========= TRUY VẤN DỮ LIỆU CHÍNH =========
-$sql = "
-SELECT 
-    u.userID AS maHS,
-    u.hoVaTen,
-    h.lopHocPhuTrach,
-    m.tenMonHoc,
-
-    -- HỌC KỲ I
-    ROUND(
-        SUM(CASE 
-            WHEN d.loaiDiem = 'hk1_mieng' THEN d.diem * 1
-            WHEN d.loaiDiem = 'hk1_1tiet' THEN d.diem * 2
-            WHEN d.loaiDiem = 'hk1_thiGK' THEN d.diem * 2
-            WHEN d.loaiDiem = 'hk1_thiCK' THEN d.diem * 3
-            ELSE 0 END) /
-        NULLIF(SUM(CASE 
-            WHEN d.loaiDiem = 'hk1_mieng' THEN 1
-            WHEN d.loaiDiem = 'hk1_1tiet' THEN 2
-            WHEN d.loaiDiem = 'hk1_thiGK' THEN 2
-            WHEN d.loaiDiem = 'hk1_thiCK' THEN 3
-            ELSE 0 END), 0), 1
-    ) AS diemHK1,
-
-    -- HỌC KỲ II
-    ROUND(
-        SUM(CASE 
-            WHEN d.loaiDiem = 'hk2_mieng' THEN d.diem * 1
-            WHEN d.loaiDiem = 'hk2_1tiet' THEN d.diem * 2
-            WHEN d.loaiDiem = 'hk2_thiGK' THEN d.diem * 2
-            WHEN d.loaiDiem = 'hk2_thiCK' THEN d.diem * 3
-            ELSE 0 END) /
-        NULLIF(SUM(CASE 
-            WHEN d.loaiDiem = 'hk2_mieng' THEN 1
-            WHEN d.loaiDiem = 'hk2_1tiet' THEN 2
-            WHEN d.loaiDiem = 'hk2_thiGK' THEN 2
-            WHEN d.loaiDiem = 'hk2_thiCK' THEN 3
-            ELSE 0 END), 0), 1
-    ) AS diemHK2
-
-FROM hocsinh h
-JOIN user u ON h.maHS = u.userID
-LEFT JOIN diemso d ON d.maHS = h.maHS
-LEFT JOIN monhoc m ON d.maMonHoc = m.maMonHoc
-WHERE 1=1
-";
-
-if ($lopChon != '') {
-    $sql .= " AND h.lopHocPhuTrach = '" . $conn->real_escape_string($lopChon) . "'";
-}
-if ($monChon != '') {
-    $sql .= " AND m.tenMonHoc = '" . $conn->real_escape_string($monChon) . "'";
-}
-
-$sql .= " GROUP BY u.userID, m.tenMonHoc ORDER BY h.lopHocPhuTrach, u.hoVaTen ASC";
-$result = $conn->query($sql);
+$stmt->close();
 ?>
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý điểm số</title>
+    <title>Cập nhật điểm</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
-    <link rel="stylesheet" href="../form.css">
     <style>
         body {
             font-family: "Segoe UI", sans-serif;
@@ -98,7 +97,7 @@ $result = $conn->query($sql);
             margin: 0;
         }
 
-        #main-container {
+        .form-box {
             padding: 20px;
         }
 
@@ -160,8 +159,65 @@ $result = $conn->query($sql);
             text-align: center;
         }
 
-        #addPopup {
-            display: none;
+        .info {
+            font-size: 24px;
+            justify-content: center;
+            display: flex;
+            gap: 20px;
+        }
+
+        .form {
+            width: 100%;
+            /* border: 1px solid black; */
+            display: flex;
+            justify-content: center;
+        }
+
+        .section-title {
+            font-size: 24px;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+            font-weight: bold;
+            color: white;
+            background-color: #152259;
+        }
+
+        .name {
+            font-size: 24px;
+            display: inline-block;
+            width: 180px;
+            font-weight: bold;
+        }
+
+        .row {
+            margin: 10px;
+        }
+
+        .row label {
+            margin-right: 40px;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .buttons button {
+            padding: 10px 30px;
+            border: none;
+            border-radius: 4px;
+        }
+
+        .buttons button:hover {
+            filter: brightness(90%);
+            cursor: pointer;
+        }
+
+        .buttons .save {
+            background-color: #18BD5B;
+            color: white;
         }
     </style>
 </head>
@@ -231,7 +287,7 @@ $result = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm..." class="searchb">
+                    <input type="text" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
@@ -243,10 +299,6 @@ $result = $conn->query($sql);
                         <h4>Thông báo</h4>
                         <ul id="notificationList"></ul>
                         <div class="no-noti" id="noNoti">Không có thông báo mới</div>
-                        <div id="xemChiTietThongBao"
-                            style="text-align:center;padding:10px;background:#f0f2f6;cursor:pointer;font-size:13px;font-weight:600;color:#0b3364;border-top:1px solid #ddd;">
-                            🔍 Xem chi tiết thông báo
-                        </div>
                     </div>
                 </div>
 
@@ -262,101 +314,69 @@ $result = $conn->query($sql);
                 </div>
             </div>
         </header>
-        <div id="main-container">
-
-
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h1>BẢNG ĐIỂM</h1>
-                <div style="display: flex; gap: 10px;">
-                    <button class="add-btn" onclick="window.location.href='importbangdiem.php'">Import bảng điểm</button>
-                    <button class="add-btn">Xuất bảng điểm</button>
-                    <button class="add-btn" onclick="window.location.href='nhapdiem.php'"><i class="fa-solid fa-plus"></i>Thêm </button>
-                </div>
-
+        <div class="form-box">
+            <h1>CẬP NHẬT ĐIỂM</h1>
+            <div class="info">
+                <div><b>HỌ TÊN HỌC SINH:</b> <?= htmlspecialchars($tenHS) ?></div>
+                <div><b>MÃ HỌC SINH:</b> K<?= str_pad($maHS, 7, '0', STR_PAD_LEFT) ?></div>
             </div>
-            <form method="GET" class="filter-box row">
-                <div class="form-group">
-                    <label for="lop"><strong>Lớp:</strong></label>
-                    <select name="lop" id="lop" onchange="this.form.submit()">
-                        <option value="">Tất cả lớp</option>
-                        <?php while ($l = $dsLop->fetch_assoc()) {
-                            $sel = ($l['tenLop'] == $lopChon) ? "selected" : "";
-                            echo "<option value='{$l['tenLop']}' $sel>{$l['tenLop']}</option>";
-                        } ?>
-                    </select>
-                </div>
+            <br>
+            <div class="form">
+                <form method="POST">
+                    <div class="section">
+                        <div class="section-title">HỌC KỲ I</div>
+                        <div class="row">
+                            <label><span class="name">ĐIỂM MIỆNG:</span>
+                                <input type="number" name="hk1_mieng" step="0.1"
+                                    value="<?= $diemArr['hk1_mieng'] ?? '' ?>">
+                            </label>
+                            <label><span class="name">ĐIỂM THI GK:</span>
+                                <input type="number" name="hk1_thiGK" step="0.1"
+                                    value="<?= $diemArr['hk1_thiGK'] ?? '' ?>">
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label><span class="name">ĐIỂM 1 TIẾT:</span>
+                                <input type="number" name="hk1_1tiet" step="0.1"
+                                    value="<?= $diemArr['hk1_1tiet'] ?? '' ?>">
+                            </label>
+                            <label><span class="name">ĐIỂM THI CK:</span>
+                                <input type="number" name="hk1_thiCK" step="0.1"
+                                    value="<?= $diemArr['hk1_thiCK'] ?? '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-                <div class="form-group">
-                    <label for="mon"><strong>Môn:</strong></label>
-                    <select name="mon" id="mon" onchange="this.form.submit()">
-                        <option value="">Tất cả môn</option>
-                        <?php while ($m = $dsMon->fetch_assoc()) {
-                            $sel = ($m['tenMonHoc'] == $monChon) ? "selected" : "";
-                            echo "<option value='{$m['tenMonHoc']}' $sel>{$m['tenMonHoc']}</option>";
-                        } ?>
-                    </select>
-                </div>
-            </form>
+                    <div class="section" style="margin-top:25px;">
+                        <div class="section-title">HỌC KỲ II</div>
+                        <div class="row">
+                            <label><span class="name">ĐIỂM MIỆNG:</span>
+                                <input type="number" name="hk2_mieng" step="0.1"
+                                    value="<?= $diemArr['hk2_mieng'] ?? '' ?>">
+                            </label>
+                            <label><span class="name">ĐIỂM THI GK:</span>
+                                <input type="number" name="hk2_thiGK" step="0.1"
+                                    value="<?= $diemArr['hk2_thiGK'] ?? '' ?>">
+                            </label>
+                        </div>
+                        <div class="row">
+                            <label><span class="name">ĐIỂM 1 TIẾT:</span>
+                                <input type="number" name="hk2_1tiet" step="0.1"
+                                    value="<?= $diemArr['hk2_1tiet'] ?? '' ?>">
+                            </label>
+                            <label><span class="name">ĐIỂM THI CK:</span>
+                                <input type="number" name="hk2_thiCK" step="0.1"
+                                    value="<?= $diemArr['hk2_thiCK'] ?? '' ?>">
+                            </label>
+                        </div>
+                    </div>
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>STT</th>
-                        <th>MÃ HS</th>
-                        <th>HỌ TÊN</th>
-                        <th>MÔN HỌC</th>
-                        <th>ĐIỂM HK I</th>
-                        <th>ĐIỂM HK II</th>
-                        <th>TRUNG BÌNH MÔN</th>
-                        <th>TÁC VỤ</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php
-                    if ($result && $result->num_rows > 0) {
-                        $stt = 1;
-                        while ($row = $result->fetch_assoc()) {
-                            $tb = "-";
-                            if (is_numeric($row['diemHK1']) || is_numeric($row['diemHK2'])) {
-                                $tong = 0;
-                                $dem = 0;
-                                foreach (['diemHK1', 'diemHK2'] as $c) {
-                                    if (is_numeric($row[$c])) {
-                                        $tong += $row[$c];
-                                        $dem++;
-                                    }
-                                }
-                                $tb = $dem ? round($tong / $dem, 1) : "-";
-                            }
-
-                            $hrefSua = "../pages/suadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
-                            $hrefXoa = "../pages/xoadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
-
-                            echo "
-                        <tr>
-                            <td>{$stt}</td>
-                            <td>K" . str_pad($row['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
-                            <td>" . htmlspecialchars($row['hoVaTen']) . "</td>
-                            <td>" . htmlspecialchars($row['tenMonHoc'] ?? '-') . "</td>
-                            <td>" . ($row['diemHK1'] ?? '-') . "</td>
-                            <td>" . ($row['diemHK2'] ?? '-') . "</td>
-                            <td><strong>$tb</strong></td>
-                            <td>
-                                <a href='{$hrefSua}' title='Sửa điểm'><i class='fa-solid fa-pen-to-square' style='color:#0b3364;'></i></a>
-                                &nbsp;
-                                <a href='{$hrefXoa}' onclick=\"return confirm('Bạn có chắc muốn xóa toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($row['tenMonHoc']) . " không?');\" title='Xóa điểm'>
-                                    <i class='fa-solid fa-trash' style='color:black;'></i>
-                                </a>
-                            </td>
-                        </tr>";
-                            $stt++;
-                        }
-                    } else {
-                        echo "<tr><td colspan='10'>Không có dữ liệu phù hợp.</td></tr>";
-                    }
-                    ?>
-                </tbody>
-            </table>
+                    <div class="buttons">
+                        <button type="button" class="cancel" onclick="window.location.href='qldiemso.php'">HỦY</button>
+                        <button type="submit" class="save">CẬP NHẬT</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
     <script>
@@ -466,11 +486,6 @@ $result = $conn->query($sql);
             if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
                 menu.style.display = "none";
             }
-        });
-
-        // Khi click vào "Xem chi tiết thông báo"
-        document.getElementById("xemChiTietThongBao").addEventListener("click", function () {
-            window.location.href = "../pages/qlthongbao.php";
         });
 
         // Xử lý đăng xuất

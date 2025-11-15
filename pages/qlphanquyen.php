@@ -272,8 +272,10 @@ $result = $conn->query($sql);
             </div>
         </header>
         <div id="main-container">
-            <h1>DANH SÁCH TÀI KHOẢN</h1>
-            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm mới</button>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>DANH SÁCH TÀI KHOẢN</h1>
+                <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm mới</button>
+            </div>
             <div class="selection">
                 <h2>Tất cả</h2>
                 <h2>Giáo viên</h2>

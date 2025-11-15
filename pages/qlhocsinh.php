@@ -212,22 +212,23 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             </div>
         </header>
         <div id="main-container">
-            <h1>QUẢN LÝ HỌC SINH</h1>
-            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Học Sinh</button>
-
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>QUẢN LÝ HỌC SINH</h1>
+                <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Học Sinh</button>
+            </div>
             <table>
                 <thead>
                     <tr>
                         <th><input type="checkbox"></th>
                         <th>STT</th>
-                        <th>MÃ HS</th>
+                        <th>MÃ HỌC SINH</th>
                         <th>HỌ TÊN</th>
                         <th class="hide-column">GIỚI TÍNH</th>
                         <th class="hide-column">EMAIL</th>
                         <th class="hide-column">SDT</th>
                         <th>LỚP</th>
                         <th>KHÓA HỌC</th>
-                        <th>HỌC KỲ</th>
+                        <th>CHỨC VỤ</th>
                         <th>TRẠNG THÁI</th>
                         <th>TÁC VỤ</th>
                     </tr>
@@ -246,7 +247,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                                 <td class="hide-column"><?= htmlspecialchars($row['sdt']) ?></td>
                                 <td><?= htmlspecialchars($row['lopHocPhuTrach']) ?></td>
                                 <td><?= htmlspecialchars($row['namHoc']) ?></td>
-                                <td><?= htmlspecialchars($row['hocKy']) ?></td>
+                                <td></td>
                                 <td>
                                     <span class="status <?= $row['trangThai'] === 'active' ? 'active' : 'inactive' ?>">
                                         <?= $row['trangThai'] === 'active' ? '● Active' : '● Inactive' ?>
@@ -268,7 +269,8 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         </div>
         <div class="popup-bg" id="addPopup">
             <div class="popup">
-                <h2 id="title-h2">THÊM HỌC SINH</h2>
+                <h1 id="title-h2">THÊM HỌC SINH</h1>
+                <br>
                 <div class="them-hocsinh">
                     <form id="addForm" class="student-form">
                         <input type="hidden" name="action" value="add" id="formAction">

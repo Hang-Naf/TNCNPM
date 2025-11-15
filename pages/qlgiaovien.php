@@ -62,6 +62,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         }
 
         .add-btn {
+            height: 32px;
             background: #0b1e6b;
             color: white;
             border: none;
@@ -214,8 +215,11 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             </div>
         </header>
         <div id="main-container">
-            <h1>QUẢN LÝ GIÁO VIÊN</h1>
-            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Giáo Viên</button>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>QUẢN LÝ GIÁO VIÊN</h1>
+                <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Giáo Viên</button>
+            </div>
+
 
             <table>
                 <thead>
@@ -263,7 +267,8 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         <div class="popup-bg" id="addPopup">
             <div class="popup">
                 <div class="them-hocsinh">
-                    <h2 id="title-h2">THÊM GIÁO VIÊN</h2>
+                    <h1 id="title-h2">THÊM GIÁO VIÊN</h1>
+                    <br>
                     <form id="addForm" class="form">
                         <input type="hidden" name="action" value="add" id="formAction">
                         <input type="hidden" name="userId" id="userId">
@@ -324,8 +329,10 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                             <div class="form-group">
                                 <label>Trạng thái:</label>
                                 <div class="form-group-horizontal">
-                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="active"> Đang hoạt động</label>
-                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="inactive"> Tạm dừng</label>
+                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="active">
+                                        Đang hoạt động</label>
+                                    <label class="label-width-auto"><input type="radio" name="trangThai"
+                                            value="inactive"> Tạm dừng</label>
                                 </div>
                             </div>
                         </div>

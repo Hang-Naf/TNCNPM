@@ -257,18 +257,26 @@ $result = $conn->query($sql);
         </header>
         <div id="main-container">
             <h1>DANH SÁCH TÀI LIỆU</h1>
-            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm tài liệu</button>
+            <div class="row">
+                <div class="form-group">
+                    <label>Lớp:</label>
+                    <select name="" id=""></select>
+                </div>
+                <div class="form-group">
+                    <label>Môn:</label>
+                    <select name="" id=""></select>
+                </div>
+            </div>
+            <!-- <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm tài liệu</button> -->
             <table>
                 <thead>
                     <tr>
                         <th>STT</th>
-                        <th>Mã TL</th>
-                        <th>Tiêu đề</th>
-                        <th>Môn học</th>
-                        <th>Giáo viên</th>
-                        <th>Ngày tải</th>
-                        <th>Trạng thái</th>
-                        <th>Hành động</th>
+                        <th>TIÊU ĐỀ</th>
+                        <th>MÔ TẢ</th>
+                        <th>MÔN HỌC</th>
+                        <th>NGƯỜI TẢI</th>
+                        <th>TỪ KHÓA</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -277,16 +285,11 @@ $result = $conn->query($sql);
                         while ($row = $result->fetch_assoc()): ?>
                             <tr data-id="<?= $row['maTL'] ?>">
                                 <td class="center"><?= $stt++ ?></td>
-                                <td class="center"><?= $row['maTL'] ?></td>
                                 <td><?= htmlspecialchars($row['tieuDe']) ?></td>
+                                <td><?= htmlspecialchars($row['noiDung']) ?></td>
                                 <td class="center"><?= htmlspecialchars($row['tenMonHoc']) ?></td>
                                 <td class="center"><?= htmlspecialchars($row['tenGV']) ?></td>
-                                <td class="center"><?= $row['ngayTai'] ?></td>
-                                <td class="center"><?= $row['trangThai'] ?></td>
-                                <td class="center">
-                                    <i class="fa-solid fa-pen edit-btn"></i>
-                                    <i class="fa-solid fa-trash delete-btn"></i>
-                                </td>
+                                <td></td>
                             </tr>
                         <?php endwhile;
                     else: ?>

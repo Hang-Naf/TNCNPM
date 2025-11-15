@@ -224,9 +224,10 @@ $gv_rs = $conn->query("
             </div>
         </header>
         <div id="main-container">
-            <h1>QUẢN LÝ MÔN HỌC</h1>
-            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Môn Học</button>
-
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>QUẢN LÝ MÔN HỌC</h1>
+                <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Môn Học</button>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -256,7 +257,7 @@ $gv_rs = $conn->query("
                                 <td><?= htmlspecialchars($row['trongSo']) ?></td>
                                 <td><?= htmlspecialchars($row['namHoc']) ?></td>
                                 <td><span class="status <?= $row['trangThai'] === 'Hoạt động' ? 'active' : 'inactive' ?>">
-                                        <?= htmlspecialchars($row['trangThai']) ?>
+                                        <?= $row['trangThai'] === 'Hoạt động' ? '● Active' : '● Inactive' ?>
                                     </span></td>
                                 <td class="actions">
                                     <i class="fa-solid fa-pen edit-btn"></i>
@@ -324,9 +325,11 @@ $gv_rs = $conn->query("
                             <div class="form-group">
                                 <label>Trạng thái:</label>
                                 <div class="form-group-horizontal">
-                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="● Active"> Đang hoạt
+                                    <label class="label-width-auto"><input type="radio" name="trangThai"
+                                            value="Hoạt động"> Đang hoạt
                                         động</label>
-                                    <label class="label-width-auto"><input type="radio" name="trangThai" value="● Inctive"> Tạm dừng</label>
+                                    <label class="label-width-auto"><input type="radio" name="trangThai"
+                                            value="Tạm dừng"> Tạm dừng</label>
                                 </div>
                             </div>
                         </div>

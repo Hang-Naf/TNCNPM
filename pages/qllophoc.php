@@ -90,7 +90,22 @@ $giaovien_rs = $conn->query("
         td {
             padding: 10px;
             border-bottom: 1px solid #eee;
-            text-align: center;
+        }
+
+        .status.active {
+            background-color: rgba(32, 164, 99, 0.2);
+            color: #20a463;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+
+        .status.inactive {
+            background-color: rgba(128, 128, 128, 0.2);
+            color: gray;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
         }
 
         th {
@@ -208,11 +223,12 @@ $giaovien_rs = $conn->query("
             </div>
         </header>
         <div id="main-container">
-            <h1>QUẢN LÝ LỚP HỌC</h1>
-            <button class="add-btn" onclick="showAddPopup()">
-                <i class="fa-solid fa-plus"></i> Thêm Lớp Học
-            </button>
-
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>QUẢN LÝ LỚP HỌC</h1>
+                <button class="add-btn" onclick="showAddPopup()">
+                    <i class="fa-solid fa-plus"></i> Thêm Lớp
+                </button>
+            </div>
             <table>
                 <thead>
                     <tr>
@@ -220,8 +236,8 @@ $giaovien_rs = $conn->query("
                         <th>STT</th>
                         <th>MÃ LỚP</th>
                         <th>TÊN LỚP</th>
+                        <th>GIÁO VIÊN CHỦ NHIỆM</th>
                         <th>SĨ SỐ</th>
-                        <th>GIÁO VIÊN PHỤ TRÁCH</th>
                         <th class="hide-column">NĂM HỌC</th>
                         <th>TRẠNG THÁI</th>
                         <th>TÁC VỤ</th>
@@ -236,10 +252,14 @@ $giaovien_rs = $conn->query("
                                 <td><?= $stt++ ?></td>
                                 <td><?= $row['maLop'] ?></td>
                                 <td><?= htmlspecialchars($row['tenLop']) ?></td>
-                                <td><?= htmlspecialchars($row['siSo']) ?></td>
                                 <td data-gv="<?= $row['maGV'] ?? '' ?>"><?= htmlspecialchars($row['tenGV'] ?? '—') ?></td>
+                                <td><?= htmlspecialchars($row['siSo']) ?></td>
                                 <td class="hide-column"><?= htmlspecialchars($row['namHoc']) ?></td>
-                                <td><?= htmlspecialchars($row['trangThai']) ?></td>
+                                <td>
+                                    <span class="status <?= $row['trangThai'] === 'Đang học' ? 'active' : 'inactive' ?>">
+                                        <?= $row['trangThai'] === 'Đang học' ? '● Active' : '● Inactive' ?>
+                                    </span>
+                                </td>
                                 <td class="actions">
                                     <i class="fa-solid fa-pen edit-btn"></i>
                                     <i class="fa-solid fa-trash delete-btn"></i>
@@ -256,23 +276,29 @@ $giaovien_rs = $conn->query("
         </div>
         <div class="popup-bg" id="addPopup">
             <div class="popup">
-                <h2 id="title-h2">THÊM LỚP HỌC</h2>
+                <h1 id="title-h2">THÊM LỚP HỌC</h1>
+                <br>
                 <div class="them-hocsinh">
                     <form id="addForm" class="student-form">
                         <input type="hidden" name="action" value="add" id="formAction">
                         <div class="row">
                             <div class="form-group-horizontal">
                                 <label class="label-width-auto">Năm học:</label>
-                                <input type="text">
+                                <input type="text" name="namHoc">
                             </div>
                             <div class="form-group-horizontal">
                                 <label class="label-width-auto">Tên lớp:</label>
-                                <input type="text">
+                                <input type="text" name="tenLop">
                             </div>
-                            
+
                             <div class="form-group-horizontal">
                                 <label class="label-width-auto">GVCN:</label>
-                                <select name="maGV">
+                                <select name="maGV" required>
+                                    <option hidden></option>
+                                    <?php while ($row = $giaovien_rs->fetch_assoc()) { ?>
+                                        <option value="<?= $row['maGV'] ?>"><?= htmlspecialchars($row['hoVaTen']) ?>
+                                        </option>
+                                    <?php } ?>
                                 </select>
                             </div>
                         </div>
@@ -280,13 +306,18 @@ $giaovien_rs = $conn->query("
                         <div class="row">
                             <div class="form-group-horizontal">
                                 <label class="label-width-auto">Sĩ số:</label>
-                                <input type="number">
+                                <input type="number" name="siSo">
                             </div>
                             <div class="form-group">
                                 <label>Trạng thái:</label>
                                 <div class="form-group-horizontal">
-                                    <label class="label-width-auto"><input type="radio" name="status" checked> Đang hoạt động</label>
-                                    <label class="label-width-auto"><input type="radio" name="status"> Tạm dừng</label>
+                                    <label class="label-width-auto"><input type="radio" name="trangThai"
+                                            value="Đang học">
+                                        Đang hoạt
+                                        động</label>
+                                    <label class="label-width-auto"><input type="radio" name="trangThai"
+                                            value="Đã nghỉ">
+                                        Tạm dừng</label>
                                 </div>
                             </div>
                         </div>
@@ -447,37 +478,31 @@ $giaovien_rs = $conn->query("
             if (e.target.classList.contains("edit-btn")) {
                 const tr = e.target.closest("tr");
 
-                // Lấy dữ liệu từ dòng
                 const maLop = tr.dataset.id;
                 const tenLop = tr.children[3].innerText.trim();
-                const siSo = tr.children[4].innerText.trim();
-                const maGV = tr.children[5].dataset.gv || "";
+                const maGV = tr.children[4].dataset.gv || "";
+                const siSo = tr.children[5].innerText.trim();
                 const namHoc = tr.children[6].innerText.trim();
-                const trangThai = tr.children[7].innerText.trim();
+                const trangThai = tr.children[7].innerText.includes("Active") ? "Đang học" : "Đã nghỉ";
 
-                // Hiển thị popup và đổi giao diện nút
+                // Mở popup
                 showAddPopup();
                 document.getElementById("title-h2").innerText = "CHỈNH SỬA LỚP HỌC";
                 document.querySelector(".btn-primary").innerHTML = `<i class="fa-solid fa-check"></i> Cập nhật`;
                 document.getElementById("formAction").value = "update";
 
-                // Gán dữ liệu vào form
                 const form = document.getElementById("addForm");
-                const inputs = form.querySelectorAll("input[type='text']");
-                inputs[0].value = tenLop;
-                inputs[1].value = siSo;
+
+                // Gán dữ liệu
+                form.querySelector("input[name='namHoc']").value = namHoc;
+                form.querySelector("input[name='tenLop']").value = tenLop;
+                form.querySelector("input[name='siSo']").value = siSo;
                 form.querySelector("select[name='maGV']").value = maGV;
-                inputs[2].value = namHoc;
 
-                // Gán trạng thái
-                const radios = form.querySelectorAll("input[name='status']");
-                if (trangThai === "Đang hoạt động") {
-                    radios[0].checked = true;
-                } else {
-                    radios[1].checked = true;
-                }
+                // Trạng thái
+                form.querySelector(`input[name='trangThai'][value='${trangThai}']`).checked = true;
 
-                // Thêm hidden input chứa mã lớp (nếu chưa có)
+                // Hidden maLop
                 let hidden = form.querySelector("input[name='maLop']");
                 if (!hidden) {
                     hidden = document.createElement("input");
@@ -488,7 +513,6 @@ $giaovien_rs = $conn->query("
                 hidden.value = maLop;
             }
         });
-
 
         // === Xóa lớp học ===
         document.addEventListener("click", async (e) => {

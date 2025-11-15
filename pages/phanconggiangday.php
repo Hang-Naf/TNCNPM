@@ -225,9 +225,10 @@ $giaoviens = $conn->query("
             </div>
         </header>
         <div id="main-container">
-            <h1>PHÂN CÔNG GIẢNG DẠY</h1>
-            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Phân Công</button>
-
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>PHÂN CÔNG</h1>
+                <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Phân Công</button>
+            </div>
             <table>
                 <thead>
                     <tr>

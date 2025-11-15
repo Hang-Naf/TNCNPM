@@ -73,6 +73,10 @@ if (!$result) {
             gap: 6px;
         }
 
+        .del-btn {
+            background-color: red;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -121,6 +125,21 @@ if (!$result) {
 
         .hide-column {
             display: none;
+        }
+
+        .selection {
+            display: flex;
+            gap: 120px;
+        }
+
+        .selection h2 {
+            color: gray;
+        }
+
+        .selection h2:hover {
+            cursor: pointer;
+            color: black;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -221,21 +240,28 @@ if (!$result) {
         </header>
         <div id="main-container">
 
-
-            <h1>QUẢN LÝ THÔNG BÁO</h1>
-
-            <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Thông Báo</button>
-
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h1>THÔNG BÁO</h1>
+                <div style="display: flex; gap: 10px;">
+                    <button class="add-btn del-btn">Xóa thông báo</button>
+                    <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Thông
+                        Báo</button>
+                </div>
+            </div>
+            <div class="selection">
+                <h2>Tất cả</h2>
+                <h2>Đã gửi</h2>
+                <h2>Đã lên lịch</h2>
+            </div>
             <table>
                 <thead>
                     <tr>
+                        <th><input type="checkbox"></th>
                         <th>STT</th>
                         <th>MÃ TB</th>
                         <th>TIÊU ĐỀ</th>
                         <th>NGƯỜI GỬI</th>
-                        <th>NGÀY GỬI</th>
-                        <th>TỔNG NGƯỜI NHẬN</th>
-                        <th>ĐÃ ĐỌC</th>
+                        <th>NGƯỜI NHẬN</th>
                         <th>TÁC VỤ</th>
                     </tr>
                 </thead>
@@ -244,13 +270,12 @@ if (!$result) {
                         $stt = 1;
                         while ($row = $result->fetch_assoc()): ?>
                             <tr>
+                                <td><input type="checkbox"></td>
                                 <td><?= $stt++ ?></td>
                                 <td><?= htmlspecialchars($row['maThongBao']) ?></td>
                                 <td><?= htmlspecialchars($row['tieuDe']) ?></td>
                                 <td><?= htmlspecialchars($row['nguoiGui']) ?></td>
-                                <td><?= htmlspecialchars($row['ngayGui']) ?></td>
-                                <td><?= htmlspecialchars($row['tongNguoiNhan']) ?></td>
-                                <td><?= htmlspecialchars($row['soDaDoc']) ?></td>
+                                <td></td>
                                 <td class="actions">
                                     <i class="fa-solid fa-eye" onclick="showDetail(
                                     '<?= htmlspecialchars(addslashes($row['maThongBao'])) ?>',
@@ -310,7 +335,8 @@ if (!$result) {
                         </div>
                         <div class="row-right">
                             <div class="popup-buttons">
-                                <button type="button" class="btn-secondary" onclick="window.location.href='qlthongbao.php'">Hủy</button>
+                                <button type="button" class="btn-secondary"
+                                    onclick="window.location.href='qlthongbao.php'">Hủy</button>
                                 <button type="submit" class="btn-primary" id="submitButton">Thêm mới</button>
                             </div>
                         </div>

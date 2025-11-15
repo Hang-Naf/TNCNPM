@@ -136,6 +136,7 @@ if (!empty($loc_mon)) {
         td {
             padding: 10px;
             border-bottom: 1px solid #eee;
+            text-align: center;
         }
 
         th {
@@ -365,8 +366,8 @@ if (!empty($loc_mon)) {
                             <thead>
                                 <tr>
                                     <th>STT</th>
-                                    <th>Học sinh</th>
-                                    <th>Lớp</th>
+                                    <th>LỚP</th>
+                                    <th>HỌ VÀ TÊN</th>
                                     <th>Trạng thái</th>
                                 </tr>
                             </thead>
@@ -390,8 +391,8 @@ if (!empty($loc_mon)) {
                                     ?>
                                     <tr>
                                         <td><?= $stt++ ?></td>
-                                        <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
                                         <td><?= htmlspecialchars($hs['tenLop'] ?? '-') ?></td>
+                                        <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
                                         <td class="status-btns">
                                             <input type="hidden" name="maHS[<?= $maHS ?>]" value="<?= $maHS ?>">
                                             <input type="hidden" name="trangThai[<?= $maHS ?>]" id="status<?= $maHS ?>"
