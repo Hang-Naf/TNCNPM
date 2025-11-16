@@ -3,43 +3,69 @@ include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
-// ==== Kiểm tra đăng nhập ====
-if (!isset($_SESSION["userID"])) {
-    header("Location: ../dangnhap.php");
-    exit();
-}
-
-// ==== Chỉ cho phép HọcSinh ====
-if ($_SESSION["vaiTro"] !== "HocSinh") {
-    session_destroy();
+// Kiểm tra đăng nhập và vai trò
+if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "HocSinh") {
     header("Location: ../dangnhap.php");
     exit();
 }
 
 $userID = $_SESSION["userID"];
 
-// Truy vấn thông tin cá nhân học sinh
-$sql = "SELECT h.maHS, u.hoVaTen, u.email, u.sdt, u.ngaySinh, u.gioiTinh, 
-               h.lopHocPhuTrach, h.chucVu, h.anhDaiDien, h.namHoc, h.hocKy, h.trangThai
-        FROM user u
-        JOIN hocsinh h ON u.userID = h.maHS
-        WHERE u.userID = ?";
+// Lấy thông tin học sinh
+$sql = "SELECT hoVaTen FROM user WHERE userID = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $userID);
 $stmt->execute();
-$result = $stmt->get_result();
-$hs = $result->fetch_assoc();
+$res = $stmt->get_result();
+$hs = $res->fetch_assoc() ?: ['hoVaTen' => 'Học sinh'];
+$stmt->close();
 
-// === Lấy danh sách thông báo chung ===
-$sql_tb = "SELECT tb.maThongBao, tb.tieuDe, tb.noiDung, tb.ngayGui, tbu.trangThai
+// Lấy thông báo theo ID
+$maTB = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($maTB <= 0) {
+    die("Thông báo không hợp lệ.");
+}
+
+$sql_tb = "SELECT tb.maThongBao, tb.tieuDe, tb.noiDung, tb.tepDinhKem,
+                  u.hoVaTen AS nguoiGui, tb.ngayGui
            FROM thongbao tb
-           JOIN thongbaouser tbu ON tb.maThongBao = tbu.maThongBao
-           WHERE tbu.userID = ?
-           ORDER BY tb.ngayGui DESC";
-$stmt_tb = $conn->prepare($sql_tb);
-$stmt_tb->bind_param("i", $userID);
-$stmt_tb->execute();
-$result_tb = $stmt_tb->get_result();
+           LEFT JOIN user u ON tb.nguoiGui = u.userID
+           WHERE tb.maThongBao = ? LIMIT 1";
+$stmt = $conn->prepare($sql_tb);
+$stmt->bind_param("i", $maTB);
+$stmt->execute();
+$result_tb = $stmt->get_result();
+$tb = $result_tb->fetch_assoc();
+$stmt->close();
+
+if (!$tb) {
+    die("Thông báo không tồn tại.");
+}
+
+// Đánh dấu đã đọc
+$sql_update = "UPDATE thongbaouser SET trangThai='Đã đọc' WHERE userID=? AND maThongBao=?";
+$stmt = $conn->prepare($sql_update);
+$stmt->bind_param("ii", $userID, $maTB);
+$stmt->execute();
+$stmt->close();
+
+// Xác định người nhận
+$sql_role = "SELECT DISTINCT u.vaiTro
+             FROM thongbaouser tu
+             JOIN user u ON tu.userID = u.userID
+             WHERE tu.maThongBao=?";
+$stmt = $conn->prepare($sql_role);
+$stmt->bind_param("i", $maTB);
+$stmt->execute();
+$res_roles = $stmt->get_result();
+$roles = [];
+while ($r = $res_roles->fetch_assoc()) $roles[] = $r['vaiTro'];
+$stmt->close();
+
+if (in_array('GiaoVien', $roles) && in_array('HocSinh', $roles)) $nguoiNhan = 'Toàn hệ thống';
+elseif (in_array('GiaoVien', $roles)) $nguoiNhan = 'Giáo viên';
+elseif (in_array('HocSinh', $roles)) $nguoiNhan = 'Học sinh';
+else $nguoiNhan = 'Không xác định';
 
 ?>
 
@@ -48,7 +74,7 @@ $result_tb = $stmt_tb->get_result();
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý chuyên cần</title>
+    <title>Chi tiết thông báo</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -58,113 +84,77 @@ $result_tb = $stmt_tb->get_result();
             background: #f5f6fa;
         }
 
-        h1 {
-            margin: 20px 0;
+        .container {
+            padding: 50px;
         }
 
-        .filter-box {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
-        }
-
-        select,
-        input[type=date] {
-            padding: 6px 10px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-
-        .btn {
-            padding: 7px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            color: #fff;
-            background: #0b3364;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        th,
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: #0b3364;
-            color: #fff;
-        }
-
-        tr:hover {
-            background: #f9f9f9;
-        }
-
-        .status-btns {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-        }
-
-        .status-btn {
-            padding: 5px 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: none;
-            font-size: 13px;
-            transition: 0.2s;
-        }
-
-        .present {
-            background: #27ae60;
-            color: #fff;
-        }
-
-        .late {
-            background: #f39c12;
-            color: #fff;
-        }
-
-        .absent {
-            background: #e74c3c;
-            color: #fff;
-        }
-
-        .status-btn.active {
-            outline: 3px solid #222;
-        }
-
-        .summary-box {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            float: right;
-        }
-
-        .summary-box h3 {
-            margin-bottom: 10px;
+        abel {
+            font-weight: 600;
             color: #0b3364;
         }
 
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
+        .content {
+            width: 100%;
+            padding: 8px;
+            border-radius: 6px;
+            background: #f9f9f9;
+            min-height: 120px;
+            white-space: pre-wrap;
+            margin-bottom: 10px;
+        }
+
+        .radio-group {
+            margin: 10px 0;
+        }
+
+        .file-link {
+            color: #0b3364;
+            text-decoration: underline;
+        }
+
+        .back-btn {
+            display: block;
+            width: fit-content;
+            margin: 20px auto 0;
+            background: #0b3364;
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            text-align: center;
+        }
+
+        .thongbao-detail {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .thongbao-detail h2 {
+            color: #0b3364;
+            margin-bottom: 10px;
+        }
+
+        .thongbao-detail .date {
+            color: #777;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .thongbao-detail p {
+            font-size: 16px;
+            line-height: 1.6;
+        }
+
+        .back-btn {
+            margin-top: 15px;
+            display: inline-block;
+            padding: 8px 15px;
+            background: #0b3364;
+            color: #fff;
+            border-radius: 6px;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -227,38 +217,35 @@ $result_tb = $stmt_tb->get_result();
                 </div>
             </div>
         </header>
-
         <div class="container">
-            <h1>THÔNG BÁO</h1>
-            <div class="thongbao-box" style="background:#fff; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); padding:15px; margin-top:10px;">
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead>
-                        <tr style="background:#0b3364; color:#fff;">
-                            <th style="padding:10px; text-align:left;">Tiêu đề</th>
-                            <th style="padding:10px; text-align:right; width:150px;">Ngày gửi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($result_tb && $result_tb->num_rows > 0): ?>
-                            <?php while ($row = $result_tb->fetch_assoc()): ?>
-                                <tr style="border-bottom:1px solid #eee; cursor:pointer; <?= $row['trangThai'] == 'Chưa đọc' ? 'background:#f0f8ff' : '' ?>"
-                                    onclick="window.location.href='chitiet_thongbao.php?id=<?= $row['maThongBao'] ?>'">
-                                    <td style="padding:10px; color:#0b1e6b; font-weight:500;">
-                                        <?= htmlspecialchars($row['tieuDe']) ?> <?= $row['trangThai'] == 'Chưa đọc' ? '🔵' : '' ?>
-                                    </td>
-                                    <td style="padding:10px; text-align:right; color:#333;">
-                                        <?= date('d/m/Y', strtotime($row['ngayGui'])) ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="2" style="padding:15px; text-align:center; color:#777;">Không có thông báo nào.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+            <h2><?= htmlspecialchars($tb['tieuDe']) ?></h2>
+
+            <p><label>Mã thông báo:</label> <?= htmlspecialchars($tb['maThongBao']) ?></p>
+            <p><label>Tiêu đề:</label> <?= htmlspecialchars($tb['tieuDe']) ?></p>
+
+            <label>Nội dung:</label>
+            <div class="content"><?= nl2br(htmlspecialchars($tb['noiDung'])) ?></div>
+
+            <p><label>Người gửi:</label> <?= htmlspecialchars($tb['nguoiGui'] ?? 'Hệ thống') ?></p>
+            <p><label>Ngày gửi:</label> <?= date('d/m/Y H:i', strtotime($tb['ngayGui'])) ?></p>
+
+            <p><label>Người nhận:</label></p>
+            <div class="radio-group">
+                <label><input type="radio" <?= ($nguoiNhan == 'Toàn hệ thống') ? 'checked' : '' ?> disabled> Toàn hệ thống</label>
+                <label><input type="radio" <?= ($nguoiNhan == 'Giáo viên') ? 'checked' : '' ?> disabled> Giáo viên</label>
+                <label><input type="radio" <?= ($nguoiNhan == 'Học sinh') ? 'checked' : '' ?> disabled> Học sinh</label>
             </div>
+
+            <?php if (!empty($tb['tepDinhKem'])): ?>
+                <p><label>Tệp đính kèm:</label>
+                    <br><a class="file-link" href="../uploads/thongbao/<?= htmlspecialchars($tb['tepDinhKem']) ?>" target="_blank"><?= htmlspecialchars($tb['tepDinhKem']) ?></a>
+                </p>
+            <?php else: ?>
+                <i>Không có tệp đính kèm</i>
+            <?php endif; ?>
+            <br>
+
+            <a class="back-btn" href="thongbao.php"><i class="fa-solid fa-arrow-left"></i> Quay lại</a>
         </div>
     </div>
     <script>

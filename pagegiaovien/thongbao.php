@@ -30,10 +30,18 @@ $result = $stmt->get_result();
 $gv = $result->fetch_assoc();
 
 // === Lấy danh sách thông báo ===
-$sql_tb = "SELECT maThongBao, tieuDe, ngayGui 
-           FROM thongbao 
-           ORDER BY ngayGui DESC";
-$result_tb = $conn->query($sql_tb);
+// === Lấy danh sách thông báo cùng trạng thái đọc ===
+$sql_tb = "
+    SELECT tb.maThongBao, tb.tieuDe, tb.ngayGui, tbu.trangThai
+    FROM thongbao tb
+    LEFT JOIN thongbaouser tbu ON tb.maThongBao = tbu.maThongBao AND tbu.userID = ?
+    ORDER BY tb.ngayGui DESC
+";
+$stmt_tb = $conn->prepare($sql_tb);
+$stmt_tb->bind_param("i", $userID);
+$stmt_tb->execute();
+$result_tb = $stmt_tb->get_result();
+
 ?>
 
 <!DOCTYPE html>
@@ -249,10 +257,11 @@ $result_tb = $conn->query($sql_tb);
                     <tbody>
                         <?php if ($result_tb && $result_tb->num_rows > 0): ?>
                             <?php while ($row = $result_tb->fetch_assoc()): ?>
-                                <tr style="border-bottom:1px solid #eee; cursor:pointer;"
+                                <?php $isUnread = ($row['trangThai'] ?? 'Chưa đọc') === 'Chưa đọc'; ?>
+                                <tr style="border-bottom:1px solid #eee; cursor:pointer; <?= $isUnread ? 'background:#f0f8ff;' : '' ?>"
                                     onclick="window.location.href='chitiet_thongbao.php?id=<?= $row['maThongBao'] ?>'">
                                     <td style="padding:10px; color:#0b1e6b; font-weight:500;">
-                                        <?= htmlspecialchars($row['tieuDe']) ?>
+                                        <?= htmlspecialchars($row['tieuDe']) ?> <?= $isUnread ? '🔵' : '' ?>
                                     </td>
                                     <td style="padding:10px; text-align:right; color:#333;">
                                         <?= date('d/m/Y', strtotime($row['ngayGui'])) ?>

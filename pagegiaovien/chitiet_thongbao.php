@@ -58,6 +58,12 @@ $noiDung = $tb['noiDung'] ?? '';
 $nguoiGui = $tb['tenNguoiGui'] ?? 'Hệ thống';
 $ngayGui = $tb['ngayGui'] ? date('d/m/Y H:i', strtotime($tb['ngayGui'])) : '';
 
+$update = "UPDATE thongbaouser SET trangThai='Đã đọc' WHERE userID=? AND maThongBao=?";
+$stmt2 = $conn->prepare($update);
+$stmt2->bind_param("ii", $userID, $maTB);
+$stmt2->execute();
+
+
 // ==== Lấy nhóm người nhận ====
 $sql_role = "
     SELECT DISTINCT u.vaiTro 

@@ -9,38 +9,43 @@ if (!isset($_SESSION["userID"])) {
     exit();
 }
 
-// ==== Chỉ cho phép HọcSinh ====
+// ==== Chỉ cho phép Học Sinh ====
 if ($_SESSION["vaiTro"] !== "HocSinh") {
-    session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
 
-$userID = $_SESSION["userID"];
+// ==== Lấy maTL từ GET ====
+$maTL = isset($_GET['maTL']) ? intval($_GET['maTL']) : 0;
 
-// Truy vấn thông tin cá nhân học sinh
-$sql = "SELECT h.maHS, u.hoVaTen, u.email, u.sdt, u.ngaySinh, u.gioiTinh, 
-               h.lopHocPhuTrach, h.chucVu, h.anhDaiDien, h.namHoc, h.hocKy, h.trangThai
-        FROM user u
-        JOIN hocsinh h ON u.userID = h.maHS
-        WHERE u.userID = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $userID);
-$stmt->execute();
-$result = $stmt->get_result();
-$hs = $result->fetch_assoc();
+if ($maTL <= 0) {
+    die("Tài liệu không hợp lệ.");
+}
 
-// === Lấy danh sách thông báo chung ===
-$sql_tb = "SELECT tb.maThongBao, tb.tieuDe, tb.noiDung, tb.ngayGui, tbu.trangThai
-           FROM thongbao tb
-           JOIN thongbaouser tbu ON tb.maThongBao = tbu.maThongBao
-           WHERE tbu.userID = ?
-           ORDER BY tb.ngayGui DESC";
-$stmt_tb = $conn->prepare($sql_tb);
-$stmt_tb->bind_param("i", $userID);
-$stmt_tb->execute();
-$result_tb = $stmt_tb->get_result();
+// ==== Lấy thông tin học sinh ====
+$maHS = $_SESSION["userID"];
+$sqlHS = "SELECT hoVaTen FROM user WHERE userID = ?";
+$stmtHS = $conn->prepare($sqlHS);
+$stmtHS->bind_param("i", $maHS);
+$stmtHS->execute();
+$hs = $stmtHS->get_result()->fetch_assoc();
+$stmtHS->close();
 
+// ==== Lấy chi tiết tài liệu ====
+$sqlTL = "SELECT t.maTL, t.tieuDe, t.noiDung, t.tepDinhKem, m.tenMonHoc, u.hoVaTen AS nguoiTao
+          FROM tailieu t
+          LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
+          LEFT JOIN user u ON t.maGV = u.userID
+          WHERE t.maTL = ?";
+$stmtTL = $conn->prepare($sqlTL);
+$stmtTL->bind_param("i", $maTL);
+$stmtTL->execute();
+$tailieu = $stmtTL->get_result()->fetch_assoc();
+$stmtTL->close();
+
+if (!$tailieu) {
+    die("Tài liệu không tồn tại.");
+}
 ?>
 
 <!DOCTYPE html>
@@ -48,123 +53,46 @@ $result_tb = $stmt_tb->get_result();
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý chuyên cần</title>
+    <title>Chi tiết tài liệu</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
         body {
             font-family: 'Segoe UI', sans-serif;
-            background: #f5f6fa;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+        }
+
+        .content-area {
+            padding: 30px;
         }
 
         h1 {
-            margin: 20px 0;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #111;
         }
 
-        .filter-box {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        .detail {
             margin-bottom: 15px;
         }
 
-        select,
-        input[type=date] {
-            padding: 6px 10px;
-            border: 1px solid #ccc;
+        .detail strong {
+            display: inline-block;
+            width: 120px;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 8px 15px;
+            background: #0b3364;
+            color: #fff;
             border-radius: 5px;
-        }
-
-        .btn {
-            padding: 7px 15px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            color: #fff;
-            background: #0b3364;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: #fff;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-        }
-
-        th,
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: #0b3364;
-            color: #fff;
-        }
-
-        tr:hover {
-            background: #f9f9f9;
-        }
-
-        .status-btns {
-            display: flex;
-            gap: 5px;
-            justify-content: center;
-        }
-
-        .status-btn {
-            padding: 5px 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            border: none;
-            font-size: 13px;
-            transition: 0.2s;
-        }
-
-        .present {
-            background: #27ae60;
-            color: #fff;
-        }
-
-        .late {
-            background: #f39c12;
-            color: #fff;
-        }
-
-        .absent {
-            background: #e74c3c;
-            color: #fff;
-        }
-
-        .status-btn.active {
-            outline: 3px solid #222;
-        }
-
-        .summary-box {
-            background: #fff;
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            width: 300px;
-            float: right;
-        }
-
-        .summary-box h3 {
-            margin-bottom: 10px;
-            color: #0b3364;
-        }
-
-        .summary-item {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
+            text-decoration: none;
         }
     </style>
 </head>
@@ -181,14 +109,14 @@ $result_tb = $stmt_tb->get_result();
                 <div class="menu-title">Trang cá nhân</div>
                 <ul>
                     <li onclick="window.location.href='../pagehocsinh/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
-                    <li class="active" onclick="window.location.href='../pagehocsinh/thongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
+                    <li onclick="window.location.href='../pagehocsinh/thongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
                 </ul>
             </div>
 
             <div class="menu-section">
                 <div class="menu-title">Tra cứu thông tin</div>
                 <ul>
-                    <li onclick="window.location.href='../pagehocsinh/tlhoctap.php'"><i class="fa-solid fa-book"></i> Tài liệu học tập</li>
+                    <li class="active" onclick="window.location.href='../pagehocsinh/tlhoctap.php'"><i class="fa-solid fa-book"></i> Tài liệu học tập</li>
                     <li onclick="window.location.href='../pagehocsinh/kqhoctap.php'"><i class="fa-solid fa-file-lines"></i> Kết quả học tập</li>
                 </ul>
             </div>
@@ -227,38 +155,26 @@ $result_tb = $stmt_tb->get_result();
                 </div>
             </div>
         </header>
+        <div class="content-area">
+            <h1><?= htmlspecialchars($tailieu['tieuDe']) ?></h1>
 
-        <div class="container">
-            <h1>THÔNG BÁO</h1>
-            <div class="thongbao-box" style="background:#fff; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); padding:15px; margin-top:10px;">
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead>
-                        <tr style="background:#0b3364; color:#fff;">
-                            <th style="padding:10px; text-align:left;">Tiêu đề</th>
-                            <th style="padding:10px; text-align:right; width:150px;">Ngày gửi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php if ($result_tb && $result_tb->num_rows > 0): ?>
-                            <?php while ($row = $result_tb->fetch_assoc()): ?>
-                                <tr style="border-bottom:1px solid #eee; cursor:pointer; <?= $row['trangThai'] == 'Chưa đọc' ? 'background:#f0f8ff' : '' ?>"
-                                    onclick="window.location.href='chitiet_thongbao.php?id=<?= $row['maThongBao'] ?>'">
-                                    <td style="padding:10px; color:#0b1e6b; font-weight:500;">
-                                        <?= htmlspecialchars($row['tieuDe']) ?> <?= $row['trangThai'] == 'Chưa đọc' ? '🔵' : '' ?>
-                                    </td>
-                                    <td style="padding:10px; text-align:right; color:#333;">
-                                        <?= date('d/m/Y', strtotime($row['ngayGui'])) ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="2" style="padding:15px; text-align:center; color:#777;">Không có thông báo nào.</td>
-                            </tr>
-                        <?php endif; ?>
-                    </tbody>
-                </table>
+            <div class="detail"><strong>Môn học:</strong> <?= htmlspecialchars($tailieu['tenMonHoc']) ?></div>
+            <div class="detail"><strong>Giáo viên gửi:</strong> <?= htmlspecialchars($tailieu['nguoiTao']) ?></div>
+            <div class="detail"><strong>Nội dung:</strong></div>
+            <div style="padding: 10px; border: 1px solid #eee; border-radius: 5px; background: #fafafa;">
+                <?= nl2br(htmlspecialchars($tailieu['noiDung'])) ?>
             </div>
+            <?php if (!empty($tailieu['tepDinhKem'])): ?>
+                <p><strong>Tệp đính kèm:</strong><br>
+                    <a class="file-link" href="../uploads/tailieu/<?= htmlspecialchars($tailieu['tepDinhKem']) ?>" target="_blank">
+                        <?= htmlspecialchars($tailieu['tepDinhKem']) ?>
+                    </a>
+                </p>
+            <?php else: ?>
+                <i>Không có tệp đính kèm</i>
+            <?php endif; ?>
+
+            <a class="back-btn" href="tlhoctap.php"><i class="fa-solid fa-arrow-left"></i> Quay lại danh sách</a>
         </div>
     </div>
     <script>
