@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Nov 17, 2025 at 05:46 PM
+-- Generation Time: Nov 17, 2025 at 07:08 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -5662,7 +5662,42 @@ INSERT INTO `ghilog` (`maLog`, `userID`, `hanhDong`, `noiDungLog`, `thoiGianLog`
 (5132, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Giáo viên xóa điểm - Giáo viên gv1 đã xóa điểm hk2_thiGK của lớp 10A1.', '2025-11-17 23:37:08', 'Info'),
 (5133, 17, 'Gửi thông báo', 'Thông báo \"Giáo viên xóa điểm\" được gửi đến 2 người dùng.', '2025-11-17 23:37:08', 'Info'),
 (5134, 1, 'Đăng nhập', 'Người dùng admin đã đăng nhập vào hệ thống từ IP ::1 với trình duyệt: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0', '2025-11-17 23:41:42', 'Info'),
-(5135, 17, 'Đăng nhập', 'Người dùng gv1 đã đăng nhập vào hệ thống từ IP ::1 với trình duyệt: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0', '2025-11-17 23:44:41', 'Info');
+(5135, 17, 'Đăng nhập', 'Người dùng gv1 đã đăng nhập vào hệ thống từ IP ::1 với trình duyệt: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36 Edg/142.0.0.0', '2025-11-17 23:44:41', 'Info'),
+(5136, 17, 'Đăng tài liệu', 'Giáo viên gv1 đã đăng tài liệu \"abc\" cho lớp (Không rõ)', '2025-11-17 23:55:10', 'Info'),
+(5137, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu mới - Giáo viên gv1 vừa đăng tài liệu \"abc\" cho lớp (Không rõ)', '2025-11-17 23:55:10', 'Info'),
+(5138, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu mới\" được gửi đến 2 người dùng.', '2025-11-17 23:55:10', 'Info'),
+(5139, 17, 'Xóa tài liệu', 'Giáo viên gv1 đã xóa tài liệu: abc', '2025-11-17 23:55:46', 'Warning'),
+(5140, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu bị xóa - Giáo viên gv1 đã xóa tài liệu: abc.', '2025-11-17 23:55:46', 'Info'),
+(5141, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu bị xóa\" được gửi đến 2 người dùng.', '2025-11-17 23:55:46', 'Info'),
+(5142, 17, 'Đăng tài liệu', 'Giáo viên gv1 đã đăng tài liệu \"abc\" cho lớp (Không rõ)', '2025-11-17 23:56:00', 'Info'),
+(5143, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu mới - Giáo viên gv1 vừa đăng tài liệu \"abc\" cho lớp (Không rõ)', '2025-11-17 23:56:00', 'Info'),
+(5144, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu mới\" được gửi đến 2 người dùng.', '2025-11-17 23:56:00', 'Info'),
+(5145, 17, 'Đăng tài liệu', 'Giáo viên gv1 đã đăng tài liệu \"thu\" cho lớp (Không rõ) môn Hóa học', '2025-11-18 00:30:24', 'Info'),
+(5146, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu mới - Giáo viên gv1 vừa đăng tài liệu \"thu\" cho lớp (Không rõ)', '2025-11-18 00:30:24', 'Info'),
+(5147, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu mới\" được gửi đến 2 người dùng.', '2025-11-18 00:30:24', 'Info'),
+(5148, 17, 'Xóa tài liệu', 'Giáo viên gv1 đã xóa tài liệu: thu', '2025-11-18 00:33:08', 'Warning'),
+(5149, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu bị xóa - Giáo viên gv1 đã xóa tài liệu: thu.', '2025-11-18 00:33:08', 'Info'),
+(5150, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu bị xóa\" được gửi đến 2 người dùng.', '2025-11-18 00:33:08', 'Info'),
+(5151, 17, 'Xóa tài liệu', 'Giáo viên gv1 đã xóa tài liệu: abc', '2025-11-18 00:33:13', 'Warning'),
+(5152, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu bị xóa - Giáo viên gv1 đã xóa tài liệu: abc.', '2025-11-18 00:33:13', 'Info'),
+(5153, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu bị xóa\" được gửi đến 2 người dùng.', '2025-11-18 00:33:13', 'Info'),
+(5154, 17, 'Đăng tài liệu', 'Giáo viên gv1 đã đăng tài liệu \"thu\" cho lớp (Không rõ) môn Hóa học', '2025-11-18 00:33:28', 'Info'),
+(5155, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu mới - Giáo viên gv1 vừa đăng tài liệu \"thu\" cho lớp (Không rõ)', '2025-11-18 00:33:28', 'Info'),
+(5156, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu mới\" được gửi đến 2 người dùng.', '2025-11-18 00:33:28', 'Info'),
+(5157, 17, 'Debug-Tailieu', 'Inserted tailieu id=15, maLop=1, tenLop=10A1', '2025-11-18 00:33:28', 'Info'),
+(5158, 17, 'Xóa tài liệu', 'Giáo viên gv1 đã xóa tài liệu: thu', '2025-11-18 00:34:14', 'Warning'),
+(5159, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu bị xóa - Giáo viên gv1 đã xóa tài liệu: thu.', '2025-11-18 00:34:14', 'Info'),
+(5160, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu bị xóa\" được gửi đến 2 người dùng.', '2025-11-18 00:34:14', 'Info'),
+(5161, 17, 'Đăng tài liệu', 'Giáo viên gv1 đã đăng tài liệu \"thu\" cho lớp (Không rõ) môn Hóa học', '2025-11-18 00:34:22', 'Info'),
+(5162, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu mới - Giáo viên gv1 vừa đăng tài liệu \"thu\" cho lớp (Không rõ)', '2025-11-18 00:34:22', 'Info'),
+(5163, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu mới\" được gửi đến 2 người dùng.', '2025-11-18 00:34:22', 'Info'),
+(5164, 17, 'Debug-Tailieu', 'Inserted tailieu id=16, maLop=1, tenLop=10A1', '2025-11-18 00:34:22', 'Info'),
+(5165, 17, 'Cập nhật tài liệu', 'Giáo viên gv1 đã cập nhật tài liệu: thu', '2025-11-18 00:52:01', 'Info'),
+(5166, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu được cập nhật - Giáo viên gv1 đã chỉnh sửa tài liệu: thu.', '2025-11-18 00:52:01', 'Info'),
+(5167, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu được cập nhật\" được gửi đến 2 người dùng.', '2025-11-18 00:52:01', 'Info'),
+(5168, 17, 'Cập nhật tài liệu', 'Giáo viên gv1 đã cập nhật tài liệu: Chất béo', '2025-11-18 01:05:44', 'Info'),
+(5169, 17, 'Tạo thông báo', 'Người dùng gv1 tạo thông báo: Tài liệu được cập nhật - Giáo viên gv1 đã chỉnh sửa tài liệu: Chất béo.', '2025-11-18 01:05:44', 'Info'),
+(5170, 17, 'Gửi thông báo', 'Thông báo \"Tài liệu được cập nhật\" được gửi đến 2 người dùng.', '2025-11-18 01:05:44', 'Info');
 
 -- --------------------------------------------------------
 
@@ -6626,7 +6661,8 @@ INSERT INTO `tailieu` (`maTL`, `maMonHoc`, `tieuDe`, `noiDung`, `tepDinhKem`, `n
 (4, 6, 'sử ', 'khó thuộc', NULL, '2025-10-12', 40, 'Riêng tư', NULL),
 (5, 7, 'văn 1', '112kssmox', NULL, '2025-10-17', 44, 'Công khai', NULL),
 (10, 3, 'Chất béo', 'Các dạng chất béo thường gặp', '1762366400_Chuong 6.pdf', '2025-11-05', 17, 'Công khai', 1),
-(11, 3, 'Cơ học', 'bài giảng và tài liệu', '1763275025_Tuan 10_Trien khai cai dat tu xa.pptx', '2025-11-16', 17, 'Công khai', 1);
+(11, 3, 'Cơ học', 'bài giảng và tài liệu', '1763275025_Tuan 10_Trien khai cai dat tu xa.pptx', '2025-11-16', 17, 'Công khai', 1),
+(16, 3, 'thu', 'thu testttttttttttttttttttttttttt', '', '2025-11-17', 17, 'Riêng tư', 1);
 
 --
 -- Triggers `tailieu`
@@ -6667,53 +6703,32 @@ $$
 DELIMITER ;
 DELIMITER $$
 CREATE TRIGGER `after_tailieu_insert_notify` AFTER INSERT ON `tailieu` FOR EACH ROW BEGIN
+  -- Khai báo biến phải đứng đầu
   DECLARE tenGV VARCHAR(100);
-  DECLARE tenLop VARCHAR(100);
-  DECLARE tenMon VARCHAR(100);
   DECLARE idThongBao INT;
 
-  -- Lấy tên giáo viên
-  SELECT COALESCE(hoVaTen, '(Không rõ)') INTO tenGV
-  FROM user
-  WHERE userID = NEW.maGV
-  LIMIT 1;
-
-  -- Lấy tên lớp
-  SELECT COALESCE(tenLop, '(Không rõ)') INTO tenLop
-  FROM lophoc
-  WHERE maLop = NEW.maLop
-  LIMIT 1;
-
-  -- Lấy tên môn học
-  SELECT COALESCE(tenMonHoc, '(Không rõ)') INTO tenMon
-  FROM monhoc
-  WHERE maMonHoc = NEW.maMonHoc
-  LIMIT 1;
-
-  -- Xử lý trường hợp không tìm thấy dữ liệu
-  IF tenGV IS NULL THEN SET tenGV = '(Không rõ)'; END IF;
-  IF tenLop IS NULL THEN SET tenLop = '(Không rõ)'; END IF;
-  IF tenMon IS NULL THEN SET tenMon = '(Không rõ)'; END IF;
+  -- Lấy tên giáo viên, gán '(Không rõ)' nếu NULL
+  SELECT COALESCE(hoVaTen, '(Không rõ)') 
+    INTO tenGV
+    FROM user
+    WHERE userID = NEW.maGV
+    LIMIT 1;
 
   -- Ghi log
   INSERT INTO ghilog (userID, hanhDong, noiDungLog, loaiLog)
   VALUES (NEW.maGV, 'Đăng tài liệu',
-          CONCAT('Giáo viên ', tenGV,
-                 ' đã đăng tài liệu "', NEW.tieuDe,
-                 '" cho lớp ', tenLop,
-                 ' môn ', tenMon),
+          CONCAT('Giáo viên ', tenGV, ' đã đăng tài liệu "', NEW.tieuDe, '"'), 
           'Info');
 
   -- Tạo thông báo
   INSERT INTO thongbao (tieuDe, noiDung, nguoiGui, ngayGui, vaiTroNhan)
   VALUES ('Tài liệu mới',
-          CONCAT('Giáo viên ', tenGV,
-                 ' vừa đăng tài liệu "', NEW.tieuDe,
-                 '" cho lớp ', tenLop),
+          CONCAT('Giáo viên ', tenGV, ' vừa đăng tài liệu "', NEW.tieuDe, '"'), 
           NEW.maGV,
           NOW(),
           'HocSinh');
 
+  -- Lấy ID thông báo vừa tạo
   SET idThongBao = LAST_INSERT_ID();
 
   -- Gửi thông báo đến học sinh trong lớp
@@ -8557,7 +8572,18 @@ INSERT INTO `thongbao` (`maThongBao`, `tieuDe`, `noiDung`, `tepDinhKem`, `ngayGu
 (1843, 'Giáo viên xóa điểm', 'Giáo viên gv1 đã xóa điểm hk2_thiCK của lớp 10A1.', NULL, '2025-11-17 23:37:08', 17, NULL, 'TatCa', 0),
 (1844, 'Điểm học tập bị xóa', 'Điểm hk2_thiGK môn Hóa học của bạn đã bị xóa khỏi hệ thống.', NULL, '2025-11-17 23:37:08', NULL, 4, 'HocSinh', 0),
 (1845, 'Điểm bị xóa', 'Giáo viên gv1 đã xóa điểm hk2_thiGK môn Hóa học của bạn khỏi hệ thống.', NULL, '2025-11-17 23:37:08', 17, NULL, 'TatCa', 0),
-(1846, 'Giáo viên xóa điểm', 'Giáo viên gv1 đã xóa điểm hk2_thiGK của lớp 10A1.', NULL, '2025-11-17 23:37:08', 17, NULL, 'TatCa', 0);
+(1846, 'Giáo viên xóa điểm', 'Giáo viên gv1 đã xóa điểm hk2_thiGK của lớp 10A1.', NULL, '2025-11-17 23:37:08', 17, NULL, 'TatCa', 0),
+(1847, 'Tài liệu mới', 'Giáo viên gv1 vừa đăng tài liệu \"abc\" cho lớp (Không rõ)', NULL, '2025-11-17 23:55:10', 17, NULL, 'HocSinh', 0),
+(1848, 'Tài liệu bị xóa', 'Giáo viên gv1 đã xóa tài liệu: abc.', NULL, '2025-11-17 23:55:46', 17, NULL, 'HocSinh', 0),
+(1849, 'Tài liệu mới', 'Giáo viên gv1 vừa đăng tài liệu \"abc\" cho lớp (Không rõ)', NULL, '2025-11-17 23:56:00', 17, NULL, 'HocSinh', 0),
+(1850, 'Tài liệu mới', 'Giáo viên gv1 vừa đăng tài liệu \"thu\" cho lớp (Không rõ)', NULL, '2025-11-18 00:30:24', 17, NULL, 'HocSinh', 0),
+(1851, 'Tài liệu bị xóa', 'Giáo viên gv1 đã xóa tài liệu: thu.', NULL, '2025-11-18 00:33:08', 17, NULL, 'HocSinh', 0),
+(1852, 'Tài liệu bị xóa', 'Giáo viên gv1 đã xóa tài liệu: abc.', NULL, '2025-11-18 00:33:13', 17, NULL, 'HocSinh', 0),
+(1853, 'Tài liệu mới', 'Giáo viên gv1 vừa đăng tài liệu \"thu\" cho lớp (Không rõ)', NULL, '2025-11-18 00:33:28', 17, NULL, 'HocSinh', 0),
+(1854, 'Tài liệu bị xóa', 'Giáo viên gv1 đã xóa tài liệu: thu.', NULL, '2025-11-18 00:34:14', 17, NULL, 'HocSinh', 0),
+(1855, 'Tài liệu mới', 'Giáo viên gv1 vừa đăng tài liệu \"thu\" cho lớp (Không rõ)', NULL, '2025-11-18 00:34:22', 17, NULL, 'HocSinh', 0),
+(1856, 'Tài liệu được cập nhật', 'Giáo viên gv1 đã chỉnh sửa tài liệu: thu.', NULL, '2025-11-18 00:52:01', 17, NULL, 'HocSinh', 0),
+(1857, 'Tài liệu được cập nhật', 'Giáo viên gv1 đã chỉnh sửa tài liệu: Chất béo.', NULL, '2025-11-18 01:05:44', 17, NULL, 'HocSinh', 0);
 
 --
 -- Triggers `thongbao`
@@ -12809,7 +12835,73 @@ INSERT INTO `thongbaouser` (`id`, `userID`, `maThongBao`, `trangThai`, `thoiGian
 (4671, 4, 1845, 'Chưa đọc', '2025-11-17 23:37:08', NULL),
 (4672, 1, 1846, 'Chưa đọc', '2025-11-17 23:37:08', NULL),
 (4673, 17, 1846, 'Chưa đọc', '2025-11-17 23:37:08', NULL),
-(4674, 1, 1846, 'Chưa đọc', '2025-11-17 23:37:08', NULL);
+(4674, 1, 1846, 'Chưa đọc', '2025-11-17 23:37:08', NULL),
+(4675, 1, 1847, 'Chưa đọc', '2025-11-17 23:55:10', NULL),
+(4676, 17, 1847, 'Chưa đọc', '2025-11-17 23:55:10', NULL),
+(4677, 4, 1847, 'Chưa đọc', '2025-11-17 23:55:10', NULL),
+(4678, 37, 1847, 'Chưa đọc', '2025-11-17 23:55:10', NULL),
+(4679, 72, 1847, 'Chưa đọc', '2025-11-17 23:55:10', NULL),
+(4680, 73, 1847, 'Chưa đọc', '2025-11-17 23:55:10', NULL),
+(4684, 1, 1848, 'Chưa đọc', '2025-11-17 23:55:46', NULL),
+(4685, 17, 1848, 'Chưa đọc', '2025-11-17 23:55:46', NULL),
+(4686, 4, 1848, 'Chưa đọc', '2025-11-17 23:55:46', NULL),
+(4687, 37, 1848, 'Chưa đọc', '2025-11-17 23:55:46', NULL),
+(4688, 72, 1848, 'Chưa đọc', '2025-11-17 23:55:46', NULL),
+(4689, 73, 1848, 'Chưa đọc', '2025-11-17 23:55:46', NULL),
+(4693, 1, 1849, 'Chưa đọc', '2025-11-17 23:56:00', NULL),
+(4694, 17, 1849, 'Chưa đọc', '2025-11-17 23:56:00', NULL),
+(4695, 4, 1849, 'Chưa đọc', '2025-11-17 23:56:00', NULL),
+(4696, 37, 1849, 'Chưa đọc', '2025-11-17 23:56:00', NULL),
+(4697, 72, 1849, 'Chưa đọc', '2025-11-17 23:56:00', NULL),
+(4698, 73, 1849, 'Chưa đọc', '2025-11-17 23:56:00', NULL),
+(4702, 1, 1850, 'Chưa đọc', '2025-11-18 00:30:24', NULL),
+(4703, 17, 1850, 'Chưa đọc', '2025-11-18 00:30:24', NULL),
+(4704, 4, 1850, 'Chưa đọc', '2025-11-18 00:30:24', NULL),
+(4705, 37, 1850, 'Chưa đọc', '2025-11-18 00:30:24', NULL),
+(4706, 72, 1850, 'Chưa đọc', '2025-11-18 00:30:24', NULL),
+(4707, 73, 1850, 'Chưa đọc', '2025-11-18 00:30:24', NULL),
+(4711, 1, 1851, 'Chưa đọc', '2025-11-18 00:33:08', NULL),
+(4712, 17, 1851, 'Chưa đọc', '2025-11-18 00:33:08', NULL),
+(4713, 4, 1851, 'Chưa đọc', '2025-11-18 00:33:08', NULL),
+(4714, 37, 1851, 'Chưa đọc', '2025-11-18 00:33:08', NULL),
+(4715, 72, 1851, 'Chưa đọc', '2025-11-18 00:33:08', NULL),
+(4716, 73, 1851, 'Chưa đọc', '2025-11-18 00:33:08', NULL),
+(4720, 1, 1852, 'Chưa đọc', '2025-11-18 00:33:13', NULL),
+(4721, 17, 1852, 'Chưa đọc', '2025-11-18 00:33:13', NULL),
+(4722, 4, 1852, 'Chưa đọc', '2025-11-18 00:33:13', NULL),
+(4723, 37, 1852, 'Chưa đọc', '2025-11-18 00:33:13', NULL),
+(4724, 72, 1852, 'Chưa đọc', '2025-11-18 00:33:13', NULL),
+(4725, 73, 1852, 'Chưa đọc', '2025-11-18 00:33:13', NULL),
+(4729, 1, 1853, 'Chưa đọc', '2025-11-18 00:33:28', NULL),
+(4730, 17, 1853, 'Chưa đọc', '2025-11-18 00:33:28', NULL),
+(4731, 4, 1853, 'Chưa đọc', '2025-11-18 00:33:28', NULL),
+(4732, 37, 1853, 'Chưa đọc', '2025-11-18 00:33:28', NULL),
+(4733, 72, 1853, 'Chưa đọc', '2025-11-18 00:33:28', NULL),
+(4734, 73, 1853, 'Chưa đọc', '2025-11-18 00:33:28', NULL),
+(4738, 1, 1854, 'Chưa đọc', '2025-11-18 00:34:14', NULL),
+(4739, 17, 1854, 'Chưa đọc', '2025-11-18 00:34:14', NULL),
+(4740, 4, 1854, 'Chưa đọc', '2025-11-18 00:34:14', NULL),
+(4741, 37, 1854, 'Chưa đọc', '2025-11-18 00:34:14', NULL),
+(4742, 72, 1854, 'Chưa đọc', '2025-11-18 00:34:14', NULL),
+(4743, 73, 1854, 'Chưa đọc', '2025-11-18 00:34:14', NULL),
+(4747, 1, 1855, 'Chưa đọc', '2025-11-18 00:34:22', NULL),
+(4748, 17, 1855, 'Chưa đọc', '2025-11-18 00:34:22', NULL),
+(4749, 4, 1855, 'Chưa đọc', '2025-11-18 00:34:22', NULL),
+(4750, 37, 1855, 'Chưa đọc', '2025-11-18 00:34:22', NULL),
+(4751, 72, 1855, 'Chưa đọc', '2025-11-18 00:34:22', NULL),
+(4752, 73, 1855, 'Chưa đọc', '2025-11-18 00:34:22', NULL),
+(4756, 1, 1856, 'Chưa đọc', '2025-11-18 00:52:01', NULL),
+(4757, 17, 1856, 'Chưa đọc', '2025-11-18 00:52:01', NULL),
+(4758, 4, 1856, 'Chưa đọc', '2025-11-18 00:52:01', NULL),
+(4759, 37, 1856, 'Chưa đọc', '2025-11-18 00:52:01', NULL),
+(4760, 72, 1856, 'Chưa đọc', '2025-11-18 00:52:01', NULL),
+(4761, 73, 1856, 'Chưa đọc', '2025-11-18 00:52:01', NULL),
+(4765, 1, 1857, 'Chưa đọc', '2025-11-18 01:05:44', NULL),
+(4766, 17, 1857, 'Chưa đọc', '2025-11-18 01:05:44', NULL),
+(4767, 4, 1857, 'Chưa đọc', '2025-11-18 01:05:44', NULL),
+(4768, 37, 1857, 'Chưa đọc', '2025-11-18 01:05:44', NULL),
+(4769, 72, 1857, 'Chưa đọc', '2025-11-18 01:05:44', NULL),
+(4770, 73, 1857, 'Chưa đọc', '2025-11-18 01:05:44', NULL);
 
 --
 -- Triggers `thongbaouser`
@@ -13136,7 +13228,7 @@ ALTER TABLE `diemso`
 -- AUTO_INCREMENT for table `ghilog`
 --
 ALTER TABLE `ghilog`
-  MODIFY `maLog` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5136;
+  MODIFY `maLog` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5171;
 
 --
 -- AUTO_INCREMENT for table `giaovien_monhoc`
@@ -13184,19 +13276,19 @@ ALTER TABLE `password_reset_attempts`
 -- AUTO_INCREMENT for table `tailieu`
 --
 ALTER TABLE `tailieu`
-  MODIFY `maTL` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
+  MODIFY `maTL` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=17;
 
 --
 -- AUTO_INCREMENT for table `thongbao`
 --
 ALTER TABLE `thongbao`
-  MODIFY `maThongBao` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1847;
+  MODIFY `maThongBao` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1858;
 
 --
 -- AUTO_INCREMENT for table `thongbaouser`
 --
 ALTER TABLE `thongbaouser`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4675;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4774;
 
 --
 -- AUTO_INCREMENT for table `user`
