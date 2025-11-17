@@ -199,7 +199,7 @@ $result_tb = $stmt_tb->get_result();
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchNotifications" placeholder="Tìm kiếm thông báo...">
                 </div>
             </div>
 
@@ -238,15 +238,15 @@ $result_tb = $stmt_tb->get_result();
                             <th style="padding:10px; text-align:right; width:150px;">Ngày gửi</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="notificationTable">
                         <?php if ($result_tb && $result_tb->num_rows > 0): ?>
                             <?php while ($row = $result_tb->fetch_assoc()): ?>
-                                <tr style="border-bottom:1px solid #eee; cursor:pointer; <?= $row['trangThai'] == 'Chưa đọc' ? 'background:#f0f8ff' : '' ?>"
+                                <tr class="notification-row" style="border-bottom:1px solid #eee; cursor:pointer; <?= $row['trangThai'] == 'Chưa đọc' ? 'background:#f0f8ff' : '' ?>"
                                     onclick="window.location.href='chitiet_thongbao.php?id=<?= $row['maThongBao'] ?>'">
-                                    <td style="padding:10px; color:#0b1e6b; font-weight:500;">
+                                    <td style="padding:10px; color:#0b1e6b; font-weight:500;" class="notification-title">
                                         <?= htmlspecialchars($row['tieuDe']) ?> <?= $row['trangThai'] == 'Chưa đọc' ? '🔵' : '' ?>
                                     </td>
-                                    <td style="padding:10px; text-align:right; color:#333;">
+                                    <td style="padding:10px; text-align:right; color:#333;" class="notification-date">
                                         <?= date('d/m/Y', strtotime($row['ngayGui'])) ?>
                                     </td>
                                 </tr>
@@ -258,6 +258,9 @@ $result_tb = $stmt_tb->get_result();
                         <?php endif; ?>
                     </tbody>
                 </table>
+                <div id="noResults" style="display:none; padding:15px; text-align:center; color:#777;">
+                    Không tìm thấy thông báo phù hợp.
+                </div>
             </div>
         </div>
     </div>
@@ -410,6 +413,36 @@ $result_tb = $stmt_tb->get_result();
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
                 window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
             }
+        }
+
+        // === CHỨC NĂNG TÌM KIẾM THÔNG BÁO ===
+        const searchInput = document.getElementById("searchNotifications");
+        const notificationRows = document.querySelectorAll(".notification-row");
+        const noResults = document.getElementById("noResults");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                let foundCount = 0;
+
+                notificationRows.forEach(row => {
+                    const title = row.querySelector(".notification-title").innerText.toLowerCase();
+                    
+                    if (title.includes(keyword)) {
+                        row.style.display = "";
+                        foundCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+
+                // Hiển thị/ẩn thông báo "Không tìm thấy"
+                if (foundCount === 0 && keyword !== "") {
+                    noResults.style.display = "block";
+                } else {
+                    noResults.style.display = "none";
+                }
+            });
         }
     </script>
 </body>

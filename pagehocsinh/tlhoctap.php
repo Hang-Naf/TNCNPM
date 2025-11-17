@@ -173,7 +173,7 @@ $stmt->close();
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchDocuments" placeholder="Tìm kiếm tài liệu...">
                 </div>
             </div>
 
@@ -236,9 +236,9 @@ $stmt->close();
                         $stt = 1;
                         while ($r = $ds->fetch_assoc()):
                     ?>
-                            <tr>
+                            <tr class="document-row" data-title="<?= htmlspecialchars($r['tieuDe']) ?>" data-subject="<?= htmlspecialchars($r['tenMonHoc']) ?>">
                                 <td><?= $stt ?></td>
-                                <td><?= htmlspecialchars($r['tieuDe']) ?></td>
+                                <td class="doc-title"><?= htmlspecialchars($r['tieuDe']) ?></td>
                                 <td><?= htmlspecialchars($r['noiDung']) ?></td>
                                 <td><?= htmlspecialchars($r['tenMonHoc']) ?></td>
                                 <td><?= htmlspecialchars($r['nguoiTao']) ?></td>
@@ -409,6 +409,29 @@ $stmt->close();
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
                 window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
             }
+        }
+
+        // === CHỨC NĂNG TÌM KIẾM TÀI LIỆU ===
+        const searchInput = document.getElementById("searchDocuments");
+        const documentRows = document.querySelectorAll(".document-row");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                let foundCount = 0;
+
+                documentRows.forEach(row => {
+                    const title = row.getAttribute("data-title").toLowerCase();
+                    const subject = row.getAttribute("data-subject").toLowerCase();
+                    
+                    if (title.includes(keyword) || subject.includes(keyword)) {
+                        row.style.display = "";
+                        foundCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
         }
     </script>
 </body>

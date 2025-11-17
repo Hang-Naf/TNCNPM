@@ -160,7 +160,7 @@ while ($r = $result->fetch_assoc()) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchScores" placeholder="Tìm kiếm môn học...">
                 </div>
             </div>
 
@@ -210,9 +210,9 @@ while ($r = $result->fetch_assoc()) {
                     <tbody>
                         <?php $i = 1;
                         foreach ($bangDiem as $mon => $d): ?>
-                            <tr>
+                            <tr class="score-row" data-subject="<?= htmlspecialchars($mon) ?>">
                                 <td><?= $i++ ?></td>
-                                <td style="text-align:left;"><?= htmlspecialchars($mon) ?></td>
+                                <td style="text-align:left;" class="subject-name"><?= htmlspecialchars($mon) ?></td>
                                 <td><?= $d['mieng'] ?? '-' ?></td>
                                 <td><?= $d['1tiet'] ?? '-' ?></td>
                                 <td><?= $d['thi1'] ?? '-' ?></td>
@@ -339,6 +339,28 @@ while ($r = $result->fetch_assoc()) {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
                 window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
             }
+        }
+
+        // === CHỨC NĂNG TÌM KIẾM BẢNG ĐIỂM ===
+        const searchInput = document.getElementById("searchScores");
+        const scoreRows = document.querySelectorAll(".score-row");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                let foundCount = 0;
+
+                scoreRows.forEach(row => {
+                    const subject = row.getAttribute("data-subject").toLowerCase();
+                    
+                    if (subject.includes(keyword)) {
+                        row.style.display = "";
+                        foundCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
         }
     </script>
 </body>
