@@ -35,12 +35,18 @@ $lopList = $conn->query($sqlLop);
 
 // ==== Xử lý thêm tài liệu ====
 if (isset($_POST['add'])) {
-    $maLop = $_POST['maLop'];
-    $tieuDe = trim($_POST['tieuDe']);
-    $moTa = trim($_POST['moTa']);
+    $maLop = intval($_POST['maLop'] ?? 0);
+    $tieuDe = trim($_POST['tieuDe'] ?? '');
+    $moTa = trim($_POST['moTa'] ?? '');
     $trangThai = $_POST['trangThai'] ?? 'Công khai';
     $ngayTai = $today;
     $fileName = '';
+
+    // Kiểm tra maLop hợp lệ
+    if ($maLop <= 0) {
+        echo "<script>alert('Vui lòng chọn lớp học!');</script>";
+        exit;
+    }
 
     // ==== Lấy mã môn học mà GV dạy lớp này (để lưu đúng môn) ====
     $sqlMonHoc = "SELECT maMonHoc FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop' LIMIT 1";
@@ -74,13 +80,18 @@ if (isset($_POST['add'])) {
     if ($kiemtra->num_rows == 0) {
         echo "<script>alert('Bạn không được phân công dạy lớp này!');</script>";
     } else {
-        $sql = "INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai, tepDinhKem)
-                VALUES ('$maMonHoc', '$maLop', '$tieuDe', '$moTa', '$ngayTai', '$maGV', '$trangThai', '$fileName')";
-        if ($conn->query($sql)) {
-            echo "<script>alert('Thêm tài liệu thành công!'); window.location='tlhoctap.php';</script>";
+        // Sử dụng prepared statement để tránh SQL injection và đảm bảo giá trị được lưu đúng
+        $stmt = $conn->prepare("INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai, tepDinhKem) 
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        // Correct type: i(maMonHoc) i(maLop) s(tieuDe) s(noiDung) s(ngayTai) i(maGV) s(trangThai) s(tepDinhKem)
+        $stmt->bind_param("iisssiss", $maMonHoc, $maLop, $tieuDe, $moTa, $ngayTai, $maGV, $trangThai, $fileName);
+        
+        if ($stmt->execute()) {
+            echo "<script>alert('Thêm tài liệu thành công nha!'); window.location='tlhoctap.php';</script>";
         } else {
-            echo "Lỗi: " . $conn->error;
+            echo "Lỗi: " . $stmt->error;
         }
+        $stmt->close();
     }
 }
 ?>

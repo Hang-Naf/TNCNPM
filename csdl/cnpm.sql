@@ -6669,33 +6669,47 @@ DELIMITER $$
 CREATE TRIGGER `after_tailieu_insert_notify` AFTER INSERT ON `tailieu` FOR EACH ROW BEGIN
   DECLARE tenGV VARCHAR(100);
   DECLARE tenLop VARCHAR(100);
+  DECLARE tenMon VARCHAR(100);
   DECLARE idThongBao INT;
 
-  -- Lấy tên giáo viên và lớp
-  SELECT hoVaTen INTO tenGV
+  -- Lấy tên giáo viên
+  SELECT COALESCE(hoVaTen, '(Không rõ)') INTO tenGV
   FROM user
   WHERE userID = NEW.maGV
   LIMIT 1;
 
-  SELECT tenLop INTO tenLop
+  -- Lấy tên lớp
+  SELECT COALESCE(tenLop, '(Không rõ)') INTO tenLop
   FROM lophoc
   WHERE maLop = NEW.maLop
   LIMIT 1;
 
+  -- Lấy tên môn học
+  SELECT COALESCE(tenMonHoc, '(Không rõ)') INTO tenMon
+  FROM monhoc
+  WHERE maMonHoc = NEW.maMonHoc
+  LIMIT 1;
+
+  -- Xử lý trường hợp không tìm thấy dữ liệu
+  IF tenGV IS NULL THEN SET tenGV = '(Không rõ)'; END IF;
+  IF tenLop IS NULL THEN SET tenLop = '(Không rõ)'; END IF;
+  IF tenMon IS NULL THEN SET tenMon = '(Không rõ)'; END IF;
+
   -- Ghi log
   INSERT INTO ghilog (userID, hanhDong, noiDungLog, loaiLog)
   VALUES (NEW.maGV, 'Đăng tài liệu',
-          CONCAT('Giáo viên ', IFNULL(tenGV,'(Không rõ)'), 
+          CONCAT('Giáo viên ', tenGV,
                  ' đã đăng tài liệu "', NEW.tieuDe,
-                 '" cho lớp ', IFNULL(tenLop,'(Không rõ)')),
+                 '" cho lớp ', tenLop,
+                 ' môn ', tenMon),
           'Info');
 
   -- Tạo thông báo
   INSERT INTO thongbao (tieuDe, noiDung, nguoiGui, ngayGui, vaiTroNhan)
   VALUES ('Tài liệu mới',
-          CONCAT('Giáo viên ', IFNULL(tenGV,'(Không rõ)'),
+          CONCAT('Giáo viên ', tenGV,
                  ' vừa đăng tài liệu "', NEW.tieuDe,
-                 '" cho lớp ', IFNULL(tenLop,'(Không rõ)')),
+                 '" cho lớp ', tenLop),
           NEW.maGV,
           NOW(),
           'HocSinh');
