@@ -30,6 +30,11 @@ $stmtHS->close();
 
 $maLopHS = $hs['maLop']; // Lấy ID lớp (INT)
 
+// === PHÂN TRANG ===
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
 // ==== Lấy danh sách môn học của lớp học sinh ====
 $sqlMon = "SELECT DISTINCT m.maMonHoc, m.tenMonHoc
            FROM lophoc_monhoc lm
@@ -53,13 +58,27 @@ if (!empty($_GET['maMonHoc'])) {
     $types .= "i";
 }
 
+// ==== ĐẾM TỔNG SỐ TÀI LIỆU ====
+$countSql = "SELECT COUNT(*) as total
+            FROM tailieu t
+            WHERE $cond";
+$countStmt = $conn->prepare($countSql);
+$countStmt->bind_param($types, ...$params);
+$countStmt->execute();
+$countResult = $countStmt->get_result();
+$countRow = $countResult->fetch_assoc();
+$totalItems = $countRow['total'];
+$totalPages = ceil($totalItems / $itemsPerPage);
+$countStmt->close();
+
 // ==== Lấy danh sách tài liệu ====
 $sql = "SELECT t.maTL, t.tieuDe, t.noiDung, m.tenMonHoc, u.hoVaTen AS nguoiTao
         FROM tailieu t
         LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
         LEFT JOIN user u ON t.maGV = u.userID
         WHERE $cond
-        ORDER BY t.maTL DESC";
+        ORDER BY t.maTL DESC
+        LIMIT $offset, $itemsPerPage";
 
 $stmt = $conn->prepare($sql);
 $stmt->bind_param($types, ...$params);
@@ -233,7 +252,7 @@ $stmt->close();
                 <tbody>
                     <?php
                     if ($ds && $ds->num_rows > 0):
-                        $stt = 1;
+                        $stt = $offset + 1;
                         while ($r = $ds->fetch_assoc()):
                     ?>
                             <tr class="document-row" data-title="<?= htmlspecialchars($r['tieuDe']) ?>" data-subject="<?= htmlspecialchars($r['tenMonHoc']) ?>">
@@ -257,6 +276,31 @@ $stmt->close();
                     <?php endif; ?>
                 </tbody>
             </table>
+
+            <!-- ========= THANH PHÂN TRANG ========= -->
+            <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> tài liệu)</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <?php if ($page > 1): ?>
+                        <a href="?page=1<?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                        <a href="?page=<?= $page - 1 ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                    <?php else: ?>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                    <?php endif; ?>
+                    
+                    <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                    
+                    <?php if ($page < $totalPages): ?>
+                        <a href="?page=<?= $page + 1 ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                        <a href="?page=<?= $totalPages ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                    <?php else: ?>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <!-- ========= HẾT THANH PHÂN TRANG ========= -->
         </div>
     </div>
 

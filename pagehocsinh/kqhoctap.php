@@ -17,6 +17,11 @@ if ($_SESSION["vaiTro"] !== "HocSinh") {
 
 $userID = $_SESSION["userID"];
 
+// === PHÂN TRANG ===
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
 // === Lấy thông tin học sinh ===
 $sqlHS = "SELECT hoVaTen FROM user WHERE userID = ?";
 $stmtHS = $conn->prepare($sqlHS);
@@ -68,6 +73,13 @@ while ($r = $result->fetch_assoc()) {
     }
     $bangDiem[$mon]['tb'] = $count > 0 ? round($sum / $count, 1) : null;
 }
+
+// === TÍNH TOÁN PHÂN TRANG ===
+$totalItems = count($bangDiem);
+$totalPages = ceil($totalItems / $itemsPerPage);
+
+// === LẤY DANH SÁCH MÔN HỌC CHO TRANG HIỆN TẠI ===
+$bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
 ?>
 
 <!DOCTYPE html>
@@ -208,8 +220,8 @@ while ($r = $result->fetch_assoc()) {
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $i = 1;
-                        foreach ($bangDiem as $mon => $d): ?>
+                        <?php $i = $offset + 1;
+                        foreach ($bangDiemPaged as $mon => $d): ?>
                             <tr class="score-row" data-subject="<?= htmlspecialchars($mon) ?>">
                                 <td><?= $i++ ?></td>
                                 <td style="text-align:left;" class="subject-name"><?= htmlspecialchars($mon) ?></td>
@@ -222,6 +234,31 @@ while ($r = $result->fetch_assoc()) {
                         <?php endforeach; ?>
                     </tbody>
                 </table>
+
+                <!-- ========= THANH PHÂN TRANG ========= -->
+                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                    <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> môn học)</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <?php if ($page > 1): ?>
+                            <a href="?page=1" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                            <a href="?page=<?= $page - 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                        <?php endif; ?>
+                        
+                        <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                        
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                            <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- ========= HẾT THANH PHÂN TRANG ========= -->
             <?php endif; ?>
         </div>
     </div>

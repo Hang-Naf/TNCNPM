@@ -60,7 +60,18 @@ if (isset($_POST['updateRole'])) {
 
 
 // ================== LẤY DANH SÁCH NGƯỜI DÙNG ==================
-$sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC";
+// ==== PHÂN TRANG ====
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
+// ==== TRUY VẤN ĐẾM TỔNG SỐ ITEMS ====
+$countSql = "SELECT COUNT(*) AS total FROM user";
+$countResult = $conn->query($countSql);
+$totalItems = ($countResult && $countResult->num_rows > 0) ? $countResult->fetch_assoc()['total'] : 0;
+$totalPages = ceil($totalItems / $itemsPerPage);
+
+$sql = "SELECT userID, hoVaTen, email, sdt, vaiTro, gioiTinh, ngaySinh FROM user ORDER BY vaiTro, hoVaTen ASC LIMIT $offset, $itemsPerPage";
 $result = $conn->query($sql);
 ?>
 
@@ -151,7 +162,6 @@ $result = $conn->query($sql);
                 <div class="menu-title">Quản lý thông tin</div>
                 <ul>
                     <li onclick="window.location.href='../pages/qlthongbao.php'"><i class="fa-solid fa-bell"></i> Thông báo</li>
-                    <li onclick="window.location.href='../pages/qltsukien.php'"><i class="fa-solid fa-calendar-days"></i> Sự kiện</li>
                 </ul>
             </div>
 
@@ -217,9 +227,9 @@ $result = $conn->query($sql);
                 </tr>
             </thead>
             <tbody>
-                <?php while ($row = $result->fetch_assoc()) { ?>
+                <?php $stt = $offset + 1; while ($row = $result->fetch_assoc()) { ?>
                     <tr>
-                        <td><?= $row['userID'] ?></td>
+                        <td><?= $stt++ ?></td>
                         <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
                         <td><?= htmlspecialchars($row['email']) ?></td>
                         <td><?= htmlspecialchars($row['sdt']) ?></td>
@@ -241,6 +251,31 @@ $result = $conn->query($sql);
                 <?php } ?>
             </tbody>
         </table>
+
+        <!-- ========= THANH PHÂN TRANG ========= -->
+        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+            <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> người dùng)</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <?php if ($page > 1): ?>
+                    <a href="?page=1" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                    <a href="?page=<?= $page - 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                <?php endif; ?>
+                
+                <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                    <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                <?php endif; ?>
+            </div>
+        </div>
+        <!-- ========= HẾT THANH PHÂN TRANG ========= -->
     </div>
 
     <script>

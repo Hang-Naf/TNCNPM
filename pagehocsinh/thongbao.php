@@ -18,6 +18,11 @@ if ($_SESSION["vaiTro"] !== "HocSinh") {
 
 $userID = $_SESSION["userID"];
 
+// === PHÂN TRANG ===
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
 // Truy vấn thông tin cá nhân học sinh
 $sql = "SELECT h.maHS, u.hoVaTen, u.email, u.sdt, u.ngaySinh, u.gioiTinh, 
                h.lopHocPhuTrach, h.chucVu, h.anhDaiDien, h.namHoc, h.hocKy, h.trangThai
@@ -31,11 +36,25 @@ $result = $stmt->get_result();
 $hs = $result->fetch_assoc();
 
 // === Lấy danh sách thông báo chung ===
+// === ĐẾM TỔNG SỐ THÔNG BÁO ===
+$count_sql = "SELECT COUNT(*) as total
+           FROM thongbao tb
+           JOIN thongbaouser tbu ON tb.maThongBao = tbu.maThongBao
+           WHERE tbu.userID = ?";
+$count_stmt = $conn->prepare($count_sql);
+$count_stmt->bind_param("i", $userID);
+$count_stmt->execute();
+$count_result = $count_stmt->get_result();
+$countRow = $count_result->fetch_assoc();
+$totalItems = $countRow['total'];
+$totalPages = ceil($totalItems / $itemsPerPage);
+
 $sql_tb = "SELECT tb.maThongBao, tb.tieuDe, tb.noiDung, tb.ngayGui, tbu.trangThai
            FROM thongbao tb
            JOIN thongbaouser tbu ON tb.maThongBao = tbu.maThongBao
            WHERE tbu.userID = ?
-           ORDER BY tb.ngayGui DESC";
+           ORDER BY tb.ngayGui DESC
+           LIMIT $offset, $itemsPerPage";
 $stmt_tb = $conn->prepare($sql_tb);
 $stmt_tb->bind_param("i", $userID);
 $stmt_tb->execute();
@@ -261,6 +280,31 @@ $result_tb = $stmt_tb->get_result();
                 <div id="noResults" style="display:none; padding:15px; text-align:center; color:#777;">
                     Không tìm thấy thông báo phù hợp.
                 </div>
+
+                <!-- ========= THANH PHÂN TRANG ========= -->
+                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                    <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> thông báo)</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <?php if ($page > 1): ?>
+                            <a href="?page=1" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                            <a href="?page=<?= $page - 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                        <?php endif; ?>
+                        
+                        <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                        
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                            <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+                <!-- ========= HẾT THANH PHÂN TRANG ========= -->
             </div>
         </div>
     </div>

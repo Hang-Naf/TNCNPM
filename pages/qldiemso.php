@@ -20,8 +20,34 @@ if ($_SESSION["vaiTro"] !== "Admin") {
 $lopChon = $_GET['lop'] ?? '';
 $monChon = $_GET['mon'] ?? '';
 
+// ========= PHÂN TRANG =========
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
 $dsLop = $conn->query("SELECT DISTINCT lopHocPhuTrach AS tenLop FROM hocsinh WHERE lopHocPhuTrach IS NOT NULL");
 $dsMon = $conn->query("SELECT * FROM monhoc ORDER BY tenMonHoc ASC");
+
+// ========= TRUY VẤN ĐẾM TỔNG SỐ ITEMS =========
+$countSql = "
+SELECT COUNT(DISTINCT u.userID, m.tenMonHoc) as total
+FROM hocsinh h
+JOIN user u ON h.maHS = u.userID
+LEFT JOIN diemso d ON d.maHS = h.maHS
+LEFT JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+WHERE 1=1
+";
+
+if ($lopChon != '') {
+    $countSql .= " AND h.lopHocPhuTrach = '" . $conn->real_escape_string($lopChon) . "'";
+}
+if ($monChon != '') {
+    $countSql .= " AND m.tenMonHoc = '" . $conn->real_escape_string($monChon) . "'";
+}
+
+$countResult = $conn->query($countSql);
+$totalItems = ($countResult && $countResult->num_rows > 0) ? $countResult->fetch_assoc()['total'] : 0;
+$totalPages = ceil($totalItems / $itemsPerPage);
 
 // ========= TRUY VẤN DỮ LIỆU CHÍNH =========
 $sql = "
@@ -77,7 +103,7 @@ if ($monChon != '') {
     $sql .= " AND m.tenMonHoc = '" . $conn->real_escape_string($monChon) . "'";
 }
 
-$sql .= " GROUP BY u.userID, m.tenMonHoc ORDER BY h.lopHocPhuTrach, u.hoVaTen ASC";
+$sql .= " GROUP BY u.userID, m.tenMonHoc ORDER BY h.lopHocPhuTrach, u.hoVaTen ASC LIMIT $offset, $itemsPerPage";
 $result = $conn->query($sql);
 ?>
 
@@ -275,7 +301,7 @@ $result = $conn->query($sql);
             <tbody>
                 <?php
                 if ($result && $result->num_rows > 0) {
-                    $stt = 1;
+                    $stt = $offset + 1;
                     while ($row = $result->fetch_assoc()) {
                         $tb = "-";
                         if (is_numeric($row['diemHK1']) || is_numeric($row['diemHK2'])) {
@@ -321,7 +347,33 @@ $result = $conn->query($sql);
                 ?>
             </tbody>
         </table>
-    </div>
+
+        <!-- ========= THANH PHÂN TRANG ========= -->
+        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+            <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> items)</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <?php if ($page > 1): ?>
+                    <a href="?page=1&lop=<?= urlencode($lopChon) ?>&mon=<?= urlencode($monChon) ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                    <a href="?page=<?= $page - 1 ?>&lop=<?= urlencode($lopChon) ?>&mon=<?= urlencode($monChon) ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                <?php endif; ?>
+                
+                <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?= $page + 1 ?>&lop=<?= urlencode($lopChon) ?>&mon=<?= urlencode($monChon) ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                    <a href="?page=<?= $totalPages ?>&lop=<?= urlencode($lopChon) ?>&mon=<?= urlencode($monChon) ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                <?php endif; ?>
+            </div>
+        </div>
+        <!-- ========= HẾT THANH PHÂN TRANG ========= -->
+
+        
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");

@@ -18,8 +18,27 @@ if ($_SESSION["vaiTro"] !== "Admin") {
 
 $currentUserId = $_SESSION["userID"];
 
+// ==== PHÂN TRANG ====
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
 // ==== Lấy danh sách thông báo ====
 $filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
+
+// ==== TRUY VẤN ĐẾM TỔNG SỐ ITEMS ====
+if ($filter === 'sent') {
+    $countSql = "
+        SELECT COUNT(*) AS total FROM thongbao
+        WHERE nguoiGui = '$currentUserId'
+    ";
+} else {
+    $countSql = "SELECT COUNT(*) AS total FROM thongbao";
+}
+
+$countResult = $conn->query($countSql);
+$totalItems = ($countResult && $countResult->num_rows > 0) ? $countResult->fetch_assoc()['total'] : 0;
+$totalPages = ceil($totalItems / $itemsPerPage);
 
 if ($filter === 'sent') {
     // Chỉ lấy thông báo do admin hiện tại gửi
@@ -38,6 +57,7 @@ if ($filter === 'sent') {
         WHERE t.nguoiGui = '$currentUserId'
         GROUP BY t.maThongBao, t.tieuDe, t.noiDung, t.ngayGui, u.hoVaTen
         ORDER BY t.ngayGui DESC
+        LIMIT $offset, $itemsPerPage
     ";
 } else {
     // Tất cả thông báo
@@ -55,6 +75,7 @@ if ($filter === 'sent') {
         LEFT JOIN thongbaouser tu ON t.maThongBao = tu.maThongBao
         GROUP BY t.maThongBao, t.tieuDe, t.noiDung, t.ngayGui, u.hoVaTen
         ORDER BY t.ngayGui DESC
+        LIMIT $offset, $itemsPerPage
     ";
 }
 
@@ -343,7 +364,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
             </thead>
             <tbody>
                 <?php if ($result->num_rows > 0):
-                    $stt = 1;
+                    $stt = $offset + 1;
                     while ($row = $result->fetch_assoc()): ?>
                         <tr>
                             <td><?= $stt++ ?></td>
@@ -375,6 +396,31 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <!-- ========= THANH PHÂN TRANG ========= -->
+        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+            <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> thông báo)</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <?php if ($page > 1): ?>
+                    <a href="?page=1&filter=<?= $filter ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                    <a href="?page=<?= $page - 1 ?>&filter=<?= $filter ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                <?php endif; ?>
+                
+                <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?= $page + 1 ?>&filter=<?= $filter ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                    <a href="?page=<?= $totalPages ?>&filter=<?= $filter ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                <?php endif; ?>
+            </div>
+        </div>
+        <!-- ========= HẾT THANH PHÂN TRANG ========= -->
     </div>
 
     <!-- Popup: Thêm -->

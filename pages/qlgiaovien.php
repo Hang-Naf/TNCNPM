@@ -16,6 +16,17 @@ if ($_SESSION["vaiTro"] !== "Admin") {
     exit();
 }
 
+// ==== Cấu hình phân trang ====
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
+// ==== Lấy tổng số giáo viên ====
+$countSql = "SELECT COUNT(*) as total FROM giaovien g JOIN user u ON g.maGV = u.userID WHERE u.vaiTro = 'GiaoVien'";
+$countResult = $conn->query($countSql);
+$totalItems = $countResult->fetch_assoc()['total'];
+$totalPages = ceil($totalItems / $itemsPerPage);
+
 // ==== Lấy danh sách giáo viên ====
 $sql = "
     SELECT 
@@ -24,6 +35,8 @@ $sql = "
     FROM giaovien g
     JOIN user u ON g.maGV = u.userID
     WHERE u.vaiTro = 'GiaoVien'
+    ORDER BY g.maGV DESC
+    LIMIT $offset, $itemsPerPage
 ";
 $result = $conn->query($sql);
 
@@ -272,7 +285,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             </thead>
             <tbody>
                 <?php if ($result->num_rows > 0):
-                    $stt = 1;
+                    $stt = $offset + 1;
                     while ($row = $result->fetch_assoc()): ?>
                         <tr data-id="<?= $row['maGV'] ?>">
                             <td><input type="checkbox"></td>
@@ -303,6 +316,30 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <?php endif; ?>
             </tbody>
         </table>
+
+        <!-- Thanh phân trang -->
+        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+            <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> giáo viên)</span>
+            <div style="display:flex; gap:8px; align-items:center;">
+                <?php if ($page > 1): ?>
+                    <a href="?page=1" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                    <a href="?page=<?= $page - 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                <?php endif; ?>
+                
+                <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                
+                <?php if ($page < $totalPages): ?>
+                    <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                    <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                <?php else: ?>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                <?php endif; ?>
+            </div>
+        </div>
     </div>
 
     <!-- Popup thêm -->

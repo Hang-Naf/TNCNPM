@@ -74,12 +74,42 @@ $monhoc = $conn->query("SELECT * FROM monhoc");
 $giaovien = $conn->query("SELECT g.maGV, u.hoVaTen FROM giaovien g 
                           JOIN user u ON g.maGV = u.userID");
 
+// Cấu hình phân trang
+$itemsPerPage = 18;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
+// Lấy tổng số tài liệu
+$countSql = "SELECT COUNT(*) as total FROM tailieu t WHERE 1=1";
+if (!empty($_GET['maLop'])) {
+    $maLop = intval($_GET['maLop']);
+    $countSql .= " AND t.maLop = $maLop";
+}
+if (!empty($_GET['maMonHoc'])) {
+    $maMonHoc = intval($_GET['maMonHoc']);
+    $countSql .= " AND t.maMonHoc = $maMonHoc";
+}
+$countResult = $conn->query($countSql);
+$totalItems = $countResult->fetch_assoc()['total'];
+$totalPages = ceil($totalItems / $itemsPerPage);
+
 // Lấy danh sách tài liệu
 $sql = "SELECT t.maTL, t.tieuDe, t.noiDung, t.ngayTai, t.trangThai, 
                m.tenMonHoc, u.hoVaTen AS tenGV
         FROM tailieu t
         LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
-        LEFT JOIN user u ON t.maGV = u.userID";
+        LEFT JOIN user u ON t.maGV = u.userID WHERE 1=1";
+
+if (!empty($_GET['maLop'])) {
+    $maLop = intval($_GET['maLop']);
+    $sql .= " AND t.maLop = $maLop";
+}
+if (!empty($_GET['maMonHoc'])) {
+    $maMonHoc = intval($_GET['maMonHoc']);
+    $sql .= " AND t.maMonHoc = $maMonHoc";
+}
+
+$sql .= " ORDER BY t.maTL DESC LIMIT $offset, $itemsPerPage";
 $result = $conn->query($sql);
 ?>
 
@@ -400,7 +430,7 @@ $result = $conn->query($sql);
                             $cond .= " AND t.maMonHoc = $maMonHoc";
                         }
 
-                        $sql = "SELECT t.tieuDe, t.noiDung, t.trangThai, m.tenMonHoc, u.hoVaTen AS nguoiTao
+                        $sql = "SELECT t.maTL, t.tieuDe, t.noiDung, t.trangThai, m.tenMonHoc, u.hoVaTen AS nguoiTao
                                 FROM tailieu t
                                 LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
                                 LEFT JOIN user u ON t.maGV = u.userID
@@ -408,10 +438,10 @@ $result = $conn->query($sql);
                                 ORDER BY t.maTL DESC";
 
                         $ds = $conn->query($sql);
-                        $stt = 1;
+                        $stt = $offset + 1;
                         if ($ds->num_rows > 0) {
                             while ($r = $ds->fetch_assoc()) {
-                                echo "<tr style='border-top:1px solid #eee;'>
+                                echo "<tr class='data-row' style='border-top:1px solid #eee;'>
                                     <td style='padding:10px;'>$stt</td>
                                     <td style='padding:10px;'>" . htmlspecialchars($r['tieuDe']) . "</td>
                                     <td style='padding:10px;'>" . htmlspecialchars($r['noiDung']) . "</td>
@@ -428,13 +458,27 @@ $result = $conn->query($sql);
                     </tbody>
                 </table>
 
-                <!-- Thanh phân trang giả lập -->
+                <!-- Thanh phân trang -->
                 <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee;">
-                    <span>1–<?= min($stt - 1, 4) ?>/<?= $stt - 1 ?> mục</span>
+                    <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> tài liệu)</span>
                     <div style="display:flex; gap:8px; align-items:center;">
-                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px;">◀</button>
-                        <span style="font-weight:600;">1/5</span>
-                        <button style="border:none; background:#eee; border-radius:4px; padding:5px 10px;">▶</button>
+                        <?php if ($page > 1): ?>
+                            <a href="?page=1<?= !empty($_GET['maLop']) ? '&maLop='.$_GET['maLop'] : '' ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                            <a href="?page=<?= $page - 1 ?><?= !empty($_GET['maLop']) ? '&maLop='.$_GET['maLop'] : '' ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                        <?php endif; ?>
+                        
+                        <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                        
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?page=<?= $page + 1 ?><?= !empty($_GET['maLop']) ? '&maLop='.$_GET['maLop'] : '' ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                            <a href="?page=<?= $totalPages ?><?= !empty($_GET['maLop']) ? '&maLop='.$_GET['maLop'] : '' ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

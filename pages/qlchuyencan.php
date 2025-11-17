@@ -47,6 +47,22 @@ if ($loc_lop) {
     $filter .= " AND hl.maLop = $loc_lop";
 }
 
+// ==== Cấu hình phân trang ====
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
+// ==== Lấy tổng số học sinh ====
+$countSql = "SELECT COUNT(DISTINCT h.maHS) as total 
+FROM hocsinh h 
+JOIN user u ON h.maHS = u.userID
+LEFT JOIN hocsinh_lophoc hl ON h.maHS = hl.maHS
+LEFT JOIN lophoc l ON hl.maLop = l.maLop
+WHERE 1=1 $filter";
+$countResult = $conn->query($countSql);
+$totalItems = $countResult->fetch_assoc()['total'];
+$totalPages = ceil($totalItems / $itemsPerPage);
+
 // Lấy danh sách học sinh theo lọc hoặc tất cả
 $sql = "
 SELECT h.maHS, u.hoVaTen, l.tenLop 
@@ -55,7 +71,8 @@ JOIN user u ON h.maHS = u.userID
 LEFT JOIN hocsinh_lophoc hl ON h.maHS = hl.maHS
 LEFT JOIN lophoc l ON hl.maLop = l.maLop
 WHERE 1=1 $filter
-ORDER BY l.tenLop, u.hoVaTen ASC";
+ORDER BY l.tenLop, u.hoVaTen ASC
+LIMIT $offset, $itemsPerPage";
 $danhsach = $conn->query($sql);
 
 // Lấy điểm danh hiện có để hiển thị trạng thái (nếu chọn môn)
@@ -363,6 +380,30 @@ if (!empty($loc_mon)) {
                 </table>
                 <br>
                 <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
+
+                <!-- Thanh phân trang -->
+                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                    <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> học sinh)</span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        <?php if ($page > 1): ?>
+                            <a href="?page=1<?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                            <a href="?page=<?= $page - 1 ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                        <?php endif; ?>
+                        
+                        <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                        
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?page=<?= $page + 1 ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                            <a href="?page=<?= $totalPages ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                        <?php else: ?>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                            <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </form>
 
             <div class="summary-box">
