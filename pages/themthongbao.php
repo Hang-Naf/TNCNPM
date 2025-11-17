@@ -189,7 +189,7 @@ $currentUserId = $_SESSION["userID"];
             <textarea name="noiDung" required></textarea>
 
             <label>Thời gian gửi thông báo:</label>
-            <input type="datetime-local" name="thoiGianGui" required>
+            <input type="datetime-local" name="thoiGianGui" id="thoiGianGui" required>
 
             <label>Người nhận:</label>
             <div class="radio-group">
@@ -210,8 +210,31 @@ $currentUserId = $_SESSION["userID"];
     </div>
 
     <script>
+        // Đặt giá trị tối thiểu cho datetime picker là hiện tại
+        const thoiGianGuiInput = document.getElementById('thoiGianGui');
+        const now = new Date();
+        
+        // Tính thời gian hiện tại theo định dạng YYYY-MM-DDTHH:MM
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const date = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        const minDateTime = `${year}-${month}-${date}T${hours}:${minutes}`;
+        
+        thoiGianGuiInput.min = minDateTime;
+        thoiGianGuiInput.value = minDateTime;
+
         document.getElementById('addForm').onsubmit = async (e) => {
             e.preventDefault();
+            
+            // Kiểm tra thời gian không được ở quá khứ
+            const selectedDateTime = new Date(thoiGianGuiInput.value);
+            if (selectedDateTime < now) {
+                alert('Vui lòng chọn thời gian ở tương lai!');
+                return;
+            }
+            
             const formData = new FormData(e.target);
             const res = await fetch('../src/thongbao.php', {
                 method: 'POST',

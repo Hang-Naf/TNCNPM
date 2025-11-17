@@ -54,6 +54,14 @@ if (isset($_POST['add'])) {
 
     // ==== Upload file nếu có ====
     if (!empty($_FILES['fileTaiLieu']['name'])) {
+
+        // ==== Giới hạn dung lượng 15MB ====
+        $maxSize = 15 * 1024 * 1024; // 15MB
+        if ($_FILES['fileTaiLieu']['size'] > $maxSize) {
+            echo "<script>alert('File quá lớn! Giới hạn tối đa là 15MB.');</script>";
+            exit;
+        }
+
         $targetDir = "../uploads/tailieu/";
         if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
         $fileName = time() . "_" . basename($_FILES["fileTaiLieu"]["name"]);

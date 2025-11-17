@@ -434,7 +434,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                 <label>Nội dung:</label>
                 <textarea name="noiDung" rows="5" required></textarea>
                 <label>Thời gian gửi:</label>
-                <input type="datetime-local" name="thoiGianGui" required>
+                <input type="datetime-local" name="thoiGianGui" id="addThoiGianGui" required>
                 <div class="popup-buttons">
                     <button type="button" class="cancel-btn" onclick="closePopup('addPopup')">Hủy</button>
                     <button type="submit" class="send-btn">Gửi</button>
@@ -481,6 +481,26 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
     </div>
 
     <script>
+        // Đặt giá trị tối thiểu cho datetime picker là hiện tại
+        function setMinDateTime() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const date = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const minDateTime = `${year}-${month}-${date}T${hours}:${minutes}`;
+            
+            const addThoiGianGui = document.getElementById('addThoiGianGui');
+            if (addThoiGianGui) {
+                addThoiGianGui.min = minDateTime;
+                addThoiGianGui.value = minDateTime;
+            }
+        }
+        
+        // Gọi khi trang load
+        setMinDateTime();
+
         // Chuyển tab lọc
         document.querySelectorAll(".tab").forEach(tab => {
             tab.addEventListener("click", () => {
@@ -608,6 +628,15 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
 
         document.getElementById('addForm').onsubmit = async (e) => {
             e.preventDefault();
+            
+            // Kiểm tra thời gian không được ở quá khứ
+            const selectedDateTime = new Date(document.getElementById('addThoiGianGui').value);
+            const now = new Date();
+            if (selectedDateTime < now) {
+                alert('Vui lòng chọn thời gian ở tương lai!');
+                return;
+            }
+            
             const formData = new FormData(e.target);
             const res = await fetch('src/thongbao.php', {
                 method: 'POST',
@@ -632,6 +661,15 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
 
         document.getElementById('editForm').onsubmit = async (e) => {
             e.preventDefault();
+            
+            // Kiểm tra thời gian không được ở quá khứ
+            const selectedDateTime = new Date(document.getElementById('editThoiGianGui').value);
+            const now = new Date();
+            if (selectedDateTime < now) {
+                alert('Vui lòng chọn thời gian ở tương lai!');
+                return;
+            }
+            
             const formData = new FormData(e.target);
             const res = await fetch('src/thongbao.php', {
                 method: 'POST',
