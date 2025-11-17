@@ -320,7 +320,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <input type="email" name="email" required>
 
                 <label>Số điện thoại:</label>
-                <input type="text" name="sdt">
+                <input type="text" name="sdt" id="addSdt" placeholder="VD: 0912345678" pattern="^0[0-9]{9}$" title="Số điện thoại Việt Nam phải bắt đầu bằng 0 và có 10 chữ số" required>
 
                 <label>Giới tính:</label>
                 <select name="gioiTinh">
@@ -374,7 +374,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 <input type="text" name="hoVaTen" id="editHoTen" placeholder="Họ và tên" required maxlength="255">
                 <div id="editCounter">0 / 255 ký tự</div>
                 <input type="email" name="email" id="editEmail" placeholder="Email" required>
-                <input type="text" name="sdt" id="editSdt" placeholder="Số điện thoại">
+                <input type="text" name="sdt" id="editSdt" placeholder="VD: 0912345678" pattern="^0[0-9]{9}$" title="Số điện thoại Việt Nam phải bắt đầu bằng 0 và có 10 chữ số" required>
                 <select name="gioiTinh" id="editGioiTinh">
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
@@ -553,6 +553,27 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                 return;
             }
 
+            const email = e.target.email.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                alert("❌ Vui lòng nhập email!");
+                return;
+            }
+            if (!emailRegex.test(email)) {
+                alert("❌ Email không hợp lệ! Email phải có định dạng: user@domain.com\n- Phải có @ và tên miền (ví dụ: .com, .vn)");
+                return;
+            }
+
+            const sdt = e.target.sdt.value.trim();
+            if (!sdt) {
+                alert("❌ Vui lòng nhập số điện thoại!");
+                return;
+            }
+            if (!/^0[0-9]{9}$/.test(sdt)) {
+                alert("❌ Số điện thoại không hợp lệ! Phải bắt đầu bằng 0 và có 10 chữ số.\nVD: 0912345678");
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch(apiGiaoVien, {
                 method: "POST",
@@ -595,6 +616,27 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             const hoTen = e.target.hoVaTen.value.trim();
             if (hoTen.length > 255) {
                 alert("Họ và tên không được vượt quá 255 ký tự!");
+                return;
+            }
+
+            const email = e.target.email.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                alert("❌ Vui lòng nhập email!");
+                return;
+            }
+            if (!emailRegex.test(email)) {
+                alert("❌ Email không hợp lệ! Email phải có định dạng: user@domain.com\n- Phải có @ và tên miền (ví dụ: .com, .vn)");
+                return;
+            }
+
+            const sdt = e.target.sdt.value.trim();
+            if (!sdt) {
+                alert("❌ Vui lòng nhập số điện thoại!");
+                return;
+            }
+            if (!/^0[0-9]{9}$/.test(sdt)) {
+                alert("❌ Số điện thoại không hợp lệ! Phải bắt đầu bằng 0 và có 10 chữ số.\nVD: 0912345678");
                 return;
             }
 
@@ -687,7 +729,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             }
         });
 
-        // === TÌM KIẾM GIÁO VIÊN THEO TÊN, MÃ, HOẶC BỘ MÔN ===
+        // === TÌM KIẾM GIÁO VIÊN THEO TÊN, MÃ, EMAIL HOẶC BỘ MÔN ===
         const searchInput = document.querySelector('.search-box input');
         const tableRows = document.querySelectorAll('tbody tr');
 
@@ -698,10 +740,11 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             tableRows.forEach(row => {
                 const maGV = row.children[2]?.innerText.toLowerCase() || "";
                 const hoTen = row.children[3]?.innerText.toLowerCase() || "";
+                const email = row.children[5]?.innerText.toLowerCase() || "";
                 const boMon = row.children[7]?.innerText.toLowerCase() || "";
 
-                // So khớp nếu có chứa từ khóa trong mã GV, tên hoặc bộ môn
-                if (maGV.includes(keyword) || hoTen.includes(keyword) || boMon.includes(keyword)) {
+                // So khớp nếu có chứa từ khóa trong mã GV, tên, email hoặc bộ môn
+                if (maGV.includes(keyword) || hoTen.includes(keyword) || email.includes(keyword) || boMon.includes(keyword)) {
                     row.style.display = "";
                     found++;
                 } else {

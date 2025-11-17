@@ -23,7 +23,6 @@ $sql = "
         m.tenMonHoc,
         m.moTa,
         m.hocKy,
-        m.trongSo,
         m.trangThai,
         m.namHoc,
         u.hoVaTen AS truongBoMon
@@ -261,7 +260,6 @@ $gv_rs = $conn->query("
                     <th>TRƯỞNG BỘ MÔN</th>
                     <th>MÔ TẢ</th>
                     <th>HỌC KỲ</th>
-                    <th>TRỌNG SỐ</th>
                     <th>NĂM HỌC</th>
                     <th>TRẠNG THÁI</th>
                     <th>TÁC VỤ</th>
@@ -277,7 +275,6 @@ $gv_rs = $conn->query("
                             <td><?= htmlspecialchars($row['truongBoMon'] ?? '—') ?></td>
                             <td><?= htmlspecialchars($row['moTa']) ?></td>
                             <td><?= htmlspecialchars($row['hocKy']) ?></td>
-                            <td><?= htmlspecialchars($row['trongSo']) ?></td>
                             <td><?= htmlspecialchars($row['namHoc']) ?></td>
                             <td><span class="status <?= $row['trangThai'] === 'Hoạt động' ? 'active' : 'inactive' ?>">
                                     <?= htmlspecialchars($row['trangThai']) ?>
@@ -290,7 +287,7 @@ $gv_rs = $conn->query("
                     <?php endwhile;
                 else: ?>
                     <tr>
-                        <td colspan="10" style="text-align:center;">Không có dữ liệu</td>
+                        <td colspan="9" style="text-align:center;">Không có dữ liệu</td>
                     </tr>
                 <?php endif; ?>
             </tbody>
@@ -302,7 +299,8 @@ $gv_rs = $conn->query("
             <h3>Thêm môn học</h3>
             <form id="addForm">
                 <input type="hidden" name="action" value="add">
-                <input type="text" name="tenMonHoc" placeholder="Tên môn học" required>
+                <input type="text" name="tenMonHoc" placeholder="Tên môn học" maxlength="50" required>
+                <small style="color:#999;"><span id="charCountAdd">0</span>/50 ký tự</small>
                 <select name="truongBoMon">
                     <option value="">--Chọn Trưởng Bộ Môn--</option>
                     <?php
@@ -318,7 +316,6 @@ $gv_rs = $conn->query("
                     <option value="HK2">Học kỳ 2</option>
                     <option value="Hè">Học kỳ Hè</option>
                 </select>
-                <input type="number" name="trongSo" placeholder="Trọng số" step="0.1" required>
                 <input type="text" name="namHoc" placeholder="VD: 2024-2025" required>
                 <div>
                     <label><input type="radio" name="trangThai" value="Hoạt động" checked> Hoạt động</label>
@@ -339,7 +336,8 @@ $gv_rs = $conn->query("
             <form id="editForm">
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="maMonHoc" id="editId">
-                <input type="text" name="tenMonHoc" id="editTenMonHoc" required>
+                <input type="text" name="tenMonHoc" id="editTenMonHoc" maxlength="50" required>
+                <small style="color:#999;"><span id="charCountEdit">0</span>/50 ký tự</small>
                 <select name="truongBoMon" id="editTruongBoMon">
                     <option value="">--Chọn Trưởng Bộ Môn--</option>
                     <?php
@@ -355,7 +353,6 @@ $gv_rs = $conn->query("
                     <option value="HK2">HK2</option>
                     <option value="Hè">Hè</option>
                 </select>
-                <input type="number" name="trongSo" id="editTrongSo" step="0.1" required>
                 <input type="text" name="namHoc" id="editNamHoc" required>
                 <div>
                     <label><input type="radio" name="trangThai" id="editActive" value="Hoạt động"> Hoạt động</label>
@@ -474,9 +471,34 @@ $gv_rs = $conn->query("
             document.getElementById(id).style.display = "none";
         }
 
+        // Cập nhật counter khi nhập tên môn học - Form thêm
+        document.querySelector("#addForm input[name='tenMonHoc']").addEventListener("input", function() {
+            const count = this.value.length;
+            document.getElementById("charCountAdd").textContent = count;
+            if (count >= 50) {
+                this.style.borderColor = "#ff6b6b";
+                this.style.boxShadow = "0 0 5px rgba(255, 107, 107, 0.3)";
+            } else {
+                this.style.borderColor = "#ccc";
+                this.style.boxShadow = "none";
+            }
+        });
+
         // Thêm môn học
         document.getElementById("addForm").addEventListener("submit", async e => {
             e.preventDefault();
+            const tenMonHoc = document.querySelector("#addForm input[name='tenMonHoc']").value.trim();
+            
+            // Kiểm tra độ dài
+            if (tenMonHoc.length > 50) {
+                alert("❌ Tên môn học không được vượt quá 50 ký tự! (Hiện tại: " + tenMonHoc.length + " ký tự)");
+                return;
+            }
+            if (tenMonHoc.length === 0) {
+                alert("❌ Vui lòng nhập tên môn học!");
+                return;
+            }
+            
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch(api, {
                 method: "POST",
@@ -496,6 +518,8 @@ $gv_rs = $conn->query("
                 const tr = e.target.closest("tr");
                 document.getElementById("editId").value = tr.dataset.id;
                 document.getElementById("editTenMonHoc").value = tr.children[2].innerText;
+                // Cập nhật counter cho form sửa
+                document.getElementById("charCountEdit").textContent = tr.children[2].innerText.length;
                 // Lấy tên trưởng bộ môn hiện tại
                 const truongBoMon = tr.children[3].innerText.trim();
                 const selectGV = document.getElementById("editTruongBoMon");
@@ -508,17 +532,41 @@ $gv_rs = $conn->query("
                 }
                 document.getElementById("editMoTa").value = tr.children[4].innerText;
                 document.getElementById("editHocKy").value = tr.children[5].innerText;
-                document.getElementById("editTrongSo").value = tr.children[6].innerText;
-                document.getElementById("editNamHoc").value = tr.children[7].innerText;
-                const active = tr.children[8].innerText === "Hoạt động";
+                document.getElementById("editNamHoc").value = tr.children[6].innerText;
+                const active = tr.children[7].innerText === "Hoạt động";
                 document.getElementById(active ? "editActive" : "editInactive").checked = true;
                 document.getElementById("editPopup").style.display = "flex";
+            }
+        });
+
+        // Cập nhật counter khi nhập tên môn học - Form sửa
+        document.querySelector("#editForm input[name='tenMonHoc']").addEventListener("input", function() {
+            const count = this.value.length;
+            document.getElementById("charCountEdit").textContent = count;
+            if (count >= 50) {
+                this.style.borderColor = "#ff6b6b";
+                this.style.boxShadow = "0 0 5px rgba(255, 107, 107, 0.3)";
+            } else {
+                this.style.borderColor = "#ccc";
+                this.style.boxShadow = "none";
             }
         });
 
         // Lưu cập nhật
         document.getElementById("editForm").addEventListener("submit", async e => {
             e.preventDefault();
+            const tenMonHoc = document.getElementById("editTenMonHoc").value.trim();
+            
+            // Kiểm tra độ dài
+            if (tenMonHoc.length > 50) {
+                alert("❌ Tên môn học không được vượt quá 50 ký tự! (Hiện tại: " + tenMonHoc.length + " ký tự)");
+                return;
+            }
+            if (tenMonHoc.length === 0) {
+                alert("❌ Vui lòng nhập tên môn học!");
+                return;
+            }
+            
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch(api, {
                 method: "POST",

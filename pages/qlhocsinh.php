@@ -302,7 +302,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                 <input type="hidden" name="action" value="add">
                 <input type="text" name="hoVaTen" placeholder="Họ tên" required maxlength="255">
                 <input type="email" name="email" placeholder="Email" required>
-                <input type="text" name="sdt" placeholder="Số điện thoại">
+                <input type="text" name="sdt" id="addSdt" placeholder="VD: 0912345678" pattern="^0[0-9]{9}$" title="Số điện thoại Việt Nam phải bắt đầu bằng 0 và có 10 chữ số" required>
                 <select name="gioiTinh">
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
@@ -343,7 +343,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                 <input type="hidden" name="userId" id="editId">
                 <input type="text" name="hoVaTen" id="editHoTen" placeholder="Họ và tên" required maxlength="255">
                 <input type="email" name="email" id="editEmail" placeholder="Email" required>
-                <input type="text" name="sdt" id="editSdt" placeholder="Số điện thoại">
+                <input type="text" name="sdt" id="editSdt" placeholder="VD: 0912345678" pattern="^0[0-9]{9}$" title="Số điện thoại Việt Nam phải bắt đầu bằng 0 và có 10 chữ số" required>
                 <select name="gioiTinh" id="editGioiTinh">
                     <option value="Nam">Nam</option>
                     <option value="Nữ">Nữ</option>
@@ -487,6 +487,34 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         // === Thêm học sinh ===
         document.getElementById("addForm").addEventListener("submit", async (e) => {
             e.preventDefault();
+
+            const hoTen = e.target.hoVaTen.value.trim();
+            if (hoTen.length > 255) {
+                alert("Họ và tên không được vượt quá 255 ký tự!");
+                return;
+            }
+
+            const email = e.target.email.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                alert("❌ Vui lòng nhập email!");
+                return;
+            }
+            if (!emailRegex.test(email)) {
+                alert("❌ Email không hợp lệ! Email phải có định dạng: user@domain.com\n- Phải có @ và tên miền (ví dụ: .com, .vn)");
+                return;
+            }
+
+            const sdt = e.target.sdt.value.trim();
+            if (!sdt) {
+                alert("❌ Vui lòng nhập số điện thoại!");
+                return;
+            }
+            if (!/^0[0-9]{9}$/.test(sdt)) {
+                alert("❌ Số điện thoại không hợp lệ! Phải bắt đầu bằng 0 và có 10 chữ số.\nVD: 0912345678");
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch(api, {
                 method: "POST",
@@ -498,13 +526,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             const json = await res.json();
             alert(json.message || json.error);
             if (json.message) location.reload();
-
-            const hoTen = e.target.hoVaTen.value.trim();
-            if (hoTen.length > 255) {
-                alert("Họ và tên không được vượt quá 255 ký tự!");
-                return;
-            }
-
         });
 
         // === Mở popup sửa ===
@@ -530,6 +551,34 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         // === Cập nhật học sinh ===
         document.getElementById("editForm").addEventListener("submit", async (e) => {
             e.preventDefault();
+
+            const hoTen = e.target.hoVaTen.value.trim();
+            if (hoTen.length > 255) {
+                alert("Họ và tên không được vượt quá 255 ký tự!");
+                return;
+            }
+
+            const email = e.target.email.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email) {
+                alert("❌ Vui lòng nhập email!");
+                return;
+            }
+            if (!emailRegex.test(email)) {
+                alert("❌ Email không hợp lệ! Email phải có định dạng: user@domain.com\n- Phải có @ và tên miền (ví dụ: .com, .vn)");
+                return;
+            }
+
+            const sdt = e.target.sdt.value.trim();
+            if (!sdt) {
+                alert("❌ Vui lòng nhập số điện thoại!");
+                return;
+            }
+            if (!/^0[0-9]{9}$/.test(sdt)) {
+                alert("❌ Số điện thoại không hợp lệ! Phải bắt đầu bằng 0 và có 10 chữ số.\nVD: 0912345678");
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch(api, {
                 method: "POST",
@@ -541,12 +590,6 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             const json = await res.json();
             alert(json.message || json.error);
             if (json.message) location.reload();
-
-            const hoTen = e.target.hoVaTen.value.trim();
-            if (hoTen.length > 255) {
-                alert("Họ và tên không được vượt quá 255 ký tự!");
-                return;
-            }
         });
 
         // === Xóa học sinh ===
