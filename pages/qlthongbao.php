@@ -430,7 +430,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
             <form id="addForm">
                 <input type="hidden" name="action" value="add">
                 <label>Tiêu đề:</label>
-                <input type="text" name="tieuDe" required>
+                <input type="text" name="tieuDe" maxlength="255" required>
                 <label>Nội dung:</label>
                 <textarea name="noiDung" rows="5" required></textarea>
                 <div class="popup-buttons">
@@ -449,7 +449,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="maThongBao" id="editMaTB">
                 <label>Tiêu đề:</label>
-                <input type="text" name="tieuDe" id="editTieuDe" required>
+                <input type="text" name="tieuDe" id="editTieuDe" maxlength="255" required>
                 <label>Nội dung:</label>
                 <textarea name="noiDung" id="editNoiDung" rows="5" required></textarea>
                 <div class="popup-buttons">

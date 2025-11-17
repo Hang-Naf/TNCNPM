@@ -183,7 +183,7 @@ $currentUserId = $_SESSION["userID"];
             <input type="hidden" name="action" value="add">
 
             <label>Tiêu đề:</label>
-            <input type="text" name="tieuDe" required>
+            <input type="text" name="tieuDe" maxlength="255" required>
 
             <label>Nội dung:</label>
             <textarea name="noiDung" required></textarea>

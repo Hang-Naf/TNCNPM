@@ -60,6 +60,11 @@ switch ($action) {
             jsonResponse(["error" => true, "message" => "Vui lòng nhập đầy đủ tiêu đề và nội dung."]);
         }
 
+        // Kiểm tra độ dài tiêu đề (tối đa 255 ký tự)
+        if (mb_strlen($tieuDe, 'UTF-8') > 255) {
+            jsonResponse(["error" => true, "message" => "Tiêu đề không được vượt quá 255 ký tự."]);
+        }
+
         $hasDoiTuong = columnExists($conn, 'thongbao', 'doiTuongNhan');
         if ($hasDoiTuong) {
             $stmt = $conn->prepare("INSERT INTO thongbao (tieuDe, noiDung, tepDinhKem, nguoiGui, ngayGui, doiTuongNhan) VALUES (?, ?, ?, ?, ?, ?)");
@@ -111,6 +116,11 @@ switch ($action) {
 
         if ($maThongBao <= 0 || $tieuDe === "" || $noiDung === "") {
             jsonResponse(["error" => true, "message" => "Dữ liệu không hợp lệ."]);
+        }
+
+        // Kiểm tra độ dài tiêu đề (tối đa 255 ký tự)
+        if (mb_strlen($tieuDe, 'UTF-8') > 255) {
+            jsonResponse(["error" => true, "message" => "Tiêu đề không được vượt quá 255 ký tự."]);
         }
 
         // === Xử lý upload file (nếu có) ===

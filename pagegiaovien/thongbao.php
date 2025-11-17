@@ -60,7 +60,7 @@ $result_tb = $stmt_tb->get_result();
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý chuyên cần</title>
+    <title>Thông báo    </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
