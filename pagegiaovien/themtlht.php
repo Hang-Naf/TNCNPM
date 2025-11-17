@@ -87,7 +87,7 @@ if (isset($_POST['add'])) {
         $stmt->bind_param("iisssiss", $maMonHoc, $maLop, $tieuDe, $moTa, $ngayTai, $maGV, $trangThai, $fileName);
         
         if ($stmt->execute()) {
-            echo "<script>alert('Thêm tài liệu thành công nha!'); window.location='tlhoctap.php';</script>";
+            echo "<script>alert('Thêm tài liệu thành công!'); window.location='tlhoctap.php';</script>";
         } else {
             echo "Lỗi: " . $stmt->error;
         }
