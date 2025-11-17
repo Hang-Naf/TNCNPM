@@ -290,7 +290,9 @@ if (!empty($loc_mon)) {
         <div class="filter-box">
             <form method="GET">
                 <label>Ngày học:</label>
-                <input type="date" name="ngayHoc" value="<?= htmlspecialchars($loc_ngay) ?>">
+                <input type="date" name="ngayHoc"
+                    max="<?= date('Y-m-d') ?>"
+                    value="<?= htmlspecialchars($loc_ngay) ?>">
                 <label>Lớp:</label>
                 <select name="maLop">
                     <option value="">-- Tất cả lớp --</option>
@@ -560,6 +562,25 @@ if (!empty($loc_mon)) {
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
             window.location.href = "../pages/qlthongbao.php";
         });
+
+        document.querySelector('input[name="ngayHoc"]').addEventListener("change", function() {
+            const d = new Date(this.value);
+            const today = new Date();
+
+            // Chặn ngày tương lai
+            if (d > today) {
+                alert("Không thể chọn ngày trong tương lai!");
+                this.value = today.toISOString().split("T")[0];
+                return;
+            }
+
+            // Chặn Chủ nhật (0 = Chủ nhật)
+            if (d.getDay() === 0) {
+                alert("Không thể điểm danh vào Chủ nhật!");
+                this.value = "";
+            }
+        });
+
 
         // Xử lý đăng xuất
         function logout() {
