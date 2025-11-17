@@ -433,6 +433,8 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                 <input type="text" name="tieuDe" maxlength="255" required>
                 <label>Nội dung:</label>
                 <textarea name="noiDung" rows="5" required></textarea>
+                <label>Thời gian gửi:</label>
+                <input type="datetime-local" name="thoiGianGui" required>
                 <div class="popup-buttons">
                     <button type="button" class="cancel-btn" onclick="closePopup('addPopup')">Hủy</button>
                     <button type="submit" class="send-btn">Gửi</button>
@@ -452,6 +454,8 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                 <input type="text" name="tieuDe" id="editTieuDe" maxlength="255" required>
                 <label>Nội dung:</label>
                 <textarea name="noiDung" id="editNoiDung" rows="5" required></textarea>
+                <label>Thời gian gửi:</label>
+                <input type="datetime-local" name="thoiGianGui" id="editThoiGianGui" required>
                 <div class="popup-buttons">
                     <button type="button" class="cancel-btn" onclick="closePopup('editPopup')">Hủy</button>
                     <button type="submit" class="save-btn">Lưu thay đổi</button>
@@ -614,10 +618,15 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
             if (!json.error) location.reload();
         };
 
-        function showEditPopup(ma, td, nd) {
+        function showEditPopup(ma, td, nd, thoiGianGui) {
             document.getElementById('editMaTB').value = ma;
             document.getElementById('editTieuDe').value = td;
             document.getElementById('editNoiDung').value = nd;
+            // Chuyển định dạng từ YYYY-MM-DD HH:MM:SS sang YYYY-MM-DDTHH:MM
+            if (thoiGianGui) {
+                const dt = thoiGianGui.replace(' ', 'T').slice(0, 16);
+                document.getElementById('editThoiGianGui').value = dt;
+            }
             document.getElementById('editPopup').style.display = 'flex';
         }
 

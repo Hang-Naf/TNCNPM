@@ -39,7 +39,11 @@ switch ($action) {
     case "add":
         $tieuDe = trim($_POST["tieuDe"] ?? "");
         $noiDung = trim($_POST["noiDung"] ?? "");
-        $thoiGianGui = $_POST["thoiGianGui"] ?? date("Y-m-d");
+        $thoiGianGui = $_POST["thoiGianGui"] ?? date("Y-m-d H:i");
+        // Chuyển định dạng từ datetime-local (YYYY-MM-DDTHH:MM) sang YYYY-MM-DD HH:MM:SS
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/', $thoiGianGui, $m)) {
+            $thoiGianGui = "{$m[1]}-{$m[2]}-{$m[3]} {$m[4]}:{$m[5]}:00";
+        }
         $nguoiNhan = $_POST["nguoiNhan"] ?? "toan";
 
         // === Xử lý upload file ===
@@ -111,7 +115,11 @@ switch ($action) {
         $maThongBao = intval($_POST["maThongBao"] ?? 0);
         $tieuDe = trim($_POST["tieuDe"] ?? "");
         $noiDung = trim($_POST["noiDung"] ?? "");
-        $thoiGianGui = $_POST["thoiGianGui"] ?? date("Y-m-d");
+        $thoiGianGui = $_POST["thoiGianGui"] ?? date("Y-m-d H:i");
+        // Chuyển định dạng từ datetime-local (YYYY-MM-DDTHH:MM) sang YYYY-MM-DD HH:MM:SS
+        if (preg_match('/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/', $thoiGianGui, $m)) {
+            $thoiGianGui = "{$m[1]}-{$m[2]}-{$m[3]} {$m[4]}:{$m[5]}:00";
+        }
         $nguoiNhan = $_POST["nguoiNhan"] ?? "toan";
 
         if ($maThongBao <= 0 || $tieuDe === "" || $noiDung === "") {

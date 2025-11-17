@@ -189,7 +189,7 @@ $currentUserId = $_SESSION["userID"];
             <textarea name="noiDung" required></textarea>
 
             <label>Thời gian gửi thông báo:</label>
-            <input type="date" name="thoiGianGui" required>
+            <input type="datetime-local" name="thoiGianGui" required>
 
             <label>Người nhận:</label>
             <div class="radio-group">
