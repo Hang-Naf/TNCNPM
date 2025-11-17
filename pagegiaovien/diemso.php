@@ -113,7 +113,31 @@ if ($lopChon != '') {
     $sql .= " AND l.maLop = " . intval($lopChon);
 }
 
-$sql .= " GROUP BY u.userID ORDER BY l.tenLop, u.hoVaTen ASC";
+// === PHÂN TRANG ===
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
+// Đếm tổng học sinh (sử dụng cùng filter)
+$count_sql = "SELECT COUNT(DISTINCT u.userID) as total
+FROM hocsinh_lophoc hl
+JOIN user u ON hl.maHS = u.userID
+JOIN lophoc l ON hl.maLop = l.maLop
+JOIN lophoc_monhoc lm ON l.maLop = lm.maLop
+LEFT JOIN diemso d ON d.maHS = hl.maHS AND d.maMonHoc = ?
+WHERE lm.maGV = ?";
+if ($lopChon != '') {
+    $count_sql .= " AND l.maLop = " . intval($lopChon);
+}
+$stmtCount = $conn->prepare($count_sql);
+$stmtCount->bind_param("ii", $maMonHoc, $maGV);
+$stmtCount->execute();
+$countRes = $stmtCount->get_result()->fetch_assoc();
+$totalItems = intval($countRes['total'] ?? 0);
+$totalPages = ($itemsPerPage > 0) ? (int)ceil($totalItems / $itemsPerPage) : 1;
+$stmtCount->close();
+
+$sql .= " GROUP BY u.userID ORDER BY l.tenLop, u.hoVaTen ASC LIMIT $offset, $itemsPerPage";
 $stmt3 = $conn->prepare($sql);
 $stmt3->bind_param("ii", $maMonHoc, $maGV);
 $stmt3->execute();
@@ -399,6 +423,32 @@ $result = $stmt3->get_result();
                     ?>
                 </tbody>
             </table>
+            <!-- Thanh phân trang -->
+            <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> học sinh)</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <?php $baseParams = '';
+                          if ($lopChon !== '') $baseParams .= '&lop=' . urlencode($lopChon);
+                    ?>
+                    <?php if ($page > 1): ?>
+                        <a href="?page=1<?= $baseParams ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                        <a href="?page=<?= $page - 1 ?><?= $baseParams ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                    <?php else: ?>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                    <?php endif; ?>
+
+                    <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+
+                    <?php if ($page < $totalPages): ?>
+                        <a href="?page=<?= $page + 1 ?><?= $baseParams ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                        <a href="?page=<?= $totalPages ?><?= $baseParams ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                    <?php else: ?>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
     <script>

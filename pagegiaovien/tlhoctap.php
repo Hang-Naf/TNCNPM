@@ -3,64 +3,75 @@ include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
-// ==== Kiểm tra đăng nhập ====
-if (!isset($_SESSION["userID"])) {
-    header("Location: ../dangnhap.php");
-    exit();
-}
-
-// ==== Chỉ cho phép Giáo viên ====
-if ($_SESSION["vaiTro"] !== "GiaoVien") {
+if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "GiaoVien") {
+    session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
 
 $maGV = $_SESSION["userID"];
-$today = date('Y-m-d');
 
-// ==== Lấy thông tin giáo viên ====
-$sqlGV = "SELECT u.hoVaTen 
-           FROM user u 
-           JOIN giaovien g ON u.userID = g.maGV 
-           WHERE g.maGV = '$maGV' 
-           LIMIT 1";
-$resultGV = $conn->query($sqlGV);
-$gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTen' => 'Giáo viên'];
+// Lấy thông tin giáo viên
+$sqlGV = "SELECT u.hoVaTen FROM user u JOIN giaovien g ON u.userID = g.maGV WHERE g.maGV = ?";
+$stmt = $conn->prepare($sqlGV);
+$stmt->bind_param("i", $maGV);
+$stmt->execute();
+$gv = $stmt->get_result()->fetch_assoc() ?? ['hoVaTen' => 'Giáo viên'];
 
-// ==== Lấy danh sách môn học GV được phân công ====
-$sqlMon = "SELECT DISTINCT m.maMonHoc, m.tenMonHoc
-            FROM lophoc_monhoc lm
-            JOIN monhoc m ON lm.maMonHoc = m.maMonHoc
-            WHERE lm.maGV = '$maGV'";
-$monhocList = $conn->query($sqlMon);
-
-// ==== Lấy danh sách lớp GV dạy ====
+// Lấy danh sách lớp của giáo viên
 $sqlLop = "SELECT DISTINCT l.maLop, l.tenLop
-           FROM lophoc_monhoc lm
-           JOIN lophoc l ON lm.maLop = l.maLop
-           WHERE lm.maGV = '$maGV'";
-$lopList = $conn->query($sqlLop);
+           FROM lophoc l
+           JOIN lophoc_monhoc lm ON l.maLop = lm.maLop
+           WHERE lm.maGV = ?";
+$stmt = $conn->prepare($sqlLop);
+$stmt->bind_param("i", $maGV);
+$stmt->execute();
+$lopList = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
-// ==== Lọc tài liệu ====
-$cond = "WHERE t.maGV = '$maGV'";
-if (!empty($_GET['maLop'])) {
-    $maLop = intval($_GET['maLop']);
-    $cond .= " AND t.maLop = $maLop";
-}
-if (!empty($_GET['maMonHoc'])) {
-    $maMonHoc = intval($_GET['maMonHoc']);
-    $cond .= " AND t.maMonHoc = $maMonHoc";
+// Lọc lớp
+$maLopChon = $_GET['maLop'] ?? 'all';
+
+// Phân trang
+$limit = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
+
+// Tạo điều kiện SQL
+$cond = "WHERE t.maGV = ?";
+$params = [$maGV];
+$types = "i";
+
+if ($maLopChon !== 'all') {
+    $cond .= " AND t.maLop = ?";
+    $params[] = $maLopChon;
+    $types .= "i";
 }
 
-$sql = "SELECT t.maTL, t.tieuDe, t.noiDung, t.trangThai, 
-               m.tenMonHoc, u.hoVaTen AS nguoiTao, l.tenLop
+// Đếm tổng tài liệu
+$sqlCount = "SELECT COUNT(*) AS total FROM tailieu t $cond";
+$stmt = $conn->prepare($sqlCount);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$totalItems = $stmt->get_result()->fetch_assoc()['total'] ?? 0;
+$totalPages = max(1, ceil($totalItems / $limit));
+
+// Lấy dữ liệu trang hiện tại
+$sql = "SELECT t.maTL, t.tieuDe, t.noiDung, t.trangThai,
+               l.tenLop, u.hoVaTen AS nguoiTao
         FROM tailieu t
-        LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
         LEFT JOIN lophoc l ON t.maLop = l.maLop
         LEFT JOIN user u ON t.maGV = u.userID
         $cond
-        ORDER BY t.maTL DESC";
-$ds = $conn->query($sql);
+        ORDER BY t.maTL DESC
+        LIMIT ?, ?";
+$params[] = $offset;
+$params[] = $limit;
+$types .= "ii";
+
+$stmt = $conn->prepare($sql);
+$stmt->bind_param($types, ...$params);
+$stmt->execute();
+$ds = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -157,6 +168,20 @@ $ds = $conn->query($sql);
         .actions i.fa-trash {
             color: #d9534f;
         }
+
+        .pagination .page-btn {
+            padding: 6px 12px;
+            margin: 0 3px;
+            border-radius: 4px;
+            text-decoration: none;
+            background: #eee;
+            color: #333;
+        }
+
+        .pagination .page-btn.active {
+            background: #0b3364;
+            color: #fff;
+        }
     </style>
 
 </head>
@@ -242,11 +267,11 @@ $ds = $conn->query($sql);
                     <label>Lớp:</label><br>
                     <select name="maLop" onchange="this.form.submit()">
                         <option value="">Tất cả lớp</option>
-                        <?php while ($lop = $lopList->fetch_assoc()): ?>
-                            <option value="<?= $lop['maLop'] ?>" <?= (isset($_GET['maLop']) && $_GET['maLop'] == $lop['maLop']) ? 'selected' : '' ?>>
+                        <?php foreach ($lopList as $lop): ?>
+                            <option value="<?= $lop['maLop'] ?>" <?= ($lop['maLop'] == $maLopChon) ? 'selected' : '' ?>>
                                 <?= htmlspecialchars($lop['tenLop']) ?>
                             </option>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </select>
                 </div>
 
@@ -268,11 +293,8 @@ $ds = $conn->query($sql);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php
-                    if ($ds && $ds->num_rows > 0):
-                        $stt = 1;
-                        while ($r = $ds->fetch_assoc()):
-                    ?>
+                    <?php if ($ds): $stt = $offset + 1;
+                        foreach ($ds as $r): ?>
                             <tr class="document-row" data-title="<?= htmlspecialchars($r['tieuDe']) ?>" data-description="<?= htmlspecialchars($r['noiDung']) ?>">
                                 <td><?= $stt ?></td>
                                 <td><?= htmlspecialchars($r['tieuDe']) ?></td>
@@ -289,17 +311,36 @@ $ds = $conn->query($sql);
                                         onclick="if(confirm('Bạn có chắc muốn xóa tài liệu này không?')) window.location.href='xoatlht.php?maTL=<?= urlencode($r['maTL']) ?>'"></i>
                                 </td>
                             </tr>
-                        <?php
-                            $stt++;
-                        endwhile;
-                    else:
-                        ?>
+                        <?php endforeach;
+                    else: ?>
                         <tr>
-                            <td colspan="8" style="text-align:center;padding:20px;">Không có tài liệu nào.</td>
+                            <td colspan="7" style="text-align:center;">Không có tài liệu nào.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
+            <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                <span>Trang <?= $page ?>/<?= $totalPages ?> (Tổng: <?= $totalItems ?> tài liệu)</span>
+                <div style="display:flex; gap:8px;">
+                    <?php if ($page > 1): ?>
+                        <a href="?maLop=<?= urlencode($maLopChon) ?>&maMonHoc=<?= urlencode($maMonHocChon) ?>&page=1">⏮ Đầu</a>
+                        <a href="?maLop=<?= urlencode($maLopChon) ?>&maMonHoc=<?= urlencode($maMonHocChon) ?>&page=<?= $page - 1 ?>">◀ Trước</a>
+                    <?php else: ?>
+                        <span style="opacity:0.5;">⏮ Đầu</span>
+                        <span style="opacity:0.5;">◀ Trước</span>
+                    <?php endif; ?>
+
+                    <span style="font-weight:600;"><?= $page ?></span>
+
+                    <?php if ($page < $totalPages): ?>
+                        <a href="?maLop=<?= urlencode($maLopChon) ?>&maMonHoc=<?= urlencode($maMonHocChon) ?>&page=<?= $page + 1 ?>">Sau ▶</a>
+                        <a href="?maLop=<?= urlencode($maLopChon) ?>&maMonHoc=<?= urlencode($maMonHocChon) ?>&page=<?= $totalPages ?>">Cuối ⏭</a>
+                    <?php else: ?>
+                        <span style="opacity:0.5;">Sau ▶</span>
+                        <span style="opacity:0.5;">Cuối ⏭</span>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -421,7 +462,7 @@ $ds = $conn->query($sql);
         // Xử lý tìm kiếm tài liệu
         const searchInput = document.getElementById("searchDocuments");
         const documentRows = document.querySelectorAll(".document-row");
-        
+
         if (searchInput) {
             searchInput.addEventListener("input", function() {
                 const keyword = this.value.trim().toLowerCase();

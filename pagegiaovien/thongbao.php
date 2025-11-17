@@ -31,14 +31,25 @@ $gv = $result->fetch_assoc();
 
 // === Lấy danh sách thông báo ===
 // === Lấy danh sách thông báo cùng trạng thái đọc ===
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
+
+// Đếm tổng thông báo
+$count_sql = "SELECT COUNT(*) AS total FROM thongbao";
+$count_res = $conn->query($count_sql);
+$totalItems = $count_res ? intval($count_res->fetch_assoc()['total']) : 0;
+$totalPages = ($itemsPerPage > 0) ? (int)ceil($totalItems / $itemsPerPage) : 1;
+
 $sql_tb = "
     SELECT tb.maThongBao, tb.tieuDe, tb.ngayGui, tbu.trangThai
     FROM thongbao tb
     LEFT JOIN thongbaouser tbu ON tb.maThongBao = tbu.maThongBao AND tbu.userID = ?
     ORDER BY tb.ngayGui DESC
+    LIMIT ?, ?
 ";
 $stmt_tb = $conn->prepare($sql_tb);
-$stmt_tb->bind_param("i", $userID);
+$stmt_tb->bind_param("iii", $userID, $offset, $itemsPerPage);
 $stmt_tb->execute();
 $result_tb = $stmt_tb->get_result();
 
@@ -167,6 +178,21 @@ $result_tb = $stmt_tb->get_result();
             justify-content: space-between;
             margin: 5px 0;
         }
+
+        .pg {
+            border: none;
+            background: #eee;
+            border-radius: 4px;
+            padding: 5px 10px;
+            text-decoration: none;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .pg.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 
@@ -275,6 +301,35 @@ $result_tb = $stmt_tb->get_result();
                         <?php endif; ?>
                     </tbody>
                 </table>
+                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                    <span style="font-size:14px; color:#333;">
+                        Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> thông báo)
+                    </span>
+
+                    <div style="display:flex; gap:8px; align-items:center;">
+
+                        <!-- Về đầu -->
+                        <?php if ($page > 1): ?>
+                            <a href="?page=1" class="pg">⏮ Đầu</a>
+                            <a href="?page=<?= $page - 1 ?>" class="pg">◀ Trước</a>
+                        <?php else: ?>
+                            <span class="pg disabled">⏮ Đầu</span>
+                            <span class="pg disabled">◀ Trước</span>
+                        <?php endif; ?>
+
+                        <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+
+                        <!-- Trang sau -->
+                        <?php if ($page < $totalPages): ?>
+                            <a href="?page=<?= $page + 1 ?>" class="pg">Sau ▶</a>
+                            <a href="?page=<?= $totalPages ?>" class="pg">Cuối ⏭</a>
+                        <?php else: ?>
+                            <span class="pg disabled">Sau ▶</span>
+                            <span class="pg disabled">Cuối ⏭</span>
+                        <?php endif; ?>
+
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -425,7 +480,7 @@ $result_tb = $stmt_tb->get_result();
         // Xử lý tìm kiếm thông báo
         const searchInput = document.getElementById("searchNotifications");
         const notificationRows = document.querySelectorAll(".notification-row");
-        
+
         if (searchInput) {
             searchInput.addEventListener("input", function() {
                 const keyword = this.value.trim().toLowerCase();

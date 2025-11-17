@@ -38,13 +38,30 @@ $stmt->execute();
 $lops = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 // Lấy mã lớp được chọn (nếu có)
-// $maLopChon = $_GET['lop'] ?? ($lops[0]['maLop'] ?? null);
 $maLopChon = $_GET['lop'] ?? 'all';
 
-// Lấy danh sách học sinh trong lớp đó
+// PHÂN TRANG: limit / page
+$limit = 10; // số hàng mỗi trang
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $limit;
+
+// Lấy danh sách học sinh cho trang hiện tại và tổng số để tính số trang
 $hocsinh = [];
+$total = 0;
 if ($maLopChon === 'all') {
-    // Lấy tất cả học sinh thuộc các lớp mà giáo viên này phụ trách
+    // Tổng số học sinh (distinct vì join có thể gây trùng)
+    $count_sql = "SELECT COUNT(DISTINCT hs.maHS) AS total
+                  FROM hocsinh hs
+                  JOIN hocsinh_lophoc hl ON hs.maHS = hl.maHS
+                  JOIN lophoc l ON hl.maLop = l.maLop
+                  JOIN lophoc_monhoc lm ON l.maLop = lm.maLop
+                  WHERE lm.maGV = ?";
+    $stmt_count = $conn->prepare($count_sql);
+    $stmt_count->bind_param("i", $userID);
+    $stmt_count->execute();
+    $res_count = $stmt_count->get_result()->fetch_assoc();
+    $total = intval($res_count['total'] ?? 0);
+
     $sql_hs = "SELECT hs.maHS, u.hoVaTen, l.tenLop, hs.chucVu, hs.trangThai
                FROM hocsinh hs
                JOIN user u ON hs.maHS = u.userID
@@ -52,23 +69,42 @@ if ($maLopChon === 'all') {
                JOIN lophoc l ON hl.maLop = l.maLop
                JOIN lophoc_monhoc lm ON l.maLop = lm.maLop
                WHERE lm.maGV = ?
-               ORDER BY l.tenLop, u.hoVaTen";
+               ORDER BY l.tenLop, u.hoVaTen
+               LIMIT ?, ?";
     $stmt = $conn->prepare($sql_hs);
-    $stmt->bind_param("i", $userID);
+    $stmt->bind_param("iii", $userID, $offset, $limit);
 } else {
-    // Lấy học sinh theo lớp cụ thể
+    // Tổng số học sinh trong lớp cụ thể
+    $count_sql = "SELECT COUNT(*) AS total
+                  FROM hocsinh hs
+                  JOIN hocsinh_lophoc hl ON hs.maHS = hl.maHS
+                  JOIN lophoc l ON hl.maLop = l.maLop
+                  WHERE l.maLop = ?";
+    $stmt_count = $conn->prepare($count_sql);
+    $stmt_count->bind_param("i", $maLopChon);
+    $stmt_count->execute();
+    $res_count = $stmt_count->get_result()->fetch_assoc();
+    $total = intval($res_count['total'] ?? 0);
+
     $sql_hs = "SELECT hs.maHS, u.hoVaTen, l.tenLop, hs.chucVu, hs.trangThai
                FROM hocsinh hs
                JOIN user u ON hs.maHS = u.userID
                JOIN hocsinh_lophoc hl ON hs.maHS = hl.maHS
                JOIN lophoc l ON hl.maLop = l.maLop
-               WHERE l.maLop = ?";
+               WHERE l.maLop = ?
+               ORDER BY u.hoVaTen
+               LIMIT ?, ?";
     $stmt = $conn->prepare($sql_hs);
-    $stmt->bind_param("i", $maLopChon);
+    $stmt->bind_param("iii", $maLopChon, $offset, $limit);
 }
 
 $stmt->execute();
 $hocsinh = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$totalPages = ($limit > 0) ? (int)ceil($total / $limit) : 1;
+
+// Aliases to match other pages' naming
+$itemsPerPage = $limit;
+$totalItems = $total;
 ?>
 
 <!DOCTYPE html>
@@ -153,6 +189,31 @@ $hocsinh = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             align-items: center;
             margin-bottom: 20px;
         }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            margin-top: 14px;
+        }
+
+        .pagination a {
+            display: inline-block;
+            padding: 6px 10px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: #0b1e6b;
+            border: 1px solid #e0e6f0;
+            background: #fff;
+        }
+
+        .pagination a.active {
+            background: #0b1e6b;
+            color: #fff;
+            border-color: #0b1e6b;
+        }
+
+        .pagination a:hover { background: #f1f3f8; }
     </style>
 </head>
 
@@ -265,7 +326,7 @@ $hocsinh = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (count($hocsinh) > 0): $stt = 1; ?>
+                    <?php if (count($hocsinh) > 0): $stt = ($offset ?? 0) + 1; ?>
                         <?php foreach ($hocsinh as $hs): ?>
                             <tr class="student-row" data-name="<?= htmlspecialchars($hs['hoVaTen']) ?>" data-id="<?= htmlspecialchars($hs['maHS']) ?>">
                                 <td><?= $stt++ ?></td>
@@ -292,6 +353,29 @@ $hocsinh = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                     <?php endif; ?>
                 </tbody>
             </table>
+            <!-- Thanh phân trang -->
+            <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> học sinh)</span>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <?php if ($page > 1): ?>
+                        <a href="?lop=<?= urlencode($maLopChon) ?>&page=1" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                        <a href="?lop=<?= urlencode($maLopChon) ?>&page=<?= $page - 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                    <?php else: ?>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
+                    <?php endif; ?>
+
+                    <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+
+                    <?php if ($page < $totalPages): ?>
+                        <a href="?lop=<?= urlencode($maLopChon) ?>&page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                        <a href="?lop=<?= urlencode($maLopChon) ?>&page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                    <?php else: ?>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
+                        <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
+                    <?php endif; ?>
+                </div>
+            </div>
         </div>
     </div>
 
