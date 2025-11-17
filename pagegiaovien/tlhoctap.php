@@ -206,7 +206,7 @@ $ds = $conn->query($sql);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchDocuments" placeholder="Tìm kiếm tài liệu...">
                 </div>
             </div>
 
@@ -273,7 +273,7 @@ $ds = $conn->query($sql);
                         $stt = 1;
                         while ($r = $ds->fetch_assoc()):
                     ?>
-                            <tr>
+                            <tr class="document-row" data-title="<?= htmlspecialchars($r['tieuDe']) ?>" data-description="<?= htmlspecialchars($r['noiDung']) ?>">
                                 <td><?= $stt ?></td>
                                 <td><?= htmlspecialchars($r['tieuDe']) ?></td>
                                 <td><?= htmlspecialchars($r['noiDung']) ?></td>
@@ -417,6 +417,21 @@ $ds = $conn->query($sql);
                 menu.style.display = "none";
             }
         });
+
+        // Xử lý tìm kiếm tài liệu
+        const searchInput = document.getElementById("searchDocuments");
+        const documentRows = document.querySelectorAll(".document-row");
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                documentRows.forEach(row => {
+                    const title = row.getAttribute("data-title").toLowerCase();
+                    const description = row.getAttribute("data-description").toLowerCase();
+                    row.style.display = (title.includes(keyword) || description.includes(keyword)) ? "" : "none";
+                });
+            });
+        }
 
         // Xử lý đăng xuất
         function logout() {

@@ -291,7 +291,7 @@ $result = $stmt3->get_result();
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchScores" placeholder="Tìm kiếm học sinh...">
                 </div>
             </div>
 
@@ -373,7 +373,7 @@ $result = $stmt3->get_result();
                             $hrefXoa = "xoadiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
                             $hrefCT = "chitietdiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
                             echo "
-                        <tr>
+                        <tr class='score-row' data-name='" . htmlspecialchars($r['hoVaTen']) . "'>
                             <td>{$stt}</td>
                             <td>K" . str_pad($r['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
                             <td>" . htmlspecialchars($r['hoVaTen']) . "</td>
@@ -543,6 +543,20 @@ $result = $stmt3->get_result();
                     }
                 })
                 .catch(err => console.error('Lỗi kết nối:', err));
+        }
+
+        // Xử lý tìm kiếm học sinh
+        const searchInput = document.getElementById("searchScores");
+        const scoreRows = document.querySelectorAll(".score-row");
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                scoreRows.forEach(row => {
+                    const name = row.getAttribute("data-name").toLowerCase();
+                    row.style.display = name.includes(keyword) ? "" : "none";
+                });
+            });
         }
 
         // Xử lý đăng xuất

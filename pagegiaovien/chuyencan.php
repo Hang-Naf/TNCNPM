@@ -324,7 +324,7 @@ if ($cc) {
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchAttendance" placeholder="Tìm kiếm học sinh...">
                 </div>
             </div>
 
@@ -399,7 +399,7 @@ if ($cc) {
                             elseif ($status == 'Vắng mặt') $absent++;
                             $tong++;
                         ?>
-                            <tr>
+                            <tr class="attendance-row" data-name="<?= htmlspecialchars($hs['hoVaTen']) ?>">
                                 <td><?= $stt++ ?></td>
                                 <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
                                 <td><?= htmlspecialchars($hs['tenLop'] ?? '-') ?></td>
@@ -573,6 +573,20 @@ if ($cc) {
                     }
                 })
                 .catch(err => console.error('Lỗi kết nối:', err));
+        }
+
+        // Xử lý tìm kiếm học sinh
+        const searchInput = document.getElementById("searchAttendance");
+        const attendanceRows = document.querySelectorAll(".attendance-row");
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                attendanceRows.forEach(row => {
+                    const name = row.getAttribute("data-name").toLowerCase();
+                    row.style.display = name.includes(keyword) ? "" : "none";
+                });
+            });
         }
 
         // Xử lý đăng xuất

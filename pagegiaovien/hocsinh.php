@@ -202,7 +202,7 @@ $hocsinh = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchStudents" placeholder="Tìm kiếm học sinh...">
                 </div>
             </div>
 
@@ -267,10 +267,10 @@ $hocsinh = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                 <tbody>
                     <?php if (count($hocsinh) > 0): $stt = 1; ?>
                         <?php foreach ($hocsinh as $hs): ?>
-                            <tr>
+                            <tr class="student-row" data-name="<?= htmlspecialchars($hs['hoVaTen']) ?>" data-id="<?= htmlspecialchars($hs['maHS']) ?>">
                                 <td><?= $stt++ ?></td>
                                 <td><?= htmlspecialchars($hs['maHS']) ?></td>
-                                <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
+                                <td class="student-name"><?= htmlspecialchars($hs['hoVaTen']) ?></td>
                                 <td><?= htmlspecialchars($hs['tenLop']) ?></td>
                                 <td><?= htmlspecialchars($hs['chucVu'] ?? '') ?></td>
                                 <td>
@@ -412,6 +412,29 @@ $hocsinh = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
                 window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
             }
+        }
+
+        // === CHỨC NĂNG TÌM KIẾM HỌC SINH ===
+        const searchInput = document.getElementById("searchStudents");
+        const studentRows = document.querySelectorAll(".student-row");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                let foundCount = 0;
+
+                studentRows.forEach(row => {
+                    const name = row.getAttribute("data-name").toLowerCase();
+                    const id = row.getAttribute("data-id").toLowerCase();
+                    
+                    if (name.includes(keyword) || id.includes(keyword)) {
+                        row.style.display = "";
+                        foundCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
         }
     </script>
 </body>

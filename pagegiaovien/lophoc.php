@@ -160,7 +160,7 @@ $gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTe
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchClasses" placeholder="Tìm kiếm lớp học...">
                 </div>
             </div>
 
@@ -220,10 +220,10 @@ $gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTe
                     $stt = 1;
                     if ($resultLop && $resultLop->num_rows > 0) {
                         while ($row = $resultLop->fetch_assoc()) {
-                            echo "<tr>
+                            echo "<tr class='class-row' data-name='" . htmlspecialchars($row['tenLop']) . "' data-id='" . htmlspecialchars($row['maLop']) . "'>
                         <td>{$stt}</td>
                         <td>{$row['maLop']}</td>
-                        <td>" . htmlspecialchars($row['tenLop']) . "</td>
+                        <td class='class-name'>" . htmlspecialchars($row['tenLop']) . "</td>
                         <td>" . htmlspecialchars($row['giaoVien'] ?? 'Chưa phân công') . "</td>
                         <td>{$row['siSo']}</td>
                         <td class='status " . ($row['trangThai'] == 'Đang học' ? 'Đang học' : 'Tạm dừng') . "'>" . ($row['trangThai'] == 'Đang học' ? 'Active' : 'Inactive') . "</td>
@@ -351,6 +351,21 @@ $gv = $resultGV && $resultGV->num_rows > 0 ? $resultGV->fetch_assoc() : ['hoVaTe
                 menu.style.display = "none";
             }
         });
+
+        // Xử lý tìm kiếm lớp học
+        const searchInput = document.getElementById("searchClasses");
+        const classRows = document.querySelectorAll(".class-row");
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                classRows.forEach(row => {
+                    const name = row.getAttribute("data-name").toLowerCase();
+                    const id = row.getAttribute("data-id").toLowerCase();
+                    row.style.display = (name.includes(keyword) || id.includes(keyword)) ? "" : "none";
+                });
+            });
+        }
 
         // Xử lý đăng xuất
         function logout() {

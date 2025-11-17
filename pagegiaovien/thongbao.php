@@ -215,7 +215,7 @@ $result_tb = $stmt_tb->get_result();
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchNotifications" placeholder="Tìm kiếm thông báo...">
                 </div>
             </div>
 
@@ -258,7 +258,7 @@ $result_tb = $stmt_tb->get_result();
                         <?php if ($result_tb && $result_tb->num_rows > 0): ?>
                             <?php while ($row = $result_tb->fetch_assoc()): ?>
                                 <?php $isUnread = ($row['trangThai'] ?? 'Chưa đọc') === 'Chưa đọc'; ?>
-                                <tr style="border-bottom:1px solid #eee; cursor:pointer; <?= $isUnread ? 'background:#f0f8ff;' : '' ?>"
+                                <tr class="notification-row" data-title="<?= htmlspecialchars($row['tieuDe']) ?>" style="border-bottom:1px solid #eee; cursor:pointer; <?= $isUnread ? 'background:#f0f8ff;' : '' ?>"
                                     onclick="window.location.href='chitiet_thongbao.php?id=<?= $row['maThongBao'] ?>'">
                                     <td style="padding:10px; color:#0b1e6b; font-weight:500;">
                                         <?= htmlspecialchars($row['tieuDe']) ?> <?= $isUnread ? '🔵' : '' ?>
@@ -420,6 +420,20 @@ $result_tb = $stmt_tb->get_result();
                     }
                 })
                 .catch(err => console.error('Lỗi kết nối:', err));
+        }
+
+        // Xử lý tìm kiếm thông báo
+        const searchInput = document.getElementById("searchNotifications");
+        const notificationRows = document.querySelectorAll(".notification-row");
+        
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                notificationRows.forEach(row => {
+                    const title = row.getAttribute("data-title").toLowerCase();
+                    row.style.display = title.includes(keyword) ? "" : "none";
+                });
+            });
         }
 
         // Xử lý đăng xuất
