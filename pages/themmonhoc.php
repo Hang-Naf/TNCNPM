@@ -205,11 +205,7 @@ $gv_rs = $conn->query("
             <label>Mô tả:</label>
             <textarea name="moTa"></textarea>
             <label>Học kỳ:</label>
-            <select name="hocKy">
-                <option value="HK1">HK1</option>
-                <option value="HK2">HK2</option>
-                <option value="Hè">Hè</option>
-            </select>
+            <input type="text" name="hocKy" id="hocKy" readonly>
             <label>Năm học:</label>
             <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" readonly>
             <label>Trạng thái:</label>
@@ -224,6 +220,18 @@ $gv_rs = $conn->query("
         </form>
     </div>
     <script>
+        function getHocKy() {
+            const now = new Date();
+            const month = now.getMonth() + 1; // tháng hiện tại
+            if (month >= 8 && month <= 12) return "HK1"; // Học kỳ 1
+            if (month >= 1 && month <= 5) return "HK2"; // Học kỳ 2
+            return "Hè"; // Học kỳ hè
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("hocKy").value = getHocKy();
+        });
+
         document.getElementById("addForm").addEventListener("submit", async e => {
             e.preventDefault();
             const data = Object.fromEntries(new FormData(e.target).entries());
