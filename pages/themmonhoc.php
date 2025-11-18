@@ -16,17 +16,6 @@ if ($_SESSION["vaiTro"] !== "Admin") {
     exit();
 }
 
-// ==== Cấu hình phân trang ====
-$itemsPerPage = 10;
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$offset = ($page - 1) * $itemsPerPage;
-
-// ==== Lấy tổng số môn học ====
-$countSql = "SELECT COUNT(*) as total FROM monhoc";
-$countResult = $conn->query($countSql);
-$totalItems = $countResult->fetch_assoc()['total'];
-$totalPages = ceil($totalItems / $itemsPerPage);
-
 // ==== Lấy danh sách môn học và trưởng bộ môn ====
 $sql = "
     SELECT 
@@ -45,7 +34,6 @@ $sql = "
     ) AS gvmh ON m.maMonHoc = gvmh.maMonHoc
     LEFT JOIN user u ON u.userID = gvmh.maGV
     ORDER BY m.maMonHoc DESC
-    LIMIT $offset, $itemsPerPage
 ";
 $result = $conn->query($sql);
 
@@ -56,121 +44,67 @@ $gv_rs = $conn->query("
     JOIN user u ON g.maGV = u.userID
 ");
 ?>
-
 <!DOCTYPE html>
 <html lang="vi">
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý môn học</title>
+    <title>Thêm lớp học</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
         body {
-            font-family: "Segoe UI", sans-serif;
+            font-family: "Segoe UI";
             background: #f8f9fb;
-            margin: 0;
         }
 
-        .container {
-            padding: 20px;
-        }
-
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        .add-btn {
-            background: #0b1e6b;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            width: 150px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .main-container {
             background: white;
-            margin-top: 20px;
-        }
-
-        th,
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: #f1f3f9;
-        }
-
-        .status.active {
-            color: green;
-            font-weight: 500;
-        }
-
-        .status.inactive {
-            color: gray;
-        }
-
-        .actions i {
-            cursor: pointer;
-            margin-right: 10px;
-        }
-
-        .popup-bg {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .popup {
-            background: white;
-            padding: 20px;
+            padding: 30px;
             border-radius: 10px;
-            width: 420px;
+            width: 500px;
+            margin: 50px auto;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
         }
 
-        .popup input,
-        .popup select,
-        .popup textarea {
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        input,
+        select {
             width: 100%;
             padding: 8px;
-            margin-bottom: 10px;
+            margin-top: 5px;
             border: 1px solid #ccc;
             border-radius: 6px;
         }
 
-        .popup-buttons {
-            text-align: right;
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 20px;
         }
 
-        .save-btn {
-            background: #0b1e6b;
-            color: white;
+        .buttons button {
+            padding: 10px 20px;
             border: none;
-            padding: 8px 14px;
             border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 10px;
         }
 
         .cancel-btn {
             background: #ccc;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
+        }
+
+        .save-btn {
+            background: #0b3364;
+            color: white;
         }
     </style>
 </head>
@@ -261,82 +195,49 @@ $gv_rs = $conn->query("
                 </div>
             </div>
         </header>
-        <h1>QUẢN LÝ MÔN HỌC</h1>
-        <button class="add-btn" onclick="window.location.href='themmonhoc.php'">
-            <i class="fa-solid fa-plus"></i> Thêm Môn Học
-        </button>
-
-        <table>
-            <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>MÃ MH</th>
-                    <th>TÊN MÔN HỌC</th>
-                    <th>TRƯỞNG BỘ MÔN</th>
-                    <th>MÔ TẢ</th>
-                    <th>HỌC KỲ</th>
-                    <th>NĂM HỌC</th>
-                    <th>TRẠNG THÁI</th>
-                    <th>TÁC VỤ</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($result->num_rows > 0): $stt = $offset + 1;
-                    while ($row = $result->fetch_assoc()): ?>
-                        <tr data-id="<?= $row['maMonHoc'] ?>">
-                            <td><?= $stt++ ?></td>
-                            <td><?= $row['maMonHoc'] ?></td>
-                            <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
-                            <td><?= htmlspecialchars($row['truongBoMon'] ?? '—') ?></td>
-                            <td><?= htmlspecialchars($row['moTa']) ?></td>
-                            <td><?= htmlspecialchars($row['hocKy']) ?></td>
-                            <td><?= htmlspecialchars($row['namHoc']) ?></td>
-                            <td><span class="status <?= $row['trangThai'] === 'Hoạt động' ? 'active' : 'inactive' ?>">
-                                    <?= htmlspecialchars($row['trangThai']) ?>
-                                </span>
-                            </td>
-                            <td class="actions">
-                                <a href="suamonhoc.php?maMonHoc=<?= $row['maMonHoc'] ?>">
-                                    <i class="fa-solid fa-pen" style="color: black;"></i>
-                                </a>
-                                <i class="fa-solid fa-trash delete-btn"></i>
-                            </td>
-                        </tr>
-                    <?php endwhile;
-                else: ?>
-                    <tr>
-                        <td colspan="9" style="text-align:center;">Không có dữ liệu</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
-
-        <!-- Thanh phân trang -->
-        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
-            <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> môn học)</span>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <?php if ($page > 1): ?>
-                    <a href="?page=1" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
-                    <a href="?page=<?= $page - 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
-                <?php else: ?>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
-                <?php endif; ?>
-
-                <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-
-                <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
-                    <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
-                <?php else: ?>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
-                <?php endif; ?>
+        <h2 style="margin-left: 30px;">THÊM MÔN HỌC</h2>
+        <form method="post" id="addForm" style="margin-left: 50px; margin-right: 50px;">
+            <input type="hidden" name="action" value="add">
+            <label>Tên môn học:</label>
+            <input type="text" name="tenMonHoc" required maxlength="50">
+            <label>Trưởng bộ môn:</label>
+            <select name="truongBoMon"> ... </select>
+            <label>Mô tả:</label>
+            <textarea name="moTa"></textarea>
+            <label>Học kỳ:</label>
+            <select name="hocKy">
+                <option value="HK1">HK1</option>
+                <option value="HK2">HK2</option>
+                <option value="Hè">Hè</option>
+            </select>
+            <label>Năm học:</label>
+            <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" required>
+            <label>Trạng thái:</label>
+            <select name="trangThai">
+                <option value="Hoạt động">Hoạt động</option>
+                <option value="Ngưng">Ngưng</option>
+            </select>
+            <div class="buttons">
+                <button type="button" class="cancel-btn" onclick="window.location.href='qlmonhoc.php'">HỦY</button>
+                <button type="submit" class="save-btn">THÊM</button>
             </div>
-        </div>
+        </form>
     </div>
-
     <script>
+        document.getElementById("addForm").addEventListener("submit", async e => {
+            e.preventDefault();
+            const data = Object.fromEntries(new FormData(e.target).entries());
+            const res = await fetch("../src/monhoc.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(data)
+            });
+            const json = await res.json();
+            alert(json.message || json.error);
+            if (json.message) window.location.href = "qlmonhoc.php";
+        });
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu
@@ -431,68 +332,6 @@ $gv_rs = $conn->query("
             }
         });
 
-        const api = "../src/monhoc.php";
-
-        function showAddPopup() {
-            document.getElementById("addPopup").style.display = "flex";
-        }
-
-        function closePopup(id) {
-            document.getElementById(id).style.display = "none";
-        }
-
-
-        // Mở popup sửa
-        document.addEventListener("click", e => {
-            if (e.target.classList.contains("edit-btn")) {
-                const tr = e.target.closest("tr");
-                document.getElementById("editId").value = tr.dataset.id;
-                document.getElementById("editTenMonHoc").value = tr.children[2].innerText;
-                // Cập nhật counter cho form sửa
-                document.getElementById("charCountEdit").textContent = tr.children[2].innerText.length;
-                // Lấy tên trưởng bộ môn hiện tại
-                const truongBoMon = tr.children[3].innerText.trim();
-                const selectGV = document.getElementById("editTruongBoMon");
-                for (let opt of selectGV.options) {
-                    // Nếu tên giáo viên có chứa chuỗi hiển thị trong bảng (vd: "Nguyễn Văn A (Toán)")
-                    if (opt.text.includes(truongBoMon)) {
-                        opt.selected = true;
-                        break;
-                    }
-                }
-                document.getElementById("editMoTa").value = tr.children[4].innerText;
-                document.getElementById("editHocKy").value = tr.children[5].innerText;
-                document.getElementById("editNamHoc").value = tr.children[6].innerText;
-                const active = tr.children[7].innerText === "Hoạt động";
-                document.getElementById(active ? "editActive" : "editInactive").checked = true;
-                document.getElementById("editPopup").style.display = "flex";
-            }
-        });
-
-
-        // Xóa môn học
-        document.addEventListener("click", async e => {
-            if (e.target.classList.contains("delete-btn")) {
-                const tr = e.target.closest("tr");
-                const id = tr.dataset.id;
-                if (confirm("Bạn có chắc muốn xóa môn học này?")) {
-                    const res = await fetch(api, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({
-                            action: "delete",
-                            maMonHoc: id
-                        })
-                    });
-                    const json = await res.json();
-                    alert(json.message || json.error);
-                    if (json.message) location.reload();
-                }
-            }
-        });
-
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
@@ -504,45 +343,6 @@ $gv_rs = $conn->query("
             const userInfo = document.querySelector(".user-info");
             if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
                 menu.style.display = "none";
-            }
-        });
-
-        // === TÌM KIẾM MÔN HỌC THEO MÃ HOẶC TÊN ===
-        document.getElementById("searchBox").addEventListener("input", function() {
-            const keyword = this.value.toLowerCase().trim();
-            const rows = document.querySelectorAll("tbody tr");
-            let found = false;
-
-            rows.forEach(row => {
-                // Bỏ qua dòng "Không có dữ liệu"
-                if (row.children.length < 10) return;
-
-                const maMH = row.children[1]?.innerText.toLowerCase() || "";
-                const tenMH = row.children[2]?.innerText.toLowerCase() || "";
-
-                if (maMH.includes(keyword) || tenMH.includes(keyword)) {
-                    row.style.display = "";
-                    found = true;
-                } else {
-                    row.style.display = "none";
-                }
-            });
-
-            // Nếu không tìm thấy kết quả → thêm dòng thông báo
-            let noResultRow = document.getElementById("noResultRow");
-            if (!found) {
-                if (!noResultRow) {
-                    noResultRow = document.createElement("tr");
-                    noResultRow.id = "noResultRow";
-                    noResultRow.innerHTML = `
-                <td colspan="10" style="text-align:center;color:gray;">
-                    Không tìm thấy môn học phù hợp.
-                </td>
-            `;
-                    document.querySelector("tbody").appendChild(noResultRow);
-                }
-            } else if (noResultRow) {
-                noResultRow.remove();
             }
         });
 
@@ -558,6 +358,7 @@ $gv_rs = $conn->query("
             }
         }
     </script>
+
 </body>
 
 </html>

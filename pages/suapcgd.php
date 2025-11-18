@@ -16,45 +16,55 @@ if ($_SESSION["vaiTro"] !== "Admin") {
     exit();
 }
 
-// ==== Cấu hình phân trang ====
-$itemsPerPage = 10;
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$offset = ($page - 1) * $itemsPerPage;
+// ==== Lấy id từ URL ====
+$id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+if ($id <= 0) {
+    die("ID không hợp lệ");
+}
 
-// ==== Lấy tổng số môn học ====
-$countSql = "SELECT COUNT(*) as total FROM monhoc";
-$countResult = $conn->query($countSql);
-$totalItems = $countResult->fetch_assoc()['total'];
-$totalPages = ceil($totalItems / $itemsPerPage);
-
-// ==== Lấy danh sách môn học và trưởng bộ môn ====
+// ==== Lấy dữ liệu phân công theo id ====
 $sql = "
-    SELECT 
-        m.maMonHoc,
-        m.tenMonHoc,
-        m.moTa,
-        m.hocKy,
-        m.trangThai,
-        m.namHoc,
-        u.hoVaTen AS truongBoMon
-    FROM monhoc m
-    LEFT JOIN (
-        SELECT gm.maMonHoc, gm.maGV
-        FROM giaovien_monhoc gm
-        GROUP BY gm.maMonHoc
-    ) AS gvmh ON m.maMonHoc = gvmh.maMonHoc
-    LEFT JOIN user u ON u.userID = gvmh.maGV
-    ORDER BY m.maMonHoc DESC
-    LIMIT $offset, $itemsPerPage
+    SELECT lm.id, lm.maLop, lm.maMonHoc, lm.maGV,
+           l.tenLop, m.tenMonHoc, u.hoVaTen AS tenGV
+    FROM lophoc_monhoc lm
+    LEFT JOIN lophoc l ON lm.maLop = l.maLop
+    LEFT JOIN monhoc m ON lm.maMonHoc = m.maMonHoc
+    LEFT JOIN giaovien g ON lm.maGV = g.maGV
+    LEFT JOIN user u ON g.maGV = u.userID
+    WHERE lm.id = $id
 ";
 $result = $conn->query($sql);
+if (!$result || $result->num_rows == 0) {
+    die("Không tìm thấy phân công");
+}
+$data = $result->fetch_assoc();
 
-// ==== Lấy danh sách giáo viên cho select ====
-$gv_rs = $conn->query("
-    SELECT g.maGV, u.hoVaTen, g.boMon 
-    FROM giaovien g 
+// ==== Lấy danh sách lớp, môn, giáo viên ====
+$lops = $conn->query("SELECT maLop, tenLop FROM lophoc");
+$mons = $conn->query("SELECT maMonHoc, tenMonHoc FROM monhoc");
+$giaoviens = $conn->query("
+    SELECT g.maGV, g.boMon, u.hoVaTen 
+    FROM giaovien g
     JOIN user u ON g.maGV = u.userID
+    WHERE u.vaiTro = 'GiaoVien' AND g.trangThai='active'
 ");
+
+// ==== Xử lý khi submit form ====
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $maLop = $_POST['maLop'];
+    $maMonHoc = $_POST['maMonHoc'];
+    $maGV = $_POST['maGV'];
+
+    $updateSql = "UPDATE lophoc_monhoc 
+                  SET maLop='$maLop', maMonHoc='$maMonHoc', maGV='$maGV'
+                  WHERE id=$id";
+    if ($conn->query($updateSql)) {
+        echo "<script>alert('Cập nhật thành công'); window.location.href='phanconggiangday.php';</script>";
+        exit();
+    } else {
+        echo "Lỗi cập nhật: " . $conn->error;
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -62,7 +72,7 @@ $gv_rs = $conn->query("
 
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý môn học</title>
+    <title>Sửa phân công giảng dạy</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -77,100 +87,59 @@ $gv_rs = $conn->query("
             padding: 20px;
         }
 
-        h1 {
-            margin-bottom: 20px;
-        }
-
-        .add-btn {
-            background: #0b1e6b;
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            width: 150px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .form-container {
             background: white;
-            margin-top: 20px;
-        }
-
-        th,
-        td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background: #f1f3f9;
-        }
-
-        .status.active {
-            color: green;
-            font-weight: 500;
-        }
-
-        .status.inactive {
-            color: gray;
-        }
-
-        .actions i {
-            cursor: pointer;
-            margin-right: 10px;
-        }
-
-        .popup-bg {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.4);
-            justify-content: center;
-            align-items: center;
-        }
-
-        .popup {
-            background: white;
-            padding: 20px;
+            padding: 40px;
             border-radius: 10px;
-            width: 420px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            width: 500px;
+            margin: 50px auto;
         }
 
-        .popup input,
-        .popup select,
-        .popup textarea {
+
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #0b3364;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        select {
             width: 100%;
-            padding: 8px;
-            margin-bottom: 10px;
+            padding: 10px;
+            margin-bottom: 16px;
             border: 1px solid #ccc;
             border-radius: 6px;
+            font-size: 14px;
         }
 
-        .popup-buttons {
-            text-align: right;
+        .buttons {
+            display: flex;
+            justify-content: flex-end;
         }
 
-        .save-btn {
-            background: #0b1e6b;
-            color: white;
+        .buttons button {
+            padding: 10px 20px;
             border: none;
-            padding: 8px 14px;
             border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-left: 20px;
         }
 
         .cancel-btn {
             background: #ccc;
-            border: none;
-            padding: 8px 14px;
-            border-radius: 6px;
+            color: #333;
+        }
+
+        .save-btn {
+            background: #0b3364;
+            color: white;
         }
     </style>
 </head>
@@ -196,7 +165,7 @@ $gv_rs = $conn->query("
             <div class="menu-section">
                 <div class="menu-title">Quản lý dữ liệu</div>
                 <ul>
-                    <li class="active" onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
+                    <li onclick="window.location.href='../pages/qlmonhoc.php'"><i class="fa-solid fa-book"></i> Môn học</li>
                     <li onclick="window.location.href='../pages/qltailieu.php'"><i class="fa-solid fa-file-lines"></i> Tài liệu</li>
                 </ul>
             </div>
@@ -219,7 +188,7 @@ $gv_rs = $conn->query("
             <div class="menu-section">
                 <div class="menu-title">Quản lý tài khoản</div>
                 <ul>
-                    <li onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
+                    <li class="active" onclick="window.location.href='../pages/phanconggiangday.php'"><i class="fa-solid fa-users"></i> Phân công giảng dạy</li>
                     <li onclick="window.location.href='../pages/qlphanquyen.php'"><i class="fa-solid fa-user-shield"></i> Phân quyền</li>
                 </ul>
             </div>
@@ -261,81 +230,52 @@ $gv_rs = $conn->query("
                 </div>
             </div>
         </header>
-        <h1>QUẢN LÝ MÔN HỌC</h1>
-        <button class="add-btn" onclick="window.location.href='themmonhoc.php'">
-            <i class="fa-solid fa-plus"></i> Thêm Môn Học
-        </button>
+        <div class="form-container">
+            <h2>CHỈNH SỬA PHÂN CÔNG</h2>
+            <form method="post">
+                <label for="maLop">LỚP:</label>
+                <select name="maLop" required>
+                    <option value="">Chọn lớp...</option>
+                    <?php while ($lop = $lops->fetch_assoc()): ?>
+                        <option value="<?= $lop['maLop'] ?>" <?= $lop['maLop'] == $data['maLop'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($lop['tenLop']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
 
-        <table>
-            <thead>
-                <tr>
-                    <th>STT</th>
-                    <th>MÃ MH</th>
-                    <th>TÊN MÔN HỌC</th>
-                    <th>TRƯỞNG BỘ MÔN</th>
-                    <th>MÔ TẢ</th>
-                    <th>HỌC KỲ</th>
-                    <th>NĂM HỌC</th>
-                    <th>TRẠNG THÁI</th>
-                    <th>TÁC VỤ</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($result->num_rows > 0): $stt = $offset + 1;
-                    while ($row = $result->fetch_assoc()): ?>
-                        <tr data-id="<?= $row['maMonHoc'] ?>">
-                            <td><?= $stt++ ?></td>
-                            <td><?= $row['maMonHoc'] ?></td>
-                            <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
-                            <td><?= htmlspecialchars($row['truongBoMon'] ?? '—') ?></td>
-                            <td><?= htmlspecialchars($row['moTa']) ?></td>
-                            <td><?= htmlspecialchars($row['hocKy']) ?></td>
-                            <td><?= htmlspecialchars($row['namHoc']) ?></td>
-                            <td><span class="status <?= $row['trangThai'] === 'Hoạt động' ? 'active' : 'inactive' ?>">
-                                    <?= htmlspecialchars($row['trangThai']) ?>
-                                </span>
-                            </td>
-                            <td class="actions">
-                                <a href="suamonhoc.php?maMonHoc=<?= $row['maMonHoc'] ?>">
-                                    <i class="fa-solid fa-pen" style="color: black;"></i>
-                                </a>
-                                <i class="fa-solid fa-trash delete-btn"></i>
-                            </td>
-                        </tr>
-                    <?php endwhile;
-                else: ?>
-                    <tr>
-                        <td colspan="9" style="text-align:center;">Không có dữ liệu</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                <label for="maMonHoc">MÔN:</label>
+                <select name="maMonHoc" id="editMon" required>
+                    <option value="">Chọn môn...</option>
+                    <?php while ($m = $mons->fetch_assoc()): ?>
+                        <option
+                            value="<?= $m['maMonHoc'] ?>"
+                            data-bomon="<?= htmlspecialchars($m['tenMonHoc']) ?>"
+                            <?= $m['maMonHoc'] == $data['maMonHoc'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($m['tenMonHoc']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
 
-        <!-- Thanh phân trang -->
-        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
-            <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> môn học)</span>
-            <div style="display:flex; gap:8px; align-items:center;">
-                <?php if ($page > 1): ?>
-                    <a href="?page=1" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
-                    <a href="?page=<?= $page - 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
-                <?php else: ?>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
-                <?php endif; ?>
+                <label for="maGV">GIÁO VIÊN:</label>
+                <select name="maGV" id="editGV">
+                    <option value="">Chọn giáo viên...</option>
+                    <?php while ($gv = $giaoviens->fetch_assoc()): ?>
+                        <option
+                            value="<?= $gv['maGV'] ?>"
+                            data-bomon="<?= htmlspecialchars($gv['boMon']) ?>"
+                            <?= $gv['maGV'] == $data['maGV'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($gv['hoVaTen']) ?> (<?= htmlspecialchars($gv['boMon']) ?>)
+                        </option>
+                    <?php endwhile; ?>
+                </select>
 
-                <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-
-                <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
-                    <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
-                <?php else: ?>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
-                    <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
-                <?php endif; ?>
-            </div>
+                <div class="buttons">
+                    <a href="phanconggiangday.php"><button type="button" class="cancel-btn">HỦY</button></a>
+                    <button type="submit" class="save-btn">LƯU</button>
+                </div>
+            </form>
         </div>
     </div>
-
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
@@ -431,8 +371,49 @@ $gv_rs = $conn->query("
             }
         });
 
-        const api = "../src/monhoc.php";
+        const api = "../src/phancong.php";
 
+        // === Lọc giáo viên theo môn học ===
+        function filterGVByMon(monSelectId, gvSelectId) {
+            const monSelect = document.getElementById(monSelectId);
+            const gvSelect = document.getElementById(gvSelectId);
+
+            if (!monSelect || !gvSelect) return;
+
+            const applyFilter = () => {
+                const monName = monSelect.options[monSelect.selectedIndex]?.dataset.bomon?.trim().toLowerCase() || "";
+                for (let opt of gvSelect.options) {
+                    const gvMon = opt.dataset.bomon?.trim().toLowerCase() || "";
+                    opt.style.display = (monName === "" || gvMon === "" || gvMon === monName) ? "block" : "none";
+                }
+                // Nếu giáo viên hiện tại không khớp, reset về rỗng
+                const currentGV = gvSelect.value;
+                if (currentGV) {
+                    const selectedOpt = gvSelect.querySelector(`option[value="${currentGV}"]`);
+                    if (selectedOpt && selectedOpt.style.display === "none") {
+                        gvSelect.value = "";
+                    }
+                }
+            };
+
+            // Áp dụng ngay khi load (lọc theo môn đã chọn sẵn)
+            applyFilter();
+
+            // Lọc khi đổi môn
+            monSelect.addEventListener("change", applyFilter);
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            filterGVByMon("editMon", "editGV");
+        });
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // Chỉ gọi cho form sửa trên trang này
+            filterGVByMon("editMon", "editGV");
+        });
+
+
+        // === Mở/đóng popup ===
         function showAddPopup() {
             document.getElementById("addPopup").style.display = "flex";
         }
@@ -442,40 +423,12 @@ $gv_rs = $conn->query("
         }
 
 
-        // Mở popup sửa
-        document.addEventListener("click", e => {
-            if (e.target.classList.contains("edit-btn")) {
-                const tr = e.target.closest("tr");
-                document.getElementById("editId").value = tr.dataset.id;
-                document.getElementById("editTenMonHoc").value = tr.children[2].innerText;
-                // Cập nhật counter cho form sửa
-                document.getElementById("charCountEdit").textContent = tr.children[2].innerText.length;
-                // Lấy tên trưởng bộ môn hiện tại
-                const truongBoMon = tr.children[3].innerText.trim();
-                const selectGV = document.getElementById("editTruongBoMon");
-                for (let opt of selectGV.options) {
-                    // Nếu tên giáo viên có chứa chuỗi hiển thị trong bảng (vd: "Nguyễn Văn A (Toán)")
-                    if (opt.text.includes(truongBoMon)) {
-                        opt.selected = true;
-                        break;
-                    }
-                }
-                document.getElementById("editMoTa").value = tr.children[4].innerText;
-                document.getElementById("editHocKy").value = tr.children[5].innerText;
-                document.getElementById("editNamHoc").value = tr.children[6].innerText;
-                const active = tr.children[7].innerText === "Hoạt động";
-                document.getElementById(active ? "editActive" : "editInactive").checked = true;
-                document.getElementById("editPopup").style.display = "flex";
-            }
-        });
-
-
-        // Xóa môn học
-        document.addEventListener("click", async e => {
+        // === Xóa phân công ===
+        document.addEventListener("click", async (e) => {
             if (e.target.classList.contains("delete-btn")) {
                 const tr = e.target.closest("tr");
                 const id = tr.dataset.id;
-                if (confirm("Bạn có chắc muốn xóa môn học này?")) {
+                if (confirm("Bạn có chắc muốn xóa phân công này?")) {
                     const res = await fetch(api, {
                         method: "POST",
                         headers: {
@@ -483,7 +436,7 @@ $gv_rs = $conn->query("
                         },
                         body: JSON.stringify({
                             action: "delete",
-                            maMonHoc: id
+                            id
                         })
                     });
                     const json = await res.json();
@@ -507,44 +460,55 @@ $gv_rs = $conn->query("
             }
         });
 
-        // === TÌM KIẾM MÔN HỌC THEO MÃ HOẶC TÊN ===
-        document.getElementById("searchBox").addEventListener("input", function() {
-            const keyword = this.value.toLowerCase().trim();
-            const rows = document.querySelectorAll("tbody tr");
-            let found = false;
+        // === TÌM KIẾM PHÂN CÔNG GIẢNG DẠY ===
+        const searchInput = document.getElementById("searchBox");
+        const searchIcon = document.querySelector(".search-box i");
+        const tableRows = document.querySelectorAll("tbody tr");
 
-            rows.forEach(row => {
-                // Bỏ qua dòng "Không có dữ liệu"
-                if (row.children.length < 10) return;
+        function thucHienTimKiem() {
+            const keyword = searchInput.value.trim().toLowerCase();
+            let found = 0;
 
-                const maMH = row.children[1]?.innerText.toLowerCase() || "";
-                const tenMH = row.children[2]?.innerText.toLowerCase() || "";
+            tableRows.forEach(row => {
+                const tenLop = row.children[1]?.innerText.toLowerCase() || "";
+                const tenMon = row.children[3]?.innerText.toLowerCase() || "";
+                const tenGV = row.children[4]?.innerText.toLowerCase() || "";
 
-                if (maMH.includes(keyword) || tenMH.includes(keyword)) {
+                if (
+                    tenLop.includes(keyword) ||
+                    tenMon.includes(keyword) ||
+                    tenGV.includes(keyword)
+                ) {
                     row.style.display = "";
-                    found = true;
+                    found++;
                 } else {
                     row.style.display = "none";
                 }
             });
 
-            // Nếu không tìm thấy kết quả → thêm dòng thông báo
-            let noResultRow = document.getElementById("noResultRow");
-            if (!found) {
-                if (!noResultRow) {
-                    noResultRow = document.createElement("tr");
-                    noResultRow.id = "noResultRow";
-                    noResultRow.innerHTML = `
-                <td colspan="10" style="text-align:center;color:gray;">
-                    Không tìm thấy môn học phù hợp.
-                </td>
-            `;
-                    document.querySelector("tbody").appendChild(noResultRow);
-                }
-            } else if (noResultRow) {
-                noResultRow.remove();
+            // Xóa dòng thông báo cũ nếu có
+            const oldRow = document.getElementById("noResultRow");
+            if (oldRow) oldRow.remove();
+
+            // Nếu không có kết quả
+            if (found === 0) {
+                const tbody = document.querySelector("tbody");
+                const tr = document.createElement("tr");
+                tr.id = "noResultRow";
+                tr.innerHTML = `<td colspan="6" style="text-align:center;color:gray;">Không tìm thấy phân công phù hợp.</td>`;
+                tbody.appendChild(tr);
+            }
+        }
+
+        // Kích hoạt tìm kiếm khi nhập, nhấn Enter hoặc bấm icon
+        searchInput.addEventListener("input", thucHienTimKiem);
+        searchInput.addEventListener("keypress", e => {
+            if (e.key === "Enter") {
+                e.preventDefault();
+                thucHienTimKiem();
             }
         });
+        searchIcon.addEventListener("click", thucHienTimKiem);
 
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {

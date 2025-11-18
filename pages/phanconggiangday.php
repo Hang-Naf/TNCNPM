@@ -57,7 +57,7 @@ $giaoviens = $conn->query("
     JOIN user u ON g.maGV = u.userID
     WHERE u.vaiTro = 'GiaoVien' AND g.trangThai='active'
 ");
-if(!$giaoviens) {
+if (!$giaoviens) {
     die("Lỗi truy vấn giáo viên: " . $conn->error);
 }
 ?>
@@ -308,9 +308,9 @@ if(!$giaoviens) {
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                 <?php endif; ?>
-                
+
                 <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                
+
                 <?php if ($page < $totalPages): ?>
                     <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
                     <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
@@ -543,26 +543,15 @@ if(!$giaoviens) {
         });
 
         // === Mở popup sửa ===
+        // === Sửa: sang trang suapcgd.php ===
         document.addEventListener("click", (e) => {
             if (e.target.classList.contains("edit-btn")) {
                 const tr = e.target.closest("tr");
-                document.getElementById("editId").value = tr.dataset.id;
-                document.getElementById("editLop").value = tr.dataset.malop;
-                document.getElementById("editMon").value = tr.dataset.mamonhoc;
-                document.getElementById("editGV").value = tr.dataset.magv || "";
-
-                // === Lọc giáo viên theo môn ngay khi mở popup sửa ===
-                const monSelect = document.getElementById("editMon");
-                const gvSelect = document.getElementById("editGV");
-                const monName = monSelect.options[monSelect.selectedIndex]?.dataset.bomon?.trim().toLowerCase() || "";
-                for (let opt of gvSelect.options) {
-                    const gvMon = opt.dataset.bomon?.trim().toLowerCase() || "";
-                    opt.style.display = (monName === "" || gvMon === "" || gvMon === monName) ? "block" : "none";
-                }
-
-                document.getElementById("editPopup").style.display = "flex";
+                const id = tr.dataset.id;
+                window.location.href = "suapcgd.php?id=" + id;
             }
         });
+
 
         // === Lưu chỉnh sửa ===
         document.getElementById("editForm").addEventListener("submit", async (e) => {

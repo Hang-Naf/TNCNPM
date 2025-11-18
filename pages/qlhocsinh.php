@@ -252,7 +252,9 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             </div>
         </header>
         <h1>QUẢN LÝ HỌC SINH</h1>
-        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Học Sinh</button>
+        <button class="add-btn" onclick="window.location.href='themhocsinh.php'">
+            <i class="fa-solid fa-plus"></i> Thêm Học Sinh
+        </button>
 
         <table>
             <thead>
@@ -293,7 +295,7 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                                 </span>
                             </td>
                             <td class="actions">
-                                <i class="fa-solid fa-pen edit-btn"></i>
+                                <i class="fa-solid fa-pen edit-btn" style="color: black;"></i>
                                 <i class="fa-solid fa-trash delete-btn"></i>
                             </td>
                         </tr>
@@ -317,9 +319,9 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                 <?php endif; ?>
-                
+
                 <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                
+
                 <?php if ($page < $totalPages): ?>
                     <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
                     <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
@@ -569,19 +571,8 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         document.addEventListener("click", (e) => {
             if (e.target.classList.contains("edit-btn")) {
                 const tr = e.target.closest("tr");
-                currentId = tr.dataset.id;
-                document.getElementById("editId").value = currentId;
-                document.getElementById("editHoTen").value = tr.children[3].innerText;
-                document.getElementById("editGioiTinh").value = tr.children[4].innerText;
-                document.getElementById("editEmail").value = tr.children[5].innerText;
-                document.getElementById("editSdt").value = tr.children[6].innerText;
-                document.getElementById("editLop").value = tr.children[7].innerText; // chọn đúng lớp
-                document.getElementById("editChucVu").value = tr.children[8].innerText;
-                document.getElementById("editNamHoc").value = tr.children[9].innerText;
-                document.getElementById("editHocKy").value = tr.children[10].innerText;
-                const active = tr.children[11].innerText.includes("Hoạt");
-                document.getElementById(active ? "editActive" : "editInactive").checked = true;
-                document.getElementById("editPopup").style.display = "flex";
+                const id = tr.dataset.id;
+                window.location.href = "suahocsinh.php?id=" + id;
             }
         });
 

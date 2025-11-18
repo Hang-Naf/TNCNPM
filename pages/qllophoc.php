@@ -251,7 +251,7 @@ $giaovien_rs = $conn->query("
             </div>
         </header>
         <h1>QUẢN LÝ LỚP HỌC</h1>
-        <button class="add-btn" onclick="showAddPopup()">
+        <button class="add-btn" onclick="window.location.href='themlophoc.php'">
             <i class="fa-solid fa-plus"></i> Thêm Lớp Học
         </button>
 
@@ -284,7 +284,9 @@ $giaovien_rs = $conn->query("
                             <td><?= htmlspecialchars($row['namHoc']) ?></td>
                             <td><?= htmlspecialchars($row['trangThai']) ?></td>
                             <td class="actions">
-                                <i class="fa-solid fa-pen edit-btn"></i>
+                                <a href="sualophoc.php?maLop=<?= $row['maLop'] ?>" style="text-decoration: none">
+                                    <i class="fa-solid fa-pen edit-btn" style="color: black;"></i>
+                                </a>
                                 <i class="fa-solid fa-trash delete-btn"></i>
                             </td>
                         </tr>
@@ -308,9 +310,9 @@ $giaovien_rs = $conn->query("
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                 <?php endif; ?>
-                
+
                 <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                
+
                 <?php if ($page < $totalPages): ?>
                     <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
                     <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
@@ -351,7 +353,7 @@ $giaovien_rs = $conn->query("
     </div>
 
     <!-- Popup sửa -->
-    <div class="popup-bg" id="editPopup">
+    <!-- <div class="popup-bg" id="editPopup">
         <div class="popup">
             <h3>Chỉnh sửa lớp học</h3>
             <form id="editForm">
@@ -360,7 +362,7 @@ $giaovien_rs = $conn->query("
                 <input type="text" name="tenLop" id="editTenLop" required>
                 <input type="number" name="siSo" id="editSiSo" min="0">
                 <select name="maGV" id="editMaGV">
-                    <!-- <option value="">-- Chọn giáo viên phụ trách --</option> -->
+                    <option value="">-- Chọn giáo viên phụ trách --</option>
                     <?php
                     $giaovien_rs->data_seek(0);
                     while ($gv = $giaovien_rs->fetch_assoc()): ?>
@@ -378,7 +380,7 @@ $giaovien_rs = $conn->query("
                 </div>
             </form>
         </div>
-    </div>
+    </div> -->
 
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
@@ -517,21 +519,7 @@ $giaovien_rs = $conn->query("
             }
         });
 
-        // === Lưu sửa lớp ===
-        document.getElementById("editForm").addEventListener("submit", async (e) => {
-            e.preventDefault();
-            const data = Object.fromEntries(new FormData(e.target).entries());
-            const res = await fetch(api, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify(data)
-            });
-            const json = await res.json();
-            alert(json.message || json.error);
-            if (json.message) location.reload();
-        });
+        
 
         // === Xóa lớp học ===
         document.addEventListener("click", async (e) => {
