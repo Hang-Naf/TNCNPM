@@ -258,7 +258,7 @@ if(!$giaoviens) {
         </header>
 
         <h1>PHÂN CÔNG GIẢNG DẠY</h1>
-        <button class="add-btn" onclick="showAddPopup()"><i class="fa-solid fa-plus"></i> Thêm Phân Công</button>
+        <button class="add-btn" onclick="window.location.href='thempcgd.php'"><i class="fa-solid fa-plus"></i> Thêm Phân Công</button>
 
         <table>
             <thead>
