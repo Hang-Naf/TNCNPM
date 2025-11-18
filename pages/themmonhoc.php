@@ -211,7 +211,7 @@ $gv_rs = $conn->query("
                 <option value="Hè">Hè</option>
             </select>
             <label>Năm học:</label>
-            <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" required>
+            <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" readonly>
             <label>Trạng thái:</label>
             <select name="trangThai">
                 <option value="Hoạt động">Hoạt động</option>
