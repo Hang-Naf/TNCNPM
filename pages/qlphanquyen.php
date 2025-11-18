@@ -52,7 +52,26 @@ if (isset($_POST['updateRole'])) {
 
     $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = '$userID'";
     if ($conn->query($sql)) {
-        echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
+        // Nếu đổi quyền của chính mình
+        if ($userID == $_SESSION["userID"]) {
+            // Cập nhật lại session vaiTro
+            $_SESSION["vaiTro"] = $vaiTro;
+
+            // Hủy session để buộc đăng nhập lại
+            session_destroy();
+
+            // Chuyển hướng theo vai trò mới
+            if ($vaiTro === "GiaoVien") {
+                echo "<script>alert('Bạn đã đổi quyền sang Giáo viên. Vui lòng đăng nhập lại!'); window.location='../pagegiaovien/ttcanhan.php';</script>";
+            } elseif ($vaiTro === "HocSinh") {
+                echo "<script>alert('Bạn đã đổi quyền sang Học sinh. Vui lòng đăng nhập lại!'); window.location='../pagehocsinh/ttcanhan.php';</script>";
+            } else {
+                echo "<script>alert('Bạn đã đổi quyền. Vui lòng đăng nhập lại!'); window.location='../dangnhap.php';</script>";
+            }
+        } else {
+            // Nếu đổi quyền của người khác thì vẫn ở lại trang phân quyền
+            echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
+        }
     } else {
         echo "Lỗi: " . $conn->error;
     }
@@ -227,7 +246,8 @@ $result = $conn->query($sql);
                 </tr>
             </thead>
             <tbody>
-                <?php $stt = $offset + 1; while ($row = $result->fetch_assoc()) { ?>
+                <?php $stt = $offset + 1;
+                while ($row = $result->fetch_assoc()) { ?>
                     <tr>
                         <td><?= $stt++ ?></td>
                         <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
@@ -263,9 +283,9 @@ $result = $conn->query($sql);
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                 <?php endif; ?>
-                
+
                 <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                
+
                 <?php if ($page < $totalPages): ?>
                     <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
                     <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
