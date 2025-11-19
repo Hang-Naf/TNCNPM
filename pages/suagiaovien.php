@@ -56,6 +56,10 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             background: #f8f9fb;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         .main-container {
             background: white;
             padding: 30px;

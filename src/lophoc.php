@@ -145,6 +145,27 @@ switch ($action) {
         }
         break;
 
+    // ===== XÓA NHIỀU LỚP HỌC =====
+    case 'deleteMany':
+        $ids = $data['maLops'] ?? [];
+        if (empty($ids) || !is_array($ids)) {
+            echo json_encode(['error' => 'Không có lớp học nào được chọn']);
+            exit();
+        }
+        $idList = implode(",", array_map("intval", $ids));
+        $conn->begin_transaction();
+        try {
+            $conn->query("DELETE FROM lophoc_monhoc WHERE maLop IN ($idList)");
+            $conn->query("DELETE FROM hocsinh_lophoc WHERE maLop IN ($idList)");
+            $conn->query("DELETE FROM lophoc WHERE maLop IN ($idList)");
+            $conn->commit();
+            echo json_encode(['message' => 'Đã xóa ' . count($ids) . ' lớp học']);
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo json_encode(['error' => 'Lỗi khi xóa: ' . $e->getMessage()]);
+        }
+        break;
+
     default:
         echo json_encode(['error' => 'Hành động không hợp lệ']);
         break;

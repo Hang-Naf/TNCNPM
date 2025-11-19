@@ -43,6 +43,10 @@ if (!$giaoviens) {
             background: #f8f9fb;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+        
         /* Container riêng cho form thêm */
         .form-container {
             background: white;

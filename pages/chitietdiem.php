@@ -81,6 +81,10 @@ $diemTB = (is_numeric($diemHK1) && is_numeric($diemHK2)) ? round(($diemHK1 + $di
             margin: 20px;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;

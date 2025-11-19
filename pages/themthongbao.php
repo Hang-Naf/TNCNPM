@@ -33,6 +33,10 @@ $currentUserId = $_SESSION["userID"];
             margin: 0;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         h2 {
             margin-bottom: 20px;
             font-size: 22px;

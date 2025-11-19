@@ -106,8 +106,22 @@ if (!empty($loc_mon)) {
             background: #f5f6fa;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
         h1 {
-            margin: 20px 0;
+            margin-bottom: 20px;
+            margin-left: 50px;
+        }
+
+        .button-container {
+            text-align: right;
+            margin-right: 50px;
         }
 
         .filter-box {
@@ -118,12 +132,13 @@ if (!empty($loc_mon)) {
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            margin: 20px;
         }
 
         select,
         input[type=date] {
             padding: 6px 10px;
+            margin-right: 90px;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
@@ -138,10 +153,11 @@ if (!empty($loc_mon)) {
         }
 
         table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
             background: #fff;
             border-radius: 10px;
+            margin: 20px;
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
         }
@@ -303,7 +319,7 @@ if (!empty($loc_mon)) {
                 </div>
             </div>
         </header>
-        <h1>Quản lý chuyên cần học sinh</h1>
+        <h1>ĐIỂM DANH HỌC SINH</h1>
         <div class="filter-box">
             <form method="GET">
                 <label>Ngày học:</label>
@@ -379,25 +395,27 @@ if (!empty($loc_mon)) {
                     </tbody>
                 </table>
                 <br>
-                <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
+                <div class="button-container">
+                    <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
+                </div>
 
                 <!-- Thanh phân trang -->
                 <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
                     <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> học sinh)</span>
                     <div style="display:flex; gap:8px; align-items:center;">
                         <?php if ($page > 1): ?>
-                            <a href="?page=1<?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
-                            <a href="?page=<?= $page - 1 ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                            <a href="?page=1<?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                            <a href="?page=<?= $page - 1 ?><?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
                         <?php else: ?>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                         <?php endif; ?>
-                        
+
                         <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                        
+
                         <?php if ($page < $totalPages): ?>
-                            <a href="?page=<?= $page + 1 ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
-                            <a href="?page=<?= $totalPages ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                            <a href="?page=<?= $page + 1 ?><?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                            <a href="?page=<?= $totalPages ?><?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
                         <?php else: ?>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>

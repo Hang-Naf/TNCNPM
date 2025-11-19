@@ -128,6 +128,10 @@ $result = $conn->query($sql);
             border-collapse: collapse;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         th,
         td {
             border: 1px solid #ccc;

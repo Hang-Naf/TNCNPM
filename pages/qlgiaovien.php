@@ -65,7 +65,7 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         }
 
         .header {
-            padding: 0px 25px;
+            padding: 10px 25px;
         }
 
         .container {
@@ -74,6 +74,16 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
 
         h1 {
             margin-bottom: 20px;
+            margin-left: 50px;
+        }
+
+        .button-container {
+            text-align: right;
+            margin-right: 50px;
+        }
+
+        .hide-col {
+            display: none;
         }
 
         .add-btn {
@@ -83,17 +93,21 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
             padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            display: flex;
+            /* display: flex; */
             align-items: center;
             gap: 6px;
             width: 150px;
         }
 
         table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
             background: white;
-            margin-top: 20px;
+            margin: 40px 30px;
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -262,25 +276,27 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
         </header>
 
         <h1>QUẢN LÝ GIÁO VIÊN</h1>
-        <button class="add-btn" onclick="window.location.href='themgiaovien.php'">
-            <i class="fa-solid fa-plus"></i> Thêm Giáo Viên
-        </button>
+        <div class="button-container">
+            <button class="add-btn" onclick="window.location.href='themgiaovien.php'">
+                <i class="fa-solid fa-plus"></i> Thêm Giáo Viên
+            </button>
+        </div>
 
         <table>
             <thead>
                 <tr>
-                    <th><input type="checkbox"></th>
+                    <th><input type="checkbox" id="checkAll"></th>
                     <th>STT</th>
                     <th>MÃ GV</th>
                     <th>HỌ TÊN</th>
                     <th>GIỚI TÍNH</th>
                     <th>EMAIL</th>
-                    <th>SDT</th>
+                    <th class="hide-col">SDT</th>
                     <th>BỘ MÔN</th>
-                    <th>TRÌNH ĐỘ</th>
-                    <th>PHÒNG BAN</th>
-                    <th>NĂM HỌC</th>
-                    <th>HỌC KỲ</th>
+                    <th class="hide-col">TRÌNH ĐỘ</th>
+                    <th class="hide-col">PHÒNG BAN</th>
+                    <th class="hide-col">NĂM HỌC</th>
+                    <th class="hide-col">HỌC KỲ</th>
                     <th>TRẠNG THÁI</th>
                     <th>TÁC VỤ</th>
                 </tr>
@@ -290,18 +306,18 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                     $stt = $offset + 1;
                     while ($row = $result->fetch_assoc()): ?>
                         <tr data-id="<?= $row['maGV'] ?>">
-                            <td><input type="checkbox"></td>
+                            <td><input type="checkbox" class="row-check"></td>
                             <td><?= $stt++ ?></td>
                             <td><?= $row['maGV'] ?></td>
                             <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
                             <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
                             <td><?= htmlspecialchars($row['email']) ?></td>
-                            <td><?= htmlspecialchars($row['sdt']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['sdt']) ?></td>
                             <td><?= htmlspecialchars($row['boMon']) ?></td>
-                            <td><?= htmlspecialchars($row['trinhDo']) ?></td>
-                            <td><?= htmlspecialchars($row['phongBan']) ?></td>
-                            <td><?= htmlspecialchars($row['namHoc']) ?></td>
-                            <td><?= htmlspecialchars($row['hocKy']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['trinhDo']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['phongBan']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['namHoc']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['hocKy']) ?></td>
                             <td><span class="status <?= $row['trangThai'] === 'active' ? 'active' : 'inactive' ?>">
                                     <?= $row['trangThai'] === 'active' ? 'Hoạt động' : 'Tạm dừng' ?>
                                 </span></td>
@@ -341,6 +357,13 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
                 <?php endif; ?>
             </div>
+        </div>
+        <!-- Nút xóa -->
+        <div class="button-container">
+            <button id="deleteSelected"
+                style="margin:20px 0; padding:10px 0px; background: red; color:white; border:none; border-radius:6px; cursor:pointer; width:150px;">
+                Xóa giáo viên
+            </button>
         </div>
     </div>
 
@@ -449,6 +472,45 @@ while ($mh = $monhoc_rs->fetch_assoc()) {
     </div>
 
     <script>
+        // Lấy checkbox "chọn tất cả"
+        const checkAll = document.getElementById("checkAll");
+
+        // Bắt sự kiện thay đổi
+        checkAll.addEventListener("change", function() {
+            // Lấy tất cả checkbox trong tbody
+            const checkboxes = document.querySelectorAll(".row-check");
+            checkboxes.forEach(cb => cb.checked = checkAll.checked);
+        });
+
+        document.getElementById("deleteSelected").addEventListener("click", async () => {
+            // Lấy tất cả checkbox đã chọn
+            const checked = document.querySelectorAll(".row-check:checked");
+            if (checked.length === 0) {
+                alert("❌ Vui lòng chọn ít nhất một giáo viên để xóa!");
+                return;
+            }
+
+            // Lấy danh sách ID giáo viên
+            const ids = Array.from(checked).map(cb => cb.closest("tr").dataset.id);
+
+            if (!confirm("Bạn có chắc muốn xóa " + ids.length + " giáo viên đã chọn?")) return;
+
+            // Gửi request xóa nhiều giáo viên
+            const res = await fetch("../src/giaovien.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    action: "deleteMany",
+                    userIds: ids
+                })
+            });
+            const json = await res.json();
+            alert(json.message || json.error);
+            if (json.message) location.reload();
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu

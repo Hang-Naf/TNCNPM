@@ -111,6 +111,32 @@ try {
         $conn->query("DELETE FROM monhoc WHERE maMonHoc = $maMonHoc");
 
         echo json_encode(["message" => "Xóa môn học thành công!"]);
+    }
+
+    // ===== XÓA NHIỀU MÔN HỌC =====
+    elseif ($action === "deleteMany") {
+        $ids = $data["maMonHocs"] ?? [];
+        if (empty($ids) || !is_array($ids)) {
+            echo json_encode(['error' => 'Không có môn học nào được chọn']);
+            exit();
+        }
+        $idList = implode(",", array_map("intval", $ids));
+
+        $conn->begin_transaction();
+        try {
+            // Xóa liên kết với giáo viên trước
+            $conn->query("DELETE FROM giaovien_monhoc WHERE maMonHoc IN ($idList)");
+
+            // Xóa môn học
+            $conn->query("DELETE FROM monhoc WHERE maMonHoc IN ($idList)");
+
+            $conn->commit();
+            echo json_encode(['message' => 'Đã xóa ' . count($ids) . ' môn học và liên kết với giáo viên']);
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo json_encode(['error' => 'Lỗi khi xóa: ' . $e->getMessage()]);
+        }
+        exit();
     } else {
         echo json_encode(["error" => "Hành động không hợp lệ!"]);
     }

@@ -73,12 +73,26 @@ $gv_rs = $conn->query("
             margin: 0;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         .container {
             padding: 20px;
         }
 
         h1 {
             margin-bottom: 20px;
+            margin-left: 50px;
+        }
+
+        .button-container {
+            text-align: right;
+            margin-right: 50px;
+        }
+
+        .hide-col {
+            display: none;
         }
 
         .add-btn {
@@ -88,17 +102,21 @@ $gv_rs = $conn->query("
             padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            display: flex;
+            /* display: flex; */
             align-items: center;
             gap: 6px;
             width: 150px;
         }
 
         table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
             background: white;
-            margin-top: 20px;
+            margin: 40px 30px;
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -262,20 +280,23 @@ $gv_rs = $conn->query("
             </div>
         </header>
         <h1>QUẢN LÝ MÔN HỌC</h1>
-        <button class="add-btn" onclick="window.location.href='themmonhoc.php'">
-            <i class="fa-solid fa-plus"></i> Thêm Môn Học
-        </button>
+        <div class="button-container">
+            <button class="add-btn" onclick="window.location.href='themmonhoc.php'">
+                <i class="fa-solid fa-plus"></i> Thêm Môn Học
+            </button>
+        </div>
 
         <table>
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="checkAll"></th>
                     <th>STT</th>
                     <th>MÃ MH</th>
                     <th>TÊN MÔN HỌC</th>
                     <th>TRƯỞNG BỘ MÔN</th>
-                    <th>MÔ TẢ</th>
-                    <th>HỌC KỲ</th>
-                    <th>NĂM HỌC</th>
+                    <th>GHI CHÚ</th>
+                    <th class="hide-col">HỌC KỲ</th>
+                    <th class="hide-col">NĂM HỌC</th>
                     <th>TRẠNG THÁI</th>
                     <th>TÁC VỤ</th>
                 </tr>
@@ -284,13 +305,14 @@ $gv_rs = $conn->query("
                 <?php if ($result->num_rows > 0): $stt = $offset + 1;
                     while ($row = $result->fetch_assoc()): ?>
                         <tr data-id="<?= $row['maMonHoc'] ?>">
+                            <td><input type="checkbox" class="row-check"></td>
                             <td><?= $stt++ ?></td>
                             <td><?= $row['maMonHoc'] ?></td>
                             <td><?= htmlspecialchars($row['tenMonHoc']) ?></td>
                             <td><?= htmlspecialchars($row['truongBoMon'] ?? '—') ?></td>
                             <td><?= htmlspecialchars($row['moTa']) ?></td>
-                            <td><?= htmlspecialchars($row['hocKy']) ?></td>
-                            <td><?= htmlspecialchars($row['namHoc']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['hocKy']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['namHoc']) ?></td>
                             <td><span class="status <?= $row['trangThai'] === 'Hoạt động' ? 'active' : 'inactive' ?>">
                                     <?= htmlspecialchars($row['trangThai']) ?>
                                 </span>
@@ -334,9 +356,58 @@ $gv_rs = $conn->query("
                 <?php endif; ?>
             </div>
         </div>
+        <!-- Nút xóa -->
+        <div class="button-container">
+            <button id="deleteSelected"
+                style="margin:20px 0; padding:10px 0px; background: red; color:white; border:none; border-radius:6px; cursor:pointer; width:150px;">
+                Xóa môn học
+            </button>
+        </div>
     </div>
 
     <script>
+        // === Checkbox chọn tất cả ===
+        const checkAll = document.getElementById("checkAll");
+        checkAll.addEventListener("change", () => {
+            document.querySelectorAll(".row-check").forEach(cb => cb.checked = checkAll.checked);
+        });
+
+        // Nếu bỏ tick một checkbox con thì bỏ tick "chọn tất cả"
+        // document.addEventListener("change", (e) => {
+        //     if (e.target.classList.contains("row-check")) {
+        //         const all = document.querySelectorAll(".row-check");
+        //         const checked = document.querySelectorAll(".row-check:checked");
+        //         checkAll.checked = (all.length === checked.length);
+        //     }
+        // });
+
+        // === Xóa nhiều môn học ===
+        document.getElementById("deleteSelected").addEventListener("click", async () => {
+            const checked = document.querySelectorAll(".row-check:checked");
+            if (checked.length === 0) {
+                alert("❌ Vui lòng chọn ít nhất một môn học để xóa!");
+                return;
+            }
+
+            const ids = Array.from(checked).map(cb => cb.closest("tr").dataset.id);
+
+            if (!confirm("Bạn có chắc muốn xóa " + ids.length + " môn học đã chọn?")) return;
+
+            const res = await fetch("../src/monhoc.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    action: "deleteMany",
+                    maMonHocs: ids
+                })
+            });
+            const json = await res.json();
+            alert(json.message || json.error);
+            if (json.message) location.reload();
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu

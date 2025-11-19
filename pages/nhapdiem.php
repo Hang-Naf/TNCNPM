@@ -121,6 +121,10 @@ if (isset($_GET['update']) && $_GET['update'] == 1) {
             margin: 40px;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         .main-content {
             margin-left: 220px;
             margin-top: -40px;

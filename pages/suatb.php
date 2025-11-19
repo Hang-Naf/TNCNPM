@@ -68,6 +68,10 @@ $stmt->close();
             background: #f8f9fb;
             margin: 40px;
         }
+        
+        .header {
+            padding: 10px 25px;
+        }
 
         .container {
             background: #fff;

@@ -70,6 +70,10 @@ $stmt->close();
             margin: 40px;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         .container {
             background: #fff;
             padding: 25px;

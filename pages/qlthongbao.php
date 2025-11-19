@@ -122,8 +122,24 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
             padding: 10px 25px;
         }
 
+        .container {
+            padding: 20px;
+        }
+
         h1 {
-            margin: 20px 0;
+            margin-top: 40px;
+            margin-left: 20px;
+        }
+
+        .button-container {
+            margin-right: 50px;
+            display: flex;
+            justify-content: flex-end;
+            height: 80px;
+        }
+
+        .hide-col {
+            display: none;
         }
 
         .add-btn {
@@ -133,7 +149,7 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
             padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            display: flex;
+            /* display: flex; */
             align-items: center;
             gap: 6px;
             width: 180px;
@@ -145,6 +161,8 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
             align-items: center;
             margin-top: 10px;
             padding: 10px 0;
+            margin-left: 20px;
+            margin-right: 25px;
             border-bottom: 2px solid #f0f0f0;
         }
 
@@ -184,10 +202,15 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
         }
 
         table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
             background: white;
             margin-top: 20px;
+            margin-left: 30px;
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -366,13 +389,14 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
         <table>
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="checkAll"></th>
                     <th>STT</th>
                     <th>MÃ TB</th>
                     <th>TIÊU ĐỀ</th>
                     <th>NGƯỜI GỬI</th>
-                    <th>NGÀY GỬI</th>
+                    <th class="hide-col">NGÀY GỬI</th>
                     <th>TỔNG NGƯỜI NHẬN</th>
-                    <th>ĐÃ ĐỌC</th>
+                    <th class="hide-col">ĐÃ ĐỌC</th>
                     <th>TÁC VỤ</th>
                 </tr>
             </thead>
@@ -381,13 +405,14 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
                     $stt = $offset + 1;
                     while ($row = $result->fetch_assoc()): ?>
                         <tr>
+                            <td><input type="checkbox" class="row-check" value="<?= $row['maThongBao'] ?>"></td>
                             <td><?= $stt++ ?></td>
                             <td><?= htmlspecialchars($row['maThongBao']) ?></td>
                             <td><?= htmlspecialchars($row['tieuDe']) ?></td>
                             <td><?= htmlspecialchars($row['nguoiGui']) ?></td>
-                            <td><?= htmlspecialchars($row['ngayGui']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['ngayGui']) ?></td>
                             <td><?= htmlspecialchars($row['tongNguoiNhan']) ?></td>
-                            <td><?= htmlspecialchars($row['soDaDoc']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['soDaDoc']) ?></td>
                             <td class="actions">
                                 <a href="xemtb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" style="text-decoration: none;" title="Xem chi tiết">
                                     <i class="fa-solid fa-eye"></i>
@@ -434,7 +459,13 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
                 <?php endif; ?>
             </div>
         </div>
-        <!-- ========= HẾT THANH PHÂN TRANG ========= -->
+        <!-- Nút xóa -->
+        <div class="button-container">
+            <button id="deleteSelected"
+                style="margin:20px 0; padding:10px 0px; background: red; color:white; border:none; border-radius:6px; cursor:pointer; width:150px;">
+                Xóa thông báo
+            </button>
+        </div>
     </div>
 
     <!-- Popup: Thêm -->
@@ -495,6 +526,39 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
     </div>
 
     <script>
+        document.getElementById("deleteSelected").addEventListener("click", async () => {
+            const selected = Array.from(document.querySelectorAll(".row-check:checked"))
+                .map(cb => cb.value);
+
+            if (selected.length === 0) {
+                alert("Vui lòng chọn ít nhất một thông báo để xóa.");
+                return;
+            }
+
+            if (!confirm("Bạn có chắc muốn xóa các thông báo đã chọn?")) return;
+
+            const res = await fetch("xoatb.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    selected
+                })
+            });
+
+            const json = await res.json();
+            alert(json.message);
+            if (!json.error) location.reload();
+        });
+
+        // Checkbox "chọn tất cả"
+        document.getElementById("checkAll").addEventListener("change", function() {
+            const checked = this.checked;
+            document.querySelectorAll(".row-check").forEach(cb => cb.checked = checked);
+        });
+
+
         // Đặt giá trị tối thiểu cho datetime picker là hiện tại
         function setMinDateTime() {
             const now = new Date();

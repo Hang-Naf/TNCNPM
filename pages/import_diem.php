@@ -3,6 +3,7 @@ include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
+
 require __DIR__ . '/../vendor/autoload.php';
 
 // ==== Kiểm tra quyền Admin ====
@@ -26,6 +27,7 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
 
             $countInsert = 0;
             $countUpdate = 0;
+            $countInvalid = 0;
 
             foreach ($rows as $row) {
                 $maHS     = trim((string)$row[0]);
@@ -37,7 +39,17 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
                     $maHS     = $conn->real_escape_string($maHS);
                     $maMonHoc = $conn->real_escape_string($maMonHoc);
                     $loaiDiem = $conn->real_escape_string($loaiDiem);
-                    $diem     = floatval($diem);
+
+                    // ==== Kiểm tra điểm hợp lệ ====
+                    if (!is_numeric($diem)) {
+                        $countInvalid++;
+                        continue;
+                    }
+                    $diem = floatval($diem);
+                    if ($diem < 0 || $diem > 10) {
+                        $countInvalid++;
+                        continue;
+                    }
 
                     // Nếu bảng diemso có UNIQUE KEY (maHS, maMonHoc, loaiDiem)
                     $sql = "INSERT INTO diemso (maHS, maMonHoc, loaiDiem, diem)
@@ -56,7 +68,10 @@ if (isset($_FILES['file']) && $_FILES['file']['error'] == 0) {
                 }
             }
 
-            echo "<script>alert('Import Excel hoàn tất! Thêm mới $countInsert bản ghi, cập nhật $countUpdate bản ghi.'); window.location.href='qldiemso.php';</script>";
+            echo "<script>
+                alert('Import Excel hoàn tất! Thêm mới $countInsert bản ghi, cập nhật $countUpdate bản ghi. Bỏ qua $countInvalid điểm không hợp lệ.');
+                window.location.href='qldiemso.php';
+            </script>";
         } catch (Exception $e) {
             echo "<script>alert('Lỗi đọc file Excel: " . $e->getMessage() . "'); window.location.href='qldiemso.php';</script>";
         }

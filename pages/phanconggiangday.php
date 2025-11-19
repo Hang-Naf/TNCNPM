@@ -78,6 +78,10 @@ if (!$giaoviens) {
             margin: 0;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         .container {
             padding: 20px;
         }

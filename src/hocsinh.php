@@ -56,7 +56,7 @@ try {
     } elseif ($action === 'update') {
         $userId    = (int)$data['userId'];
         $hoVaTen   = $conn->real_escape_string($data['hoVaTen']);
-        
+
         if (strlen($hoVaTen) > 255) {
             echo json_encode(["error" => "Họ và tên không được vượt quá 255 ký tự!"]);
             exit();
@@ -90,6 +90,29 @@ try {
         } else {
             echo json_encode(['error' => $conn->error]);
         }
+    } elseif ($action === 'deleteMany') {
+        $ids = $data['userIds'] ?? [];
+        if (empty($ids) || !is_array($ids)) {
+            echo json_encode(['error' => 'Không có học sinh nào được chọn']);
+            exit();
+        }
+
+        // Chuyển mảng ID thành chuỗi số nguyên an toàn
+        $idList = implode(",", array_map("intval", $ids));
+
+        $conn->begin_transaction();
+        try {
+            // Xóa trong bảng hocsinh
+            $conn->query("DELETE FROM hocsinh WHERE maHS IN ($idList)");
+            // Xóa trong bảng user
+            $conn->query("DELETE FROM user WHERE userID IN ($idList) AND vaiTro='HocSinh'");
+            $conn->commit();
+            echo json_encode(['message' => 'Đã xóa ' . count($ids) . ' học sinh thành công!']);
+        } catch (Exception $e) {
+            $conn->rollback();
+            echo json_encode(['error' => 'Lỗi khi xóa: ' . $e->getMessage()]);
+        }
+        exit();
     } else {
         echo json_encode(['error' => 'Hành động không hợp lệ']);
     }

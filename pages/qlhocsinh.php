@@ -64,12 +64,26 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             margin: 0;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+        
         .container {
             padding: 20px;
         }
 
         h1 {
             margin-bottom: 20px;
+            margin-left: 50px;
+        }
+
+        .button-container {
+            text-align: right;
+            margin-right: 50px;
+        }
+
+        .hide-col {
+            display: none;
         }
 
         .add-btn {
@@ -79,17 +93,21 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            display: flex;
+            /* display: flex; */
             align-items: center;
             gap: 6px;
             width: 150px;
         }
 
         table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
             background: white;
-            margin-top: 20px;
+            margin: 40px 30px;
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -252,24 +270,26 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
             </div>
         </header>
         <h1>QUẢN LÝ HỌC SINH</h1>
-        <button class="add-btn" onclick="window.location.href='themhocsinh.php'">
-            <i class="fa-solid fa-plus"></i> Thêm Học Sinh
-        </button>
+        <div class="button-container">
+            <button class="add-btn" onclick="window.location.href='themhocsinh.php'">
+                <i class="fa-solid fa-plus"></i> Thêm Học Sinh
+            </button>
+        </div>
 
         <table>
             <thead>
                 <tr>
-                    <th><input type="checkbox"></th>
+                    <th><input type="checkbox" id="checkAll"></th>
                     <th>STT</th>
                     <th>MÃ HS</th>
                     <th>HỌ TÊN</th>
-                    <th>GIỚI TÍNH</th>
-                    <th>EMAIL</th>
-                    <th>SDT</th>
+                    <th class="hide-col">GIỚI TÍNH</th>
+                    <th class="hide-col">EMAIL</th>
+                    <th class="hide-col">SDT</th>
                     <th>LỚP</th>
                     <th>CHỨC VỤ</th>
-                    <th>KHÓA HỌC</th>
-                    <th>HỌC KỲ</th>
+                    <th class="hide-col">KHÓA HỌC</th>
+                    <th class="hide-col">HỌC KỲ</th>
                     <th>TRẠNG THÁI</th>
                     <th>TÁC VỤ</th>
                 </tr>
@@ -278,17 +298,17 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                 <?php if ($result->num_rows > 0): $stt = $offset + 1;
                     while ($row = $result->fetch_assoc()): ?>
                         <tr data-id="<?= $row['maHS'] ?>">
-                            <td><input type="checkbox"></td>
+                            <td><input type="checkbox" class="row-check"></td>
                             <td><?= $stt++ ?></td>
                             <td><?= $row['maHS'] ?></td>
                             <td><?= htmlspecialchars($row['hoVaTen']) ?></td>
-                            <td><?= htmlspecialchars($row['gioiTinh']) ?></td>
-                            <td><?= htmlspecialchars($row['email']) ?></td>
-                            <td><?= htmlspecialchars($row['sdt']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['gioiTinh']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['email']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['sdt']) ?></td>
                             <td><?= htmlspecialchars($row['lopHocPhuTrach']) ?></td>
                             <td><?= htmlspecialchars($row['chucVu']) ?></td>
-                            <td><?= htmlspecialchars($row['namHoc']) ?></td>
-                            <td><?= htmlspecialchars($row['hocKy']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['namHoc']) ?></td>
+                            <td class="hide-col"><?= htmlspecialchars($row['hocKy']) ?></td>
                             <td>
                                 <span class="status <?= $row['trangThai'] === 'active' ? 'active' : 'inactive' ?>">
                                     <?= $row['trangThai'] === 'active' ? 'Hoạt động' : 'Tạm dừng' ?>
@@ -330,6 +350,13 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
                 <?php endif; ?>
             </div>
+        </div>
+        <!-- Nút xóa -->
+        <div class="button-container">
+            <button id="deleteSelected"
+                style="margin:20px 0; padding:10px 0px; background: red; color:white; border:none; border-radius:6px; cursor:pointer; width:150px;">
+                Xóa học sinh
+            </button>
         </div>
     </div>
 
@@ -418,6 +445,39 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
     </div>
 
     <script>
+        // Chọn tất cả
+        const checkAll = document.getElementById("checkAll");
+        checkAll.addEventListener("change", () => {
+            document.querySelectorAll(".row-check").forEach(cb => cb.checked = checkAll.checked);
+        });
+
+        // Xóa nhiều học sinh
+        document.getElementById("deleteSelected").addEventListener("click", async () => {
+            const checked = document.querySelectorAll(".row-check:checked");
+            if (checked.length === 0) {
+                alert("❌ Vui lòng chọn ít nhất một học sinh để xóa!");
+                return;
+            }
+
+            const ids = Array.from(checked).map(cb => cb.closest("tr").dataset.id);
+
+            if (!confirm("Bạn có chắc muốn xóa " + ids.length + " học sinh đã chọn?")) return;
+
+            const res = await fetch("../src/hocsinh.php", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    action: "deleteMany",
+                    userIds: ids
+                })
+            });
+            const json = await res.json();
+            alert(json.message || json.error);
+            if (json.message) location.reload();
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu

@@ -18,6 +18,10 @@ if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "Admin") {
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
     <style>
+        .header {
+            padding: 10px 25px;
+        }
+
         .import-box {
             background: #fff;
             padding: 30px;

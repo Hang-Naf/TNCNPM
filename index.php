@@ -37,6 +37,10 @@ $vaiTro = $_SESSION["vaiTro"];
         color: #1a1a1a;
     }
 
+    .header {
+        padding: 10px 25px;
+    }
+
     h1 {
         font-size: 24px;
         font-weight: 700;
@@ -432,7 +436,7 @@ $vaiTro = $_SESSION["vaiTro"];
                 menu.style.display = "none";
             }
         });
-        
+
         // Khi click vào "Xem chi tiết thông báo"
         document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
             window.location.href = "../pages/qlthongbao.php";

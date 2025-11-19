@@ -95,6 +95,10 @@ $stmt->close();
             margin: 20px;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;

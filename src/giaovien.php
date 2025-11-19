@@ -169,4 +169,36 @@ if ($action === "delete") {
     exit();
 }
 
+// ======================== XÓA NHIỀU GIÁO VIÊN ========================
+if ($action === "deleteMany") {
+    $ids = $data["userIds"] ?? [];
+
+    if (empty($ids) || !is_array($ids)) {
+        echo json_encode(["error" => "Không có giáo viên nào được chọn!"]);
+        exit();
+    }
+
+    // Chuyển mảng ID thành chuỗi số nguyên an toàn
+    $idList = implode(",", array_map("intval", $ids));
+
+    $conn->begin_transaction();
+    try {
+        // Xóa trong bảng giaovien trước
+        $conn->query("DELETE FROM giaovien WHERE maGV IN ($idList)");
+
+        // Xóa trong bảng user
+        $conn->query("DELETE FROM user WHERE userID IN ($idList) AND vaiTro='GiaoVien'");
+
+        // Xóa phân công môn học
+        $conn->query("DELETE FROM giaovien_monhoc WHERE maGV IN ($idList)");
+
+        $conn->commit();
+        echo json_encode(["message" => "Đã xóa " . count($ids) . " giáo viên thành công!"]);
+    } catch (Exception $e) {
+        $conn->rollback();
+        echo json_encode(["error" => "Lỗi khi xóa: " . $e->getMessage()]);
+    }
+    exit();
+}
+
 echo json_encode(["error" => "Hành động không hợp lệ!"]);

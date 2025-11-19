@@ -122,10 +122,61 @@ $result = $conn->query($sql);
             margin: 20px;
         }
 
+        .header {
+            padding: 10px 25px;
+            margin: -20px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: rgb(243, 243, 243);
+            border-radius: 8px;
+            padding: 0px 12px;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h1 {
+            margin-top: 40px;
+            margin-left: 20px;
+        }
+
+        .button-container {
+            margin-right: 50px;
+            display: flex;
+            justify-content: flex-end;
+            height: 80px;
+        }
+
+        .hide-col {
+            display: none;
+        }
+
+        .add-btn {
+            background: #0b1e6b;
+            color: white;
+            border: none;
+            padding: 8px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            /* display: flex; */
+            align-items: center;
+            gap: 6px;
+            width: 150px;
+        }
+
         table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
-            margin-top: 15px;
+            background: white;
+            margin: 40px 20px;
+        }
+
+        tr {
+            text-align: center;
         }
 
         .filter-box {
@@ -150,7 +201,7 @@ $result = $conn->query($sql);
         }
 
         th {
-            background: #f4f4f4;
+            background: #f1f3f9;
         }
 
         form {
@@ -164,14 +215,10 @@ $result = $conn->query($sql);
             padding: 5px;
         }
 
-        button {
-            padding: 10px 12px;
-            cursor: pointer;
-            width: 200px;
-            background: #0b1e6b;
-            color: white;
-            border: none;
-            border-radius: 6px;
+        select {
+            margin: 5px 0;
+            padding: 5px;
+            width: 30em;
         }
     </style>
 </head>
@@ -263,8 +310,7 @@ $result = $conn->query($sql);
             </div>
         </header>
 
-        <h2>BẢNG ĐIỂM</h2>
-        <button class="add-btn" onclick="window.location.href='../pages/nhapdiem.php'"><i class="fa-solid fa-plus"></i> Thêm </button>
+        <h1>BẢNG ĐIỂM</h1>
 
         <form method="GET" class="filter-box">
             <div>
@@ -293,6 +339,7 @@ $result = $conn->query($sql);
         <table>
             <thead>
                 <tr>
+                    <th><input type="checkbox" id="checkAll"></th>
                     <th>STT</th>
                     <th>MÃ HS</th>
                     <th>HỌ TÊN</th>
@@ -323,10 +370,11 @@ $result = $conn->query($sql);
 
                         $hrefChiTiet = "../pages/chitietdiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
                         $hrefSua = "../pages/suadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
-                        $hrefXoa = "../pages/xoadiem.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
+                        $hrefXuat = "../pages/export_diem_excel.php?maHS=" . urlencode($row['maHS']) . "&mon=" . urlencode($row['tenMonHoc']);
 
                         echo "
                             <tr>
+                                <td><input type='checkbox' class='rowCheckbox'></td>
                                 <td>{$stt}</td>
                                 <td>K" . str_pad($row['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
                                 <td>" . htmlspecialchars($row['hoVaTen']) . "</td>
@@ -335,12 +383,12 @@ $result = $conn->query($sql);
                                 <td>" . ($row['diemHK2'] ?? '-') . "</td>
                                 <td><strong>$tb</strong></td>
                                 <td>
-                                    <a href='{$hrefChiTiet}' title='Xem chi tiết'><i class='fa-solid fa-eye' style='color:green;'></i></a>
+                                    <a href='{$hrefChiTiet}' title='Xem chi tiết'><i class='fa-solid fa-eye' style='color:black;'></i></a>
                                     &nbsp;
-                                    <a href='{$hrefSua}' title='Sửa điểm'><i class='fa-solid fa-pen-to-square' style='color:#0b3364;'></i></a>
+                                    <a href='{$hrefSua}' title='Sửa điểm'><i class='fa-solid fa-pen-to-square' style='color:black;'></i></a>
                                     &nbsp;
-                                    <a href='{$hrefXoa}' onclick=\"return confirm('Bạn có chắc muốn xóa toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($row['tenMonHoc']) . " không?');\" title='Xóa điểm'>
-                                        <i class='fa-solid fa-trash' style='color:black;'></i>
+                                    <a href='{$hrefXuat}' onclick=\"return confirm('Bạn có chắc muốn xuất toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($row['tenMonHoc']) . " không?');\" title='Xuất điểm'>
+                                        <i class='fa-solid fa-file-export' style='color:black;'></i>
                                     </a>
                                 </td>
                             </tr>";
@@ -377,11 +425,54 @@ $result = $conn->query($sql);
             </div>
         </div>
         <!-- Nút Import -->
-        <a href="import_diem_excel.php" style="margin:20px 0; padding:10px 16px; background:#0b1e6b; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; width:200px;">
-            📥 Import bảng điểm
-        </a>
+        <div class="button-container">
+            <button href="import_diem_excel.php" style="margin:20px 30px; padding:10px 16px; background:#0b1e6b; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; width:200px;">
+                Import bảng điểm
+            </button>
+            <form method="POST" action="export_diem_excel.php" id="exportForm">
+                <input type="hidden" name="selectedHS" id="selectedHS">
+                <button type="submit" style="margin:20px 0; padding:10px 16px; background:green; color:white; border:none; border-radius:6px; cursor:pointer; width:200px; height: 41px;">
+                    Export bảng điểm
+                </button>
+            </form>
+        </div>
     </div>
     <script>
+        // Checkbox "chọn tất cả"
+        const checkAll = document.getElementById("checkAll");
+        const rowCheckboxes = document.querySelectorAll(".rowCheckbox");
+
+        // Khi tick vào checkbox đầu tiên
+        checkAll.addEventListener("change", function() {
+            rowCheckboxes.forEach(cb => cb.checked = checkAll.checked);
+        });
+
+        // Khi tick/bỏ tick từng checkbox con
+        // rowCheckboxes.forEach(cb => {
+        //     cb.addEventListener("change", function() {
+        //         const allChecked = Array.from(rowCheckboxes).every(c => c.checked);
+        //         checkAll.checked = allChecked;
+        //     });
+        // });
+        
+        document.getElementById("exportForm").addEventListener("submit", function(e) {
+            const selected = [];
+            document.querySelectorAll("tbody tr").forEach(row => {
+                const checkbox = row.querySelector(".rowCheckbox");
+                if (checkbox && checkbox.checked) {
+                    // cột MÃ HS nằm ở vị trí thứ 2 (index 2)
+                    const maHS = row.children[2]?.innerText.replace("K", "");
+                    selected.push(maHS);
+                }
+            });
+            if (selected.length === 0) {
+                alert("Vui lòng chọn ít nhất một học sinh để export!");
+                e.preventDefault();
+                return;
+            }
+            document.getElementById("selectedHS").value = selected.join(",");
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu

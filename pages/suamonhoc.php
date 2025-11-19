@@ -57,6 +57,10 @@ $gv_rs = $conn->query("
             background: #f8f9fb;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         .main-container {
             background: white;
             padding: 30px;
