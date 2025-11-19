@@ -165,8 +165,13 @@ $result = $conn->query($sql);
         }
 
         button {
-            padding: 6px 12px;
+            padding: 10px 12px;
             cursor: pointer;
+            width: 200px;
+            background: #0b1e6b;
+            color: white;
+            border: none;
+            border-radius: 6px;
         }
     </style>
 </head>
@@ -359,9 +364,9 @@ $result = $conn->query($sql);
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                 <?php endif; ?>
-                
+
                 <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                
+
                 <?php if ($page < $totalPages): ?>
                     <a href="?page=<?= $page + 1 ?>&lop=<?= urlencode($lopChon) ?>&mon=<?= urlencode($monChon) ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
                     <a href="?page=<?= $totalPages ?>&lop=<?= urlencode($lopChon) ?>&mon=<?= urlencode($monChon) ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
@@ -371,9 +376,11 @@ $result = $conn->query($sql);
                 <?php endif; ?>
             </div>
         </div>
-        <!-- ========= HẾT THANH PHÂN TRANG ========= -->
-
-        
+        <!-- Nút Import -->
+        <a href="import_diem_excel.php" style="margin:20px 0; padding:10px 16px; background:#0b1e6b; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; width:200px;">
+            📥 Import bảng điểm
+        </a>
+    </div>
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");

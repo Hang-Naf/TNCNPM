@@ -19,6 +19,54 @@ $result = $conn->query($sql);
 if (!$result || $result->num_rows == 0) die("Không tìm thấy học sinh");
 $data = $result->fetch_assoc();
 
+// Bật chế độ báo lỗi để MySQLi ném Exception
+mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
+
+// === Khi submit form cập nhật ===
+if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_POST["action"]) && $_POST["action"] === "update") {
+    $userId = intval($_POST["userId"]);
+    $hoVaTen = $_POST["hoVaTen"];
+    $email   = $_POST["email"];
+    $sdt     = $_POST["sdt"];
+    $gioiTinh = $_POST["gioiTinh"];
+    $lopHocPhuTrach = $_POST["lopHocPhuTrach"];
+    $chucVu  = $_POST["chucVu"];
+    $namHoc  = $_POST["namHoc"];
+    $hocKy   = $_POST["hocKy"];
+    $trangThai = $_POST["trangThai"];
+
+    try {
+        // Bắt đầu transaction
+        $conn->begin_transaction();
+
+        // Cập nhật bảng user
+        $sqlUser = "UPDATE user SET hoVaTen=?, email=?, sdt=?, gioiTinh=? WHERE userID=?";
+        $stmtUser = $conn->prepare($sqlUser);
+        $stmtUser->bind_param("ssssi", $hoVaTen, $email, $sdt, $gioiTinh, $userId);
+        $stmtUser->execute();
+        $stmtUser->close();
+
+        // Cập nhật bảng hocsinh
+        $sqlHS = "UPDATE hocsinh 
+                  SET lopHocPhuTrach=?, chucVu=?, namHoc=?, hocKy=?, trangThai=? 
+                  WHERE maHS=?";
+        $stmtHS = $conn->prepare($sqlHS);
+        $stmtHS->bind_param("sssssi", $lopHocPhuTrach, $chucVu, $namHoc, $hocKy, $trangThai, $userId);
+        $stmtHS->execute();
+        $stmtHS->close();
+
+        // Commit nếu thành công
+        $conn->commit();
+
+        echo "<script>alert('Cập nhật thông tin học sinh thành công!'); window.location.href='qlhocsinh.php';</script>";
+    } catch (Exception $e) {
+        // Rollback nếu có lỗi
+        $conn->rollback();
+        echo "<script>alert('Lỗi khi cập nhật: " . $e->getMessage() . "'); window.history.back();</script>";
+    }
+    exit();
+}
+
 // Lấy danh sách lớp học
 $lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
 ?>

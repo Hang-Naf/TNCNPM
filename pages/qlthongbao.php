@@ -389,13 +389,13 @@ $count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
                             <td><?= htmlspecialchars($row['tongNguoiNhan']) ?></td>
                             <td><?= htmlspecialchars($row['soDaDoc']) ?></td>
                             <td class="actions">
-                                <a href="xemtb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" title="Xem chi tiết">
+                                <a href="xemtb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" style="text-decoration: none;" title="Xem chi tiết">
                                     <i class="fa-solid fa-eye"></i>
                                 </a>
-                                <a href="suatb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" title="Chỉnh sửa">
+                                <a href="suatb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" style="text-decoration: none;" title="Chỉnh sửa">
                                     <i class="fa-solid fa-pen-to-square"></i>
                                 </a>
-                                <a href="xoatb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>"
+                                <a href="xoatb.php?maThongBao=<?= urlencode($row['maThongBao']) ?>" style="text-decoration: none;"
                                     onclick="return confirm('Bạn có chắc muốn xóa thông báo này?')"
                                     title="Xóa">
                                     <i class="fa-solid fa-trash"></i>

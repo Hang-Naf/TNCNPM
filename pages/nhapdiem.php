@@ -40,21 +40,38 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     foreach ($diem as $loai => $value) {
         if ($value !== '' && is_numeric($value)) {
-
-            // Không cho điểm âm hoặc quá 10
             if ($value < 0 || $value > 10) {
                 echo "<script>
-                alert('Điểm phải nằm trong khoảng 0 - 10!');
-                window.history.back();
-            </script>";
+                    alert('Điểm phải nằm trong khoảng 0 - 10!');
+                    window.history.back();
+                </script>";
                 exit();
             }
 
-            $sql = "INSERT INTO diemso (maHS, maMonHoc, loaiDiem, diem, ngayCapNhat) VALUES (?, ?, ?, ?, NOW())";
-            $stmt = $conn->prepare($sql);
-            $stmt->bind_param("iisd", $maHS, $maMon, $loai, $value);
-            if (!$stmt->execute()) {
-                echo "Lỗi SQL: " . $stmt->error;
+            // Kiểm tra xem điểm đã tồn tại chưa
+            $checkSql = "SELECT diem FROM diemso WHERE maHS = ? AND maMonHoc = ? AND loaiDiem = ?";
+            $checkStmt = $conn->prepare($checkSql);
+            $checkStmt->bind_param("iis", $maHS, $maMon, $loai);
+            $checkStmt->execute();
+            $checkStmt->store_result();
+
+            if ($checkStmt->num_rows > 0) {
+                // Nếu đã có điểm → hỏi xác nhận và cập nhật nếu đồng ý
+                echo "<script>
+                    if (confirm('Điểm loại \"$loai\" đã tồn tại. Bạn có muốn cập nhật không?')) {
+                        window.location.href = 'nhapdiem.php?update=1&maHS=$maHS&maMonHoc=$maMon&loaiDiem=$loai&diemMoi=$value';
+                    } else {
+                        window.location.href = 'qldiemso.php';
+                    }
+                </script>";
+                exit();
+            } else {
+                // Nếu chưa có → thêm mới
+                $insertSql = "INSERT INTO diemso (maHS, maMonHoc, loaiDiem, diem, ngayCapNhat)
+                              VALUES (?, ?, ?, ?, NOW())";
+                $stmt = $conn->prepare($insertSql);
+                $stmt->bind_param("iisd", $maHS, $maMon, $loai, $value);
+                $stmt->execute();
             }
         }
     }
@@ -65,6 +82,27 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     </script>";
     exit();
 }
+
+// === Xử lý cập nhật khi xác nhận ===
+if (isset($_GET['update']) && $_GET['update'] == 1) {
+    $maHS = intval($_GET["maHS"]);
+    $maMon = intval($_GET["maMonHoc"]);
+    $loai = $_GET["loaiDiem"];
+    $diemMoi = floatval($_GET["diemMoi"]);
+
+    $updateSql = "UPDATE diemso SET diem = ?, ngayCapNhat = NOW()
+                  WHERE maHS = ? AND maMonHoc = ? AND loaiDiem = ?";
+    $stmt = $conn->prepare($updateSql);
+    $stmt->bind_param("diis", $diemMoi, $maHS, $maMon, $loai);
+    $stmt->execute();
+
+    echo "<script>
+        alert('Cập nhật điểm thành công!');
+        window.location.href = 'qldiemso.php';
+    </script>";
+    exit();
+}
+
 ?>
 
 <!DOCTYPE html>
@@ -104,8 +142,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             color: #0b3364;
             margin-bottom: 20px;
         }
-        
-        form{
+
+        form {
             background: #ffffff;
             padding: 20px;
             border-radius: 8px;

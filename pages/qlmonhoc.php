@@ -296,7 +296,7 @@ $gv_rs = $conn->query("
                                 </span>
                             </td>
                             <td class="actions">
-                                <a href="suamonhoc.php?maMonHoc=<?= $row['maMonHoc'] ?>">
+                                <a href="suamonhoc.php?maMonHoc=<?= $row['maMonHoc'] ?>" style="text-decoration: none;">
                                     <i class="fa-solid fa-pen" style="color: black;"></i>
                                 </a>
                                 <i class="fa-solid fa-trash delete-btn"></i>
