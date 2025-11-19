@@ -20,28 +20,31 @@ $currentUserId = $_SESSION["userID"];
 
 // ==== PHÂN TRANG ====
 $itemsPerPage = 10;
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$page   = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $offset = ($page - 1) * $itemsPerPage;
 
-// ==== Lấy danh sách thông báo ====
+// ==== Lọc ====
 $filter = isset($_GET['filter']) ? $_GET['filter'] : 'all';
 
-// ==== TRUY VẤN ĐẾM TỔNG SỐ ITEMS ====
+// ==== Đếm tổng số thông báo mà Admin có thể thấy ====
 if ($filter === 'sent') {
-    $countSql = "
-        SELECT COUNT(*) AS total FROM thongbao
-        WHERE nguoiGui = '$currentUserId'
-    ";
+    // Chỉ đếm thông báo do Admin hiện tại gửi
+    $countSql = "SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGui = ?";
+    $stmtCount = $conn->prepare($countSql);
+    $stmtCount->bind_param("i", $currentUserId);
 } else {
-    $countSql = "SELECT COUNT(*) AS total FROM thongbao";
+    // Đếm tất cả thông báo hệ thống + thông báo Admin gửi
+    $countSql = "SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGui IS NULL OR nguoiGui = ?";
+    $stmtCount = $conn->prepare($countSql);
+    $stmtCount->bind_param("i", $currentUserId);
 }
-
-$countResult = $conn->query($countSql);
-$totalItems = ($countResult && $countResult->num_rows > 0) ? $countResult->fetch_assoc()['total'] : 0;
+$stmtCount->execute();
+$countRes   = $stmtCount->get_result();
+$totalItems = $countRes->fetch_assoc()['total'];
 $totalPages = ceil($totalItems / $itemsPerPage);
 
+// ==== Lấy danh sách thông báo ====
 if ($filter === 'sent') {
-    // Chỉ lấy thông báo do admin hiện tại gửi
     $sql = "
         SELECT 
             t.maThongBao,
@@ -54,13 +57,14 @@ if ($filter === 'sent') {
         FROM thongbao t
         LEFT JOIN user u ON t.nguoiGui = u.userID
         LEFT JOIN thongbaouser tu ON t.maThongBao = tu.maThongBao
-        WHERE t.nguoiGui = '$currentUserId'
+        WHERE t.nguoiGui = ?
         GROUP BY t.maThongBao, t.tieuDe, t.noiDung, t.ngayGui, u.hoVaTen
         ORDER BY t.ngayGui DESC
-        LIMIT $offset, $itemsPerPage
+        LIMIT ?, ?
     ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iii", $currentUserId, $offset, $itemsPerPage);
 } else {
-    // Tất cả thông báo
     $sql = "
         SELECT 
             t.maThongBao,
@@ -73,19 +77,29 @@ if ($filter === 'sent') {
         FROM thongbao t
         LEFT JOIN user u ON t.nguoiGui = u.userID
         LEFT JOIN thongbaouser tu ON t.maThongBao = tu.maThongBao
+        WHERE t.nguoiGui IS NULL OR t.nguoiGui = ?
         GROUP BY t.maThongBao, t.tieuDe, t.noiDung, t.ngayGui, u.hoVaTen
         ORDER BY t.ngayGui DESC
-        LIMIT $offset, $itemsPerPage
+        LIMIT ?, ?
     ";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("iii", $currentUserId, $offset, $itemsPerPage);
 }
+$stmt->execute();
+$result = $stmt->get_result();
 
-$result = $conn->query($sql);
-if (!$result) {
-    die("<pre>SQL Error: " . $conn->error . "</pre>");
-}
-// ==== Thống kê số lượng ====
-$count_all = $conn->query("SELECT COUNT(*) AS total FROM thongbaouser")->fetch_assoc()['total'];
-$count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGui = '$currentUserId'")->fetch_assoc()['total'];
+// ==== Thống kê số lượng cho tab ====
+$count_all_sql = "SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGui IS NULL OR nguoiGui = ?";
+$stmtAll = $conn->prepare($count_all_sql);
+$stmtAll->bind_param("i", $currentUserId);
+$stmtAll->execute();
+$count_all = $stmtAll->get_result()->fetch_assoc()['total'];
+
+$count_sent_sql = "SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGui = ?";
+$stmtSent = $conn->prepare($count_sent_sql);
+$stmtSent->bind_param("i", $currentUserId);
+$stmtSent->execute();
+$count_sent = $stmtSent->get_result()->fetch_assoc()['total'];
 ?>
 
 <!DOCTYPE html>
@@ -408,9 +422,9 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                     <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                 <?php endif; ?>
-                
+
                 <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                
+
                 <?php if ($page < $totalPages): ?>
                     <a href="?page=<?= $page + 1 ?>&filter=<?= $filter ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
                     <a href="?page=<?= $totalPages ?>&filter=<?= $filter ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
@@ -490,14 +504,14 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
             const hours = String(now.getHours()).padStart(2, '0');
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const minDateTime = `${year}-${month}-${date}T${hours}:${minutes}`;
-            
+
             const addThoiGianGui = document.getElementById('addThoiGianGui');
             if (addThoiGianGui) {
                 addThoiGianGui.min = minDateTime;
                 addThoiGianGui.value = minDateTime;
             }
         }
-        
+
         // Gọi khi trang load
         setMinDateTime();
 
@@ -628,7 +642,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
 
         document.getElementById('addForm').onsubmit = async (e) => {
             e.preventDefault();
-            
+
             // Kiểm tra thời gian không được ở quá khứ
             const selectedDateTime = new Date(document.getElementById('addThoiGianGui').value);
             const now = new Date();
@@ -636,7 +650,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                 alert('Vui lòng chọn thời gian ở tương lai!');
                 return;
             }
-            
+
             const formData = new FormData(e.target);
             const res = await fetch('src/thongbao.php', {
                 method: 'POST',
@@ -661,7 +675,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
 
         document.getElementById('editForm').onsubmit = async (e) => {
             e.preventDefault();
-            
+
             // Kiểm tra thời gian không được ở quá khứ
             const selectedDateTime = new Date(document.getElementById('editThoiGianGui').value);
             const now = new Date();
@@ -669,7 +683,7 @@ $count_sent = $conn->query("SELECT COUNT(*) AS total FROM thongbao WHERE nguoiGu
                 alert('Vui lòng chọn thời gian ở tương lai!');
                 return;
             }
-            
+
             const formData = new FormData(e.target);
             const res = await fetch('src/thongbao.php', {
                 method: 'POST',

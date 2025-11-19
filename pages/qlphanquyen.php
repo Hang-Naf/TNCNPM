@@ -47,20 +47,39 @@ if (isset($_POST['add'])) {
 
 // ================== XỬ LÝ CẬP NHẬT VAI TRÒ ==================
 if (isset($_POST['updateRole'])) {
-    $userID = $_POST['userID'];
+    $userID = intval($_POST['userID']);
     $vaiTro = $_POST['vaiTro'];
 
-    $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = '$userID'";
+    $sql = "UPDATE user SET vaiTro = '$vaiTro' WHERE userID = $userID";
     if ($conn->query($sql)) {
+        // Đồng bộ dữ liệu theo vai trò mới
+        if ($vaiTro === "HocSinh") {
+            // Xóa dữ liệu giáo viên
+            $conn->query("DELETE FROM giaovien WHERE maGV = $userID");
+            // Thêm dữ liệu học sinh
+            $lopHoc = "Chưa phân lớp";
+            $chucVu = "Học sinh";
+            $namHoc = date("Y") . "-" . (date("Y") + 1);
+            $hocKy = (date("n") >= 8 && date("n") <= 12) ? "HK1" : ((date("n") >= 1 && date("n") <= 5) ? "HK2" : "Hè");
+            $conn->query("INSERT INTO hocsinh(maHS, lopHocPhuTrach, chucVu, namHoc, hocKy, trangThai)
+                          VALUES($userID,'$lopHoc','$chucVu','$namHoc','$hocKy','Đang học')
+                          ON DUPLICATE KEY UPDATE lopHocPhuTrach='$lopHoc', chucVu='$chucVu', namHoc='$namHoc', hocKy='$hocKy', trangThai='Đang học'");
+        } elseif ($vaiTro === "GiaoVien") {
+            // Xóa dữ liệu học sinh
+            $conn->query("DELETE FROM hocsinh WHERE maHS = $userID");
+            // Thêm dữ liệu giáo viên
+            $conn->query("INSERT INTO giaovien(maGV, boMon)
+                          VALUES($userID,'Chưa phân công')
+                          ON DUPLICATE KEY UPDATE boMon='Chưa phân công'");
+        } elseif ($vaiTro === "Admin") {
+            // Xóa cả dữ liệu học sinh và giáo viên
+            $conn->query("DELETE FROM hocsinh WHERE maHS = $userID");
+            $conn->query("DELETE FROM giaovien WHERE maGV = $userID");
+        }
+
         // Nếu đổi quyền của chính mình
         if ($userID == $_SESSION["userID"]) {
-            // Cập nhật lại session vaiTro
-            $_SESSION["vaiTro"] = $vaiTro;
-
-            // Hủy session để buộc đăng nhập lại
             session_destroy();
-
-            // Chuyển hướng theo vai trò mới
             if ($vaiTro === "GiaoVien") {
                 echo "<script>alert('Bạn đã đổi quyền sang Giáo viên. Vui lòng đăng nhập lại!'); window.location='../pagegiaovien/ttcanhan.php';</script>";
             } elseif ($vaiTro === "HocSinh") {
@@ -69,7 +88,6 @@ if (isset($_POST['updateRole'])) {
                 echo "<script>alert('Bạn đã đổi quyền. Vui lòng đăng nhập lại!'); window.location='../dangnhap.php';</script>";
             }
         } else {
-            // Nếu đổi quyền của người khác thì vẫn ở lại trang phân quyền
             echo "<script>alert('Cập nhật vai trò thành công!'); window.location='qlphanquyen.php';</script>";
         }
     } else {

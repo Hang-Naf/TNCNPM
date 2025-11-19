@@ -29,29 +29,6 @@ $stmt->execute();
 $result = $stmt->get_result();
 $gv = $result->fetch_assoc();
 
-// === Lấy danh sách thông báo ===
-// === Lấy danh sách thông báo cùng trạng thái đọc ===
-$itemsPerPage = 10;
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$offset = ($page - 1) * $itemsPerPage;
-
-// Đếm tổng thông báo
-$count_sql = "SELECT COUNT(*) AS total FROM thongbao";
-$count_res = $conn->query($count_sql);
-$totalItems = $count_res ? intval($count_res->fetch_assoc()['total']) : 0;
-$totalPages = ($itemsPerPage > 0) ? (int)ceil($totalItems / $itemsPerPage) : 1;
-
-$sql_tb = "
-    SELECT tb.maThongBao, tb.tieuDe, tb.ngayGui, tbu.trangThai
-    FROM thongbao tb
-    LEFT JOIN thongbaouser tbu ON tb.maThongBao = tbu.maThongBao AND tbu.userID = ?
-    ORDER BY tb.ngayGui DESC
-    LIMIT ?, ?
-";
-$stmt_tb = $conn->prepare($sql_tb);
-$stmt_tb->bind_param("iii", $userID, $offset, $itemsPerPage);
-$stmt_tb->execute();
-$result_tb = $stmt_tb->get_result();
 
 ?>
 
@@ -60,7 +37,7 @@ $result_tb = $stmt_tb->get_result();
 
 <head>
     <meta charset="UTF-8">
-    <title>Thông báo    </title>
+    <title>Thông báo </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
@@ -280,55 +257,12 @@ $result_tb = $stmt_tb->get_result();
                             <th style="padding:10px; text-align:right; width:150px;">Ngày gửi</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if ($result_tb && $result_tb->num_rows > 0): ?>
-                            <?php while ($row = $result_tb->fetch_assoc()): ?>
-                                <?php $isUnread = ($row['trangThai'] ?? 'Chưa đọc') === 'Chưa đọc'; ?>
-                                <tr class="notification-row" data-title="<?= htmlspecialchars($row['tieuDe']) ?>" style="border-bottom:1px solid #eee; cursor:pointer; <?= $isUnread ? 'background:#f0f8ff;' : '' ?>"
-                                    onclick="window.location.href='chitiet_thongbao.php?id=<?= $row['maThongBao'] ?>'">
-                                    <td style="padding:10px; color:#0b1e6b; font-weight:500;">
-                                        <?= htmlspecialchars($row['tieuDe']) ?> <?= $isUnread ? '🔵' : '' ?>
-                                    </td>
-                                    <td style="padding:10px; text-align:right; color:#333;">
-                                        <?= date('d/m/Y', strtotime($row['ngayGui'])) ?>
-                                    </td>
-                                </tr>
-                            <?php endwhile; ?>
-                        <?php else: ?>
-                            <tr>
-                                <td colspan="2" style="padding:15px; text-align:center; color:#777;">Không có thông báo nào.</td>
-                            </tr>
-                        <?php endif; ?>
+                    <tbody id="notificationTableBody">
+
                     </tbody>
                 </table>
-                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
-                    <span style="font-size:14px; color:#333;">
-                        Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> thông báo)
-                    </span>
+                <div class="pg-container" style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
 
-                    <div style="display:flex; gap:8px; align-items:center;">
-
-                        <!-- Về đầu -->
-                        <?php if ($page > 1): ?>
-                            <a href="?page=1" class="pg">⏮ Đầu</a>
-                            <a href="?page=<?= $page - 1 ?>" class="pg">◀ Trước</a>
-                        <?php else: ?>
-                            <span class="pg disabled">⏮ Đầu</span>
-                            <span class="pg disabled">◀ Trước</span>
-                        <?php endif; ?>
-
-                        <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-
-                        <!-- Trang sau -->
-                        <?php if ($page < $totalPages): ?>
-                            <a href="?page=<?= $page + 1 ?>" class="pg">Sau ▶</a>
-                            <a href="?page=<?= $totalPages ?>" class="pg">Cuối ⏭</a>
-                        <?php else: ?>
-                            <span class="pg disabled">Sau ▶</span>
-                            <span class="pg disabled">Cuối ⏭</span>
-                        <?php endif; ?>
-
-                    </div>
                 </div>
             </div>
         </div>
@@ -490,6 +424,65 @@ $result_tb = $stmt_tb->get_result();
                 });
             });
         }
+
+        function loadNotifications(page = 1, itemsPerPage = 10) {
+            fetch("../get_thongbao.php")
+                .then(res => res.json())
+                .then(data => {
+                    const tbody = document.getElementById("notificationTableBody");
+                    tbody.innerHTML = "";
+
+                    if (data.length > 0) {
+                        // Cắt dữ liệu theo phân trang
+                        const totalItems = data.length;
+                        const totalPages = Math.ceil(totalItems / itemsPerPage);
+                        const start = (page - 1) * itemsPerPage;
+                        const end = start + itemsPerPage;
+                        const pageItems = data.slice(start, end);
+
+                        pageItems.forEach(tb => {
+                            const isUnread = tb.trangThai === "Chưa đọc";
+                            const tr = document.createElement("tr");
+                            tr.className = "notification-row";
+                            tr.style.cursor = "pointer";
+                            if (isUnread) tr.style.background = "#f0f8ff";
+                            tr.onclick = () => window.location.href = "chitiet_thongbao.php?id=" + tb.maThongBao;
+                            tr.innerHTML = `
+                        <td style="padding:10px; color:#0b1e6b; font-weight:500;">
+                            ${tb.tieuDe} ${isUnread ? "🔵" : ""}
+                        </td>
+                        <td style="padding:10px; text-align:right; color:#333;">
+                            ${tb.ngayGui}
+                        </td>
+                    `;
+                            tbody.appendChild(tr);
+                        });
+
+                        // Render phân trang
+                        const pg = document.querySelector(".pg-container");
+                        pg.innerHTML = `
+                    <span style="font-size:14px; color:#333;">
+                        Trang ${page}/${totalPages} (Tổng: ${totalItems} thông báo)
+                    </span>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        ${page > 1 ? `<a href="#" class="pg" onclick="loadNotifications(1)">⏮ Đầu</a>
+                                      <a href="#" class="pg" onclick="loadNotifications(${page-1})">◀ Trước</a>`
+                                    : `<span class="pg disabled">⏮ Đầu</span><span class="pg disabled">◀ Trước</span>`}
+                        <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;">${page}</span>
+                        ${page < totalPages ? `<a href="#" class="pg" onclick="loadNotifications(${page+1})">Sau ▶</a>
+                                               <a href="#" class="pg" onclick="loadNotifications(${totalPages})">Cuối ⏭</a>`
+                                             : `<span class="pg disabled">Sau ▶</span><span class="pg disabled">Cuối ⏭</span>`}
+                    </div>
+                `;
+                    } else {
+                        tbody.innerHTML = `<tr><td colspan="2" style="text-align:center;color:#777;">Không có thông báo nào.</td></tr>`;
+                        document.querySelector(".pg-container").innerHTML = "";
+                    }
+                });
+        }
+
+        // Load trang đầu tiên khi mở
+        document.addEventListener("DOMContentLoaded", () => loadNotifications(1));
 
         // Xử lý đăng xuất
         function logout() {
