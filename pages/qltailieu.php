@@ -173,6 +173,10 @@ $result = $conn->query($sql);
             margin-bottom: 20px;
         }
 
+        .filter-bar div{
+            width: 40%;
+        }
+
         .filter-bar label {
             display: block;
             font-weight: 600;
@@ -184,7 +188,7 @@ $result = $conn->query($sql);
             padding: 8px 10px;
             border: 1px solid #ccc;
             border-radius: 6px;
-            min-width: 160px;
+            width: 100%;
             background: #fff;
         }
 
