@@ -45,12 +45,14 @@ $vaiTro = $_SESSION["vaiTro"];
         font-size: 24px;
         font-weight: 700;
         margin-bottom: 24px;
+        margin-left: 50px;
     }
 
     .stats {
         display: flex;
         gap: 20px;
         flex-wrap: wrap;
+        margin: 0px 30px 0px 30px;
     }
 
     .card {
@@ -86,7 +88,7 @@ $vaiTro = $_SESSION["vaiTro"];
 
     .bottom {
         display: flex;
-        margin-top: 30px;
+        margin: 30px 30px 0px 30px;
         gap: 20px;
         flex-wrap: wrap;
     }
@@ -137,12 +139,12 @@ $vaiTro = $_SESSION["vaiTro"];
         width: 100%;
         background: #fff;
         border: none;
-        border-radius: 6px;
-        padding: 12px;
-        margin-bottom: 10px;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 20px;
         text-align: left;
         font-weight: 600;
-        font-size: 14px;
+        font-size: 17px;
         display: flex;
         align-items: center;
         gap: 8px;

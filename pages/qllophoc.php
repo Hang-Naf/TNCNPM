@@ -320,7 +320,7 @@ $giaovien_rs = $conn->query("
         </table>
 
         <!-- Thanh phân trang -->
-        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:-30px;">
             <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> lớp học)</span>
             <div style="display:flex; gap:8px; align-items:center;">
                 <?php if ($page > 1): ?>

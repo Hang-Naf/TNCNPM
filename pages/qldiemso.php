@@ -172,7 +172,7 @@ $result = $conn->query($sql);
             width: 95%;
             border-collapse: collapse;
             background: white;
-            margin: 40px 20px;
+            margin: 20px 20px;
         }
 
         tr {
@@ -402,7 +402,7 @@ $result = $conn->query($sql);
         </table>
 
         <!-- ========= THANH PHÂN TRANG ========= -->
-        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:-10px;">
             <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> items)</span>
             <div style="display:flex; gap:8px; align-items:center;">
                 <?php if ($page > 1): ?>
