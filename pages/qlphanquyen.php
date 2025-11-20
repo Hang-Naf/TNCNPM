@@ -129,12 +129,31 @@ $result = $conn->query($sql);
 
         .header {
             padding: 10px 25px;
+            margin: -20px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: rgb(243, 243, 243);
+            border-radius: 8px;
+            padding: 0px 12px;
+        }
+
+        h1 {
+            margin-top: 40px;
+            margin-left: 20px;
         }
 
         table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
-            margin-top: 20px;
+            background: white;
+            margin: 40px 20px;
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -295,7 +314,7 @@ $result = $conn->query($sql);
         </table>
 
         <!-- ========= THANH PHÂN TRANG ========= -->
-        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+        <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:-20px;">
             <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> người dùng)</span>
             <div style="display:flex; gap:8px; align-items:center;">
                 <?php if ($page > 1): ?>

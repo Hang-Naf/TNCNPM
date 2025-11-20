@@ -154,12 +154,17 @@ if (!empty($loc_mon)) {
 
         table {
             width: 95%;
+            height: auto;
             border-collapse: collapse;
             background: #fff;
             border-radius: 10px;
-            margin: 20px;
+            margin: 20px 20px 10px 20px;
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -177,11 +182,11 @@ if (!empty($loc_mon)) {
             background: #f9f9f9;
         }
 
-        .status-btns {
+        /* .status-btns {
             display: flex;
             gap: 5px;
             justify-content: center;
-        }
+        } */
 
         .status-btn {
             padding: 5px 8px;
@@ -214,9 +219,11 @@ if (!empty($loc_mon)) {
         .summary-box {
             background: #fff;
             padding: 15px;
+            margin: 20px 20px 10px 0px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             width: 300px;
+            height: auto;
             float: right;
         }
 
@@ -354,53 +361,62 @@ if (!empty($loc_mon)) {
             <form method="POST" id="frmDiemDanh">
                 <input type="hidden" name="ngayHoc" value="<?= $loc_ngay ?>">
                 <input type="hidden" name="maMonHoc" value="<?= $loc_mon ?>">
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>STT</th>
-                            <th>Học sinh</th>
-                            <th>Lớp</th>
-                            <th>Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $stt = 1;
-                        $tong = 0;
-                        $present = 0;
-                        $late = 0;
-                        $absent = 0;
-                        while ($hs = $danhsach->fetch_assoc()) {
-                            $maHS = $hs['maHS'];
-                            $status = $chuyencan[$maHS] ?? '';
-                            if ($status == 'Có mặt') $present++;
-                            elseif ($status == 'Đến muộn') $late++;
-                            elseif ($status == 'Vắng mặt') $absent++;
-                            $tong++;
-                        ?>
+                <div style="display:flex;">
+                    <table>
+                        <thead>
                             <tr>
-                                <td><?= $stt++ ?></td>
-                                <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
-                                <td><?= htmlspecialchars($hs['tenLop'] ?? '-') ?></td>
-                                <td class="status-btns">
-                                    <input type="hidden" name="maHS[<?= $maHS ?>]" value="<?= $maHS ?>">
-                                    <input type="hidden" name="trangThai[<?= $maHS ?>]" id="status<?= $maHS ?>" value="<?= $status ?>">
-                                    <button type="button" class="status-btn present <?= ($status == 'Có mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Có mặt',this)">Có mặt</button>
-                                    <button type="button" class="status-btn late <?= ($status == 'Đến muộn') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Đến muộn',this)">Đến muộn</button>
-                                    <button type="button" class="status-btn absent <?= ($status == 'Vắng mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Vắng mặt',this)">Vắng mặt</button>
-                                </td>
+                                <th>STT</th>
+                                <th>Học sinh</th>
+                                <th>Lớp</th>
+                                <th>Trạng thái</th>
                             </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
-                <br>
-                <div class="button-container">
-                    <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $stt = 1;
+                            $tong = 0;
+                            $present = 0;
+                            $late = 0;
+                            $absent = 0;
+                            while ($hs = $danhsach->fetch_assoc()) {
+                                $maHS = $hs['maHS'];
+                                $status = $chuyencan[$maHS] ?? '';
+                                if ($status == 'Có mặt') $present++;
+                                elseif ($status == 'Đến muộn') $late++;
+                                elseif ($status == 'Vắng mặt') $absent++;
+                                $tong++;
+                            ?>
+                                <tr>
+                                    <td><?= $stt++ ?></td>
+                                    <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
+                                    <td><?= htmlspecialchars($hs['tenLop'] ?? '-') ?></td>
+                                    <td class="status-btns">
+                                        <input type="hidden" name="maHS[<?= $maHS ?>]" value="<?= $maHS ?>">
+                                        <input type="hidden" name="trangThai[<?= $maHS ?>]" id="status<?= $maHS ?>" value="<?= $status ?>">
+                                        <button type="button" class="status-btn present <?= ($status == 'Có mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Có mặt',this)">Có mặt</button>
+                                        <button type="button" class="status-btn late <?= ($status == 'Đến muộn') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Đến muộn',this)">Đến muộn</button>
+                                        <button type="button" class="status-btn absent <?= ($status == 'Vắng mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Vắng mặt',this)">Vắng mặt</button>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+
+                    <div class="summary-box">
+                        <h3>TỔNG QUAN ĐIỂM DANH</h3>
+                        <div class="summary-item"><span>Có mặt:</span><strong><?= $present ?></strong></div>
+                        <div class="summary-item"><span>Đến muộn:</span><strong><?= $late ?></strong></div>
+                        <div class="summary-item"><span>Vắng mặt:</span><strong><?= $absent ?></strong></div>
+                        <hr>
+                        <div class="summary-item">
+                            <span>Tỷ lệ đi học:</span>
+                            <strong><?= $tong > 0 ? round($present / $tong * 100, 1) : 0 ?>%</strong>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Thanh phân trang -->
-                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin:10px;">
                     <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> học sinh)</span>
                     <div style="display:flex; gap:8px; align-items:center;">
                         <?php if ($page > 1): ?>
@@ -422,19 +438,11 @@ if (!empty($loc_mon)) {
                         <?php endif; ?>
                     </div>
                 </div>
+                <div class="button-container">
+                    <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
+                </div>
             </form>
 
-            <div class="summary-box">
-                <h3>TỔNG QUAN ĐIỂM DANH</h3>
-                <div class="summary-item"><span>Có mặt:</span><strong><?= $present ?></strong></div>
-                <div class="summary-item"><span>Đến muộn:</span><strong><?= $late ?></strong></div>
-                <div class="summary-item"><span>Vắng mặt:</span><strong><?= $absent ?></strong></div>
-                <hr>
-                <div class="summary-item">
-                    <span>Tỷ lệ đi học:</span>
-                    <strong><?= $tong > 0 ? round($present / $tong * 100, 1) : 0 ?>%</strong>
-                </div>
-            </div>
         <?php endif; ?>
     </div>
     <script>

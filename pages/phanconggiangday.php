@@ -75,11 +75,12 @@ if (!$giaoviens) {
         body {
             font-family: "Segoe UI", sans-serif;
             background: #f8f9fb;
-            margin: 0;
+            margin: 20px;
         }
 
         .header {
             padding: 10px 25px;
+            margin: -20px;
         }
 
         .container {
@@ -87,7 +88,8 @@ if (!$giaoviens) {
         }
 
         h1 {
-            margin-bottom: 20px;
+            margin-top: 40px;
+            margin-left: 20px;
         }
 
         .add-btn {
@@ -97,10 +99,17 @@ if (!$giaoviens) {
             padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
-            display: flex;
+            /* display: flex; */
             align-items: center;
             gap: 6px;
             width: 170px;
+        }
+
+        .button-container {
+            margin-right: 50px;
+            display: flex;
+            justify-content: flex-end;
+            height: 80px;
         }
 
         table {
@@ -108,6 +117,10 @@ if (!$giaoviens) {
             border-collapse: collapse;
             background: white;
             margin-top: 20px;
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -262,7 +275,9 @@ if (!$giaoviens) {
         </header>
 
         <h1>PHÂN CÔNG GIẢNG DẠY</h1>
-        <button class="add-btn" onclick="window.location.href='thempcgd.php'"><i class="fa-solid fa-plus"></i> Thêm Phân Công</button>
+        <div class="button-container">
+            <button class="add-btn" onclick="window.location.href='thempcgd.php'"><i class="fa-solid fa-plus"></i> Thêm Phân Công</button>
+        </div>
 
         <table>
             <thead>
