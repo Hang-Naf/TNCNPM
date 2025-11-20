@@ -159,8 +159,17 @@ $result = $stmt3->get_result();
             background: #f5f6fa;
         }
 
+        .header {
+            padding: 12px 25px;
+        }
+
         h1 {
-            margin: 20px 0;
+            margin: 20px 0px 15px 30px;
+        }
+
+        .button-container {
+            text-align: right;
+            margin-right: 50px;
         }
 
         .filter-box {
@@ -171,7 +180,17 @@ $result = $stmt3->get_result();
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            margin: 15px 20px 15px 30px;
+        }
+
+        
+        .filter-box form{
+            width: 100%;
+        }
+
+        label {
+            font-weight: 750;
+            color: #333;
         }
 
         select,
@@ -179,6 +198,9 @@ $result = $stmt3->get_result();
             padding: 6px 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            margin-right: 50px;
+            margin-left: 10px;
+            width: 200%;
         }
 
         .btn {
@@ -191,12 +213,18 @@ $result = $stmt3->get_result();
         }
 
         table {
-            width: 100%;
+            width: 95%;
+            height: auto;
             border-collapse: collapse;
             background: #fff;
             border-radius: 10px;
+            margin: 20px 20px 0px 20px;
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -214,11 +242,11 @@ $result = $stmt3->get_result();
             background: #f9f9f9;
         }
 
-        .status-btns {
+        /* .status-btns {
             display: flex;
             gap: 5px;
             justify-content: center;
-        }
+        } */
 
         .status-btn {
             padding: 5px 8px;
@@ -345,7 +373,7 @@ $result = $stmt3->get_result();
         </header>
         <div class="container">
             <h1>BẢNG ĐIỂM</h1>
-            <div style="margin-bottom:10px;">
+            <div style="margin-bottom:10px;" class="button-container">
                 <button class="btn" onclick="window.location.href='nhapdiem.php'">
                     <i class="fa-solid fa-keyboard"></i> Nhập điểm mới
                 </button>

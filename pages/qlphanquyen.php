@@ -54,27 +54,29 @@ if (isset($_POST['updateRole'])) {
     if ($conn->query($sql)) {
         // Đồng bộ dữ liệu theo vai trò mới
         if ($vaiTro === "HocSinh") {
-            // Xóa dữ liệu giáo viên
-            $conn->query("DELETE FROM giaovien WHERE maGV = $userID");
-            // Thêm dữ liệu học sinh
-            $lopHoc = "Chưa phân lớp";
+            $conn->query("UPDATE giaovien SET trangThai='inactive' WHERE maGV=$userID");
+
             $chucVu = "Học sinh";
             $namHoc = date("Y") . "-" . (date("Y") + 1);
             $hocKy = (date("n") >= 8 && date("n") <= 12) ? "HK1" : ((date("n") >= 1 && date("n") <= 5) ? "HK2" : "Hè");
-            $conn->query("INSERT INTO hocsinh(maHS, lopHocPhuTrach, chucVu, namHoc, hocKy, trangThai)
-                          VALUES($userID,'$lopHoc','$chucVu','$namHoc','$hocKy','Đang học')
-                          ON DUPLICATE KEY UPDATE lopHocPhuTrach='$lopHoc', chucVu='$chucVu', namHoc='$namHoc', hocKy='$hocKy', trangThai='Đang học'");
+
+            // KHÔNG ghi đè lopHocPhuTrach
+            $conn->query("INSERT INTO hocsinh(maHS, chucVu, namHoc, hocKy, trangThai)
+                  VALUES($userID,'$chucVu','$namHoc','$hocKy','active')
+                  ON DUPLICATE KEY UPDATE chucVu='$chucVu', namHoc='$namHoc', hocKy='$hocKy', trangThai='active'");
         } elseif ($vaiTro === "GiaoVien") {
-            // Xóa dữ liệu học sinh
-            $conn->query("DELETE FROM hocsinh WHERE maHS = $userID");
-            // Thêm dữ liệu giáo viên
-            $conn->query("INSERT INTO giaovien(maGV, boMon)
-                          VALUES($userID,'Chưa phân công')
-                          ON DUPLICATE KEY UPDATE boMon='Chưa phân công'");
+            $conn->query("UPDATE hocsinh SET trangThai='inactive' WHERE maHS=$userID");
+
+            // KHÔNG ghi đè boMon nếu đã có
+            $conn->query("INSERT INTO giaovien(maGV, boMon, trangThai)
+                  VALUES($userID,'Chưa phân công','active')
+                  ON DUPLICATE KEY UPDATE trangThai='active'");
         } elseif ($vaiTro === "Admin") {
             // Xóa cả dữ liệu học sinh và giáo viên
-            $conn->query("DELETE FROM hocsinh WHERE maHS = $userID");
-            $conn->query("DELETE FROM giaovien WHERE maGV = $userID");
+            // $conn->query("DELETE FROM hocsinh WHERE maHS = $userID");
+            // $conn->query("DELETE FROM giaovien WHERE maGV = $userID");
+            $conn->query("UPDATE giaovien SET trangThai='inactive' WHERE maGV=$userID");
+            $conn->query("UPDATE hocsinh SET trangThai='inactive' WHERE maHS=$userID");
         }
 
         // Nếu đổi quyền của chính mình

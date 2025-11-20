@@ -47,8 +47,12 @@ $gv = $result->fetch_assoc();
             background: #f5f6fa;
         }
 
+        .header {
+            padding: 12px 25px;
+        }
+
         h1 {
-            margin: 20px 0;
+            margin: 20px 0px 15px 30px;
         }
 
         .filter-box {
@@ -59,7 +63,17 @@ $gv = $result->fetch_assoc();
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            margin: 15px 20px 15px 30px;
+        }
+
+        
+        .filter-box form{
+            width: 100%;
+        }
+
+        label {
+            font-weight: 750;
+            color: #333;
         }
 
         select,

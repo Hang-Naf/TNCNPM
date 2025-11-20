@@ -193,8 +193,17 @@ if ($cc) {
             background: #f5f6fa;
         }
 
+        .header {
+            padding: 12px 25px;
+        }
+
         h1 {
-            margin: 20px 0;
+            margin: 20px 0px 15px 30px;
+        }
+
+        .button-container {
+            text-align: right;
+            margin-right: 50px;
         }
 
         .filter-box {
@@ -205,7 +214,16 @@ if ($cc) {
             align-items: center;
             justify-content: space-between;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-            margin-bottom: 15px;
+            margin: 15px 20px 15px 30px;
+        }
+
+        .filter-box form{
+            width: 100%;
+        }
+
+        label {
+            font-weight: 750;
+            color: #333;
         }
 
         select,
@@ -213,6 +231,9 @@ if ($cc) {
             padding: 6px 10px;
             border: 1px solid #ccc;
             border-radius: 5px;
+            margin-right: 50px;
+            margin-left: 10px;
+            width: 30%;
         }
 
         .btn {
@@ -225,12 +246,18 @@ if ($cc) {
         }
 
         table {
-            width: 100%;
+            width: 95%;
+            height: auto;
             border-collapse: collapse;
             background: #fff;
             border-radius: 10px;
+            margin: 20px 20px 0px 20px;
             overflow: hidden;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        tr {
+            text-align: center;
         }
 
         th,
@@ -248,11 +275,11 @@ if ($cc) {
             background: #f9f9f9;
         }
 
-        .status-btns {
+        /* .status-btns {
             display: flex;
             gap: 5px;
             justify-content: center;
-        }
+        } */
 
         .status-btn {
             padding: 5px 8px;
@@ -285,9 +312,11 @@ if ($cc) {
         .summary-box {
             background: #fff;
             padding: 15px;
+            margin: 20px 25px 0px 0px;
             border-radius: 10px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
             width: 300px;
+            height: auto;
             float: right;
         }
 
@@ -317,7 +346,7 @@ if ($cc) {
                 <ul>
                     <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
                     <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li  onclick="window.location.href='../pagegiaovien/lophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li onclick="window.location.href='../pagegiaovien/lophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
                 </ul>
             </div>
 
@@ -339,7 +368,7 @@ if ($cc) {
             <div class="menu-section">
                 <div class="menu-title">Thông báo</div>
                 <ul>
-                    <li  onclick="window.location.href='../pagegiaovien/thongbao.php'"><i class="fa-solid fa-bell"></i> Xem thông báo</li>
+                    <li onclick="window.location.href='../pagegiaovien/thongbao.php'"><i class="fa-solid fa-bell"></i> Xem thông báo</li>
                 </ul>
             </div>
         </nav>
@@ -399,85 +428,88 @@ if ($cc) {
             <form method="POST" id="frmDiemDanh">
                 <input type="hidden" name="ngayHoc" value="<?= $loc_ngay ?>">
                 <input type="hidden" name="maMonHoc" value="<?= $maMonHoc  ?>">
-
-                <table>
-                    <thead>
-                        <tr>
-                            <th>STT</th>
-                            <th>Học sinh</th>
-                            <th>Lớp</th>
-                            <th>Trạng thái</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php
-                        $stt = $offset + 1;
-                        $tong = 0;
-                        $present = 0;
-                        $late = 0;
-                        $absent = 0;
-                        while ($hs = $danhsach->fetch_assoc()) {
-                            $maHS = $hs['maHS'];
-                            $status = $chuyencan[$maHS] ?? '';
-                            if ($status == 'Có mặt') $present++;
-                            elseif ($status == 'Đến muộn') $late++;
-                            elseif ($status == 'Vắng mặt') $absent++;
-                            $tong++;
-                        ?>
-                            <tr class="attendance-row" data-name="<?= htmlspecialchars($hs['hoVaTen']) ?>">
-                                <td><?= $stt++ ?></td>
-                                <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
-                                <td><?= htmlspecialchars($hs['tenLop'] ?? '-') ?></td>
-                                <td class="status-btns">
-                                    <input type="hidden" name="maHS[<?= $maHS ?>]" value="<?= $maHS ?>">
-                                    <input type="hidden" name="trangThai[<?= $maHS ?>]" id="status<?= $maHS ?>" value="<?= $status ?>">
-                                    <button type="button" class="status-btn present <?= ($status == 'Có mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Có mặt',this)">Có mặt</button>
-                                    <button type="button" class="status-btn late <?= ($status == 'Đến muộn') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Đến muộn',this)">Đến muộn</button>
-                                    <button type="button" class="status-btn absent <?= ($status == 'Vắng mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Vắng mặt',this)">Vắng mặt</button>
-                                </td>
+                <div style="display:flex;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>STT</th>
+                                <th>Học sinh</th>
+                                <th>Lớp</th>
+                                <th>Trạng thái</th>
                             </tr>
-                        <?php } ?>
-                    </tbody>
-                </table>
-                <br>
-                <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
+                        </thead>
+                        <tbody>
+                            <?php
+                            $stt = $offset + 1;
+                            $tong = 0;
+                            $present = 0;
+                            $late = 0;
+                            $absent = 0;
+                            while ($hs = $danhsach->fetch_assoc()) {
+                                $maHS = $hs['maHS'];
+                                $status = $chuyencan[$maHS] ?? '';
+                                if ($status == 'Có mặt') $present++;
+                                elseif ($status == 'Đến muộn') $late++;
+                                elseif ($status == 'Vắng mặt') $absent++;
+                                $tong++;
+                            ?>
+                                <tr class="attendance-row" data-name="<?= htmlspecialchars($hs['hoVaTen']) ?>">
+                                    <td><?= $stt++ ?></td>
+                                    <td><?= htmlspecialchars($hs['hoVaTen']) ?></td>
+                                    <td><?= htmlspecialchars($hs['tenLop'] ?? '-') ?></td>
+                                    <td class="status-btns">
+                                        <input type="hidden" name="maHS[<?= $maHS ?>]" value="<?= $maHS ?>">
+                                        <input type="hidden" name="trangThai[<?= $maHS ?>]" id="status<?= $maHS ?>" value="<?= $status ?>">
+                                        <button type="button" class="status-btn present <?= ($status == 'Có mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Có mặt',this)">Có mặt</button>
+                                        <button type="button" class="status-btn late <?= ($status == 'Đến muộn') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Đến muộn',this)">Đến muộn</button>
+                                        <button type="button" class="status-btn absent <?= ($status == 'Vắng mặt') ? 'active' : '' ?>" onclick="setStatus(<?= $maHS ?>,'Vắng mặt',this)">Vắng mặt</button>
+                                    </td>
+                                </tr>
+                            <?php } ?>
+                        </tbody>
+                    </table>
+
+                    <div class="summary-box">
+                        <h3>TỔNG QUAN ĐIỂM DANH</h3>
+                        <div class="summary-item"><span>Có mặt:</span><strong><?= $present ?></strong></div>
+                        <div class="summary-item"><span>Đến muộn:</span><strong><?= $late ?></strong></div>
+                        <div class="summary-item"><span>Vắng mặt:</span><strong><?= $absent ?></strong></div>
+                        <hr>
+                        <div class="summary-item">
+                            <span>Tỷ lệ đi học:</span>
+                            <strong><?= $tong > 0 ? round($present / $tong * 100, 1) : 0 ?>%</strong>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- Thanh phân trang -->
-                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
+                <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin:20px;">
                     <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> học sinh)</span>
                     <div style="display:flex; gap:8px; align-items:center;">
                         <?php if ($page > 1): ?>
-                            <a href="?page=1<?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
-                            <a href="?page=<?= $page - 1 ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                            <a href="?page=1<?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                            <a href="?page=<?= $page - 1 ?><?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
                         <?php else: ?>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                         <?php endif; ?>
-                        
+
                         <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                        
+
                         <?php if ($page < $totalPages): ?>
-                            <a href="?page=<?= $page + 1 ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
-                            <a href="?page=<?= $totalPages ?><?= !empty($loc_ngay) ? '&ngayHoc='.$loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop='.$loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc='.$loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                            <a href="?page=<?= $page + 1 ?><?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                            <a href="?page=<?= $totalPages ?><?= !empty($loc_ngay) ? '&ngayHoc=' . $loc_ngay : '' ?><?= !empty($loc_lop) ? '&maLop=' . $loc_lop : '' ?><?= !empty($loc_mon) ? '&maMonHoc=' . $loc_mon : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
                         <?php else: ?>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
                         <?php endif; ?>
                     </div>
                 </div>
+                <div class="button-container">
+                    <button type="submit" name="save" class="btn">💾 Lưu điểm danh</button>
+                </div>
             </form>
 
-            <div class="summary-box">
-                <h3>TỔNG QUAN ĐIỂM DANH</h3>
-                <div class="summary-item"><span>Có mặt:</span><strong><?= $present ?></strong></div>
-                <div class="summary-item"><span>Đến muộn:</span><strong><?= $late ?></strong></div>
-                <div class="summary-item"><span>Vắng mặt:</span><strong><?= $absent ?></strong></div>
-                <hr>
-                <div class="summary-item">
-                    <span>Tỷ lệ đi học:</span>
-                    <strong><?= $tong > 0 ? round($present / $tong * 100, 1) : 0 ?>%</strong>
-                </div>
-            </div>
         <?php endif; ?>
     </div>
     <script>
@@ -627,7 +659,7 @@ if ($cc) {
         // Xử lý tìm kiếm học sinh
         const searchInput = document.getElementById("searchAttendance");
         const attendanceRows = document.querySelectorAll(".attendance-row");
-        
+
         if (searchInput) {
             searchInput.addEventListener("input", function() {
                 const keyword = this.value.trim().toLowerCase();

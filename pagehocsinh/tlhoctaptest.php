@@ -3,54 +3,64 @@ include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
-// ==== Kiểm tra đăng nhập và vai trò học sinh ====
-if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "HocSinh") {
+// ==== Kiểm tra đăng nhập ====
+if (!isset($_SESSION["userID"])) {
+    header("Location: ../dangnhap.php");
+    exit();
+}
+
+// ==== Chỉ cho phép Học Sinh ====
+if ($_SESSION["vaiTro"] !== "HocSinh") {
     header("Location: ../dangnhap.php");
     exit();
 }
 
 $maHS = $_SESSION["userID"];
 
-// ==== Lấy thông tin học sinh và các lớp học sinh thuộc về ====
-$sqlHS = "SELECT u.hoVaTen FROM user u WHERE u.userID = ?";
+// ==== Lấy thông tin học sinh và mã lớp (INT) ====
+$sqlHS = "SELECT h.maHS, h.maLop, u.hoVaTen 
+          FROM hocsinh h
+          JOIN user u ON h.maHS = u.userID
+          WHERE h.maHS = ?";
 $stmtHS = $conn->prepare($sqlHS);
 $stmtHS->bind_param("i", $maHS);
 $stmtHS->execute();
 $hs = $stmtHS->get_result()->fetch_assoc();
 $stmtHS->close();
 
-// Lấy tất cả maLop mà học sinh thuộc về
-$sqlLop = "SELECT maLop FROM hocsinh_lophoc WHERE maHS = ?";
-$stmtLop = $conn->prepare($sqlLop);
-$stmtLop->bind_param("i", $maHS);
-$stmtLop->execute();
-$lopResult = $stmtLop->get_result();
-$maLopArr = [];
-while ($row = $lopResult->fetch_assoc()) {
-    $maLopArr[] = intval($row['maLop']);
-}
-$stmtLop->close();
+$maLopHS = $hs['maLop']; // Lấy ID lớp (INT)
 
-if (count($maLopArr) === 0) {
-    echo '<h2 style="color:red;text-align:center;margin-top:40px;">Bạn chưa được phân vào lớp nào. Vui lòng liên hệ giáo viên hoặc quản trị viên.</h2>';
-    exit();
-}
+// === PHÂN TRANG ===
+$itemsPerPage = 10;
+$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$offset = ($page - 1) * $itemsPerPage;
 
-// ==== Lấy danh sách môn học của các lớp học sinh thuộc về ====
-$inLop = implode(',', array_fill(0, count($maLopArr), '?'));
-$sqlMon = "SELECT DISTINCT m.maMonHoc, m.tenMonHoc FROM lophoc_monhoc lm JOIN monhoc m ON lm.maMonHoc = m.maMonHoc WHERE lm.maLop IN ($inLop)";
-$stmtMon = $conn->prepare($sqlMon);
-if (count($maLopArr) > 0) {
-    $stmtMon->bind_param(str_repeat('i', count($maLopArr)), ...$maLopArr);
+// ==== Lấy danh sách môn học của lớp học sinh ====
+if (!empty($maLopHS)) {
+    $sqlMon = "SELECT DISTINCT m.maMonHoc, m.tenMonHoc
+               FROM lophoc_monhoc lm
+               JOIN monhoc m ON lm.maMonHoc = m.maMonHoc
+               WHERE lm.maLop = ?";
+    $stmtMon = $conn->prepare($sqlMon);
+    $stmtMon->bind_param("i", $maLopHS);
+    $stmtMon->execute();
+    $monhocList = $stmtMon->get_result();
+    $stmtMon->close();
+} else {
+    // no class assigned: empty result set to keep the template safe
+    $monhocList = $conn->query("SELECT maMonHoc, tenMonHoc FROM monhoc WHERE 1=0");
 }
-$stmtMon->execute();
-$monhocList = $stmtMon->get_result();
-$stmtMon->close();
 
 // ==== Lọc theo môn học nếu có ====
-$params = $maLopArr;
-$types = str_repeat('i', count($maLopArr));
-$cond = "t.maLop IN ($inLop) AND t.trangThai = 'Công khai'";
+$params = [];
+$types = "";
+$cond = "t.trangThai = 'Công khai' OR t.trangThai LIKE '%Cong%' OR t.trangThai LIKE '%Công%'";
+
+if (!empty($maLopHS)) {
+    $cond = "t.maLop = ? AND (t.trangThai = 'Công khai' OR t.trangThai LIKE '%Cong%' OR t.trangThai LIKE '%Công%')";
+    $params[] = $maLopHS;
+    $types .= "i";
+}
 
 if (!empty($_GET['maMonHoc'])) {
     $maMonHoc = intval($_GET['maMonHoc']);
@@ -59,39 +69,39 @@ if (!empty($_GET['maMonHoc'])) {
     $types .= "i";
 }
 
-// === PHÂN TRANG ===
-$itemsPerPage = 10;
-$page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
-$offset = ($page - 1) * $itemsPerPage;
-
-// ==== Đếm tổng số tài liệu ====
-$countSql = "SELECT COUNT(*) as total FROM tailieu t WHERE $cond";
+// ==== ĐẾM TỔNG SỐ TÀI LIỆU ====
+$countSql = "SELECT COUNT(*) as total
+            FROM tailieu t
+            WHERE $cond";
 $countStmt = $conn->prepare($countSql);
-$countStmt->bind_param($types, ...$params);
+if ($types !== "") {
+    $countStmt->bind_param($types, ...$params);
+}
 $countStmt->execute();
 $countResult = $countStmt->get_result();
 $countRow = $countResult->fetch_assoc();
 $totalItems = $countRow['total'];
-$totalPages = max(1, ceil($totalItems / $itemsPerPage));
+$totalPages = ceil($totalItems / $itemsPerPage);
 $countStmt->close();
 
 // ==== Lấy danh sách tài liệu ====
-$sql = "SELECT t.maTL, t.tieuDe, t.noiDung, t.tepDinhKem, m.tenMonHoc, u.hoVaTen AS nguoiTao
-    FROM tailieu t
-    LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
-    LEFT JOIN user u ON t.maGV = u.userID
-    WHERE $cond
-    ORDER BY t.maTL DESC
-    LIMIT ?, ?";
-$params[] = $offset;
-$params[] = $itemsPerPage;
-$types .= "ii";
+$sql = "SELECT t.maTL, t.tieuDe, t.noiDung, m.tenMonHoc, u.hoVaTen AS nguoiTao
+        FROM tailieu t
+        LEFT JOIN monhoc m ON t.maMonHoc = m.maMonHoc
+        LEFT JOIN user u ON t.maGV = u.userID
+        WHERE $cond
+        ORDER BY t.maTL DESC
+        LIMIT $offset, $itemsPerPage";
+
 $stmt = $conn->prepare($sql);
-$stmt->bind_param($types, ...$params);
+if ($types !== "") {
+    $stmt->bind_param($types, ...$params);
+}
 $stmt->execute();
 $ds = $stmt->get_result();
 $stmt->close();
 ?>
+
 <!DOCTYPE html>
 <html lang="vi">
 
@@ -105,6 +115,8 @@ $stmt->close();
         body {
             font-family: 'Segoe UI', sans-serif;
             background: #fff;
+            margin: 0;
+            padding: 0;
         }
 
         .content-area {
@@ -157,20 +169,10 @@ $stmt->close();
             background: #fafafa;
         }
 
-        .hide-col {
-            display: none;
-        }
-
         .actions i {
             cursor: pointer;
             margin: 0 5px;
             color: #0b3364;
-        }
-
-        .download-link {
-            color: #0b3364;
-            text-decoration: underline;
-            font-weight: 600;
         }
     </style>
 </head>
@@ -208,6 +210,7 @@ $stmt->close();
                     <input type="text" id="searchDocuments" placeholder="Tìm kiếm tài liệu...">
                 </div>
             </div>
+
             <div class="right">
                 <div class="notification-area">
                     <i class="fa-regular fa-bell" id="bellIcon"></i>
@@ -218,12 +221,13 @@ $stmt->close();
                         <div class="no-noti" id="noNoti">Không có thông báo mới</div>
                     </div>
                 </div>
+
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
                     <span><?= htmlspecialchars($hs['hoVaTen']) ?></span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
-                <div class="user-menu" id="userMenu" style="display:none;">
+                <div class="user-menu" id="userMenu">
                     <ul>
                         <li onclick="window.location.href='../pagehocsinh/ttcanhan.php'"><i class="fa-solid fa-user-gear"></i> Hồ sơ</li>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
@@ -231,8 +235,10 @@ $stmt->close();
                 </div>
             </div>
         </header>
+
         <div class="content-area">
             <h1>DANH SÁCH TÀI LIỆU</h1>
+
             <form method="GET" class="filter-bar">
                 <div>
                     <label>Môn học:</label><br>
@@ -246,6 +252,7 @@ $stmt->close();
                     </select>
                 </div>
             </form>
+
             <table>
                 <thead>
                     <tr>
@@ -254,7 +261,6 @@ $stmt->close();
                         <th>Mô tả</th>
                         <th>Môn học</th>
                         <th>Giáo viên gửi</th>
-                        <th class="hide-col">Tệp đính kèm</th>
                         <th>Tác vụ</th>
                     </tr>
                 </thead>
@@ -270,13 +276,6 @@ $stmt->close();
                                 <td><?= htmlspecialchars($r['noiDung']) ?></td>
                                 <td><?= htmlspecialchars($r['tenMonHoc']) ?></td>
                                 <td><?= htmlspecialchars($r['nguoiTao']) ?></td>
-                                <td class="hide-col">
-                                    <?php if (!empty($r['tepDinhKem'])): ?>
-                                        <a class="download-link" href="../uploads/tailieu/<?= urlencode($r['tepDinhKem']) ?>" target="_blank">Tải về</a>
-                                    <?php else: ?>
-                                        <span style="color:#888;">Không có</span>
-                                    <?php endif; ?>
-                                </td>
                                 <td class="actions">
                                     <i class="fa-solid fa-eye" title="Xem chi tiết" onclick="window.location.href='chitiet_tailieu.php?maTL=<?= $r['maTL'] ?>'"></i>
                                 </td>
@@ -287,26 +286,29 @@ $stmt->close();
                     else:
                         ?>
                         <tr>
-                            <td colspan="7" style="text-align:center;padding:20px;">Không có tài liệu nào.</td>
+                            <td colspan="6" style="text-align:center;padding:20px;">Không có tài liệu nào.</td>
                         </tr>
                     <?php endif; ?>
                 </tbody>
             </table>
+
             <!-- ========= THANH PHÂN TRANG ========= -->
             <div style="padding:12px 16px; background:#f9f9f9; display:flex; justify-content:space-between; align-items:center; border-top:1px solid #eee; margin-top:10px;">
                 <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> tài liệu)</span>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <?php if ($page > 1): ?>
-                        <a href="?page=1<?= !empty($_GET['maMonHoc']) ? '&maMonHoc=' . $_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
-                        <a href="?page=<?= $page - 1 ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc=' . $_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
+                        <a href="?page=1<?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
+                        <a href="?page=<?= $page - 1 ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">◀ Trước</a>
                     <?php else: ?>
                         <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                         <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                     <?php endif; ?>
+                    
                     <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
+                    
                     <?php if ($page < $totalPages): ?>
-                        <a href="?page=<?= $page + 1 ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc=' . $_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
-                        <a href="?page=<?= $totalPages ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc=' . $_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
+                        <a href="?page=<?= $page + 1 ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
+                        <a href="?page=<?= $totalPages ?><?= !empty($_GET['maMonHoc']) ? '&maMonHoc='.$_GET['maMonHoc'] : '' ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
                     <?php else: ?>
                         <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Sau ▶</button>
                         <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
@@ -316,6 +318,7 @@ $stmt->close();
             <!-- ========= HẾT THANH PHÂN TRANG ========= -->
         </div>
     </div>
+
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
@@ -424,24 +427,70 @@ $stmt->close();
                 menu.style.display = "none";
             }
         });
-        // Tìm kiếm tài liệu
+
+        // === Cập nhật chuyên cần tức thì (AJAX) ===
+        function setStatus(maHS, status, button) {
+            // Bỏ active các nút cùng hàng
+            const row = button.closest('.status-btns');
+            row.querySelectorAll('.status-btn').forEach(b => b.classList.remove('active'));
+            button.classList.add('active');
+
+            // Cập nhật input ẩn
+            document.getElementById('status' + maHS).value = status;
+
+            // Lấy dữ liệu cần gửi
+            const formData = new FormData();
+            formData.append('maHS', maHS);
+            formData.append('maMonHoc', document.querySelector('input[name="maMonHoc"]').value);
+            formData.append('ngayHoc', document.querySelector('input[name="ngayHoc"]').value);
+            formData.append('trangThai', status);
+
+            // Gửi AJAX cập nhật vào CSDL
+            formData.append('ajax', '1'); // đánh dấu là request AJAX
+            fetch(window.location.href, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.text())
+                .then(text => {
+                    if (text.trim() === 'OK') {
+                        console.log(' Cập nhật thành công:', maHS, status);
+                    } else {
+                        console.error(' Lỗi:', text);
+                        alert('Không thể cập nhật trạng thái!');
+                    }
+                })
+                .catch(err => console.error('Lỗi kết nối:', err));
+        }
+
+        // Xử lý đăng xuất
+        function logout() {
+            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
+                window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
+            }
+        }
+
+        // === CHỨC NĂNG TÌM KIẾM TÀI LIỆU ===
         const searchInput = document.getElementById("searchDocuments");
         const documentRows = document.querySelectorAll(".document-row");
+
         if (searchInput) {
             searchInput.addEventListener("input", function() {
                 const keyword = this.value.trim().toLowerCase();
+                let foundCount = 0;
+
                 documentRows.forEach(row => {
                     const title = row.getAttribute("data-title").toLowerCase();
                     const subject = row.getAttribute("data-subject").toLowerCase();
-                    row.style.display = (title.includes(keyword) || subject.includes(keyword)) ? "" : "none";
+                    
+                    if (title.includes(keyword) || subject.includes(keyword)) {
+                        row.style.display = "";
+                        foundCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
                 });
             });
-        }
-
-        function logout() {
-            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                window.location.href = "../dangxuat.php";
-            }
         }
     </script>
 </body>

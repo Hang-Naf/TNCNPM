@@ -37,29 +37,41 @@ $lopList = $conn->query($sqlLop);
 
 // ==== Xử lý cập nhật ====
 if (isset($_POST['update'])) {
-    $tieuDe = trim($_POST['tieuDe']);
-    $noiDung = trim($_POST['moTa']);
-    $maLop = $_POST['maLop'];
+    $tieuDe   = trim($_POST['tieuDe']);
+    $noiDung  = trim($_POST['moTa']);
+    $maLop    = intval($_POST['maLop']);
     $trangThai = $_POST['trangThai'];
-    $fileName = $tl['tepDinhKem'];
+    $fileName = $tl['tepDinhKem']; // giữ file/link cũ nếu không thay đổi
 
     // Nếu có file mới
     if (!empty($_FILES['fileTaiLieu']['name'])) {
+        $maxSize = 50 * 1024 * 1024; // 50MB
+        if ($_FILES['fileTaiLieu']['size'] > $maxSize) {
+            echo "<script>alert('File quá lớn! Giới hạn tối đa 50MB');</script>";
+            exit;
+        }
         $targetDir = "../uploads/tailieu/";
         if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
         $fileName = time() . "_" . basename($_FILES["fileTaiLieu"]["name"]);
         $targetFile = $targetDir . $fileName;
         move_uploaded_file($_FILES["fileTaiLieu"]["tmp_name"], $targetFile);
     }
+    // Nếu nhập link mới
+    elseif (!empty($_POST['linkTaiLieu'])) {
+        $fileName = trim($_POST['linkTaiLieu']);
+    }
 
-    $sqlUpdate = "UPDATE tailieu 
-                  SET tieuDe='$tieuDe', noiDung='$noiDung', maLop='$maLop', trangThai='$trangThai', tepDinhKem='$fileName'
-                  WHERE maTL='$maTL' AND maGV='$maGV'";
-    if ($conn->query($sqlUpdate)) {
+    $stmt = $conn->prepare("UPDATE tailieu 
+                            SET tieuDe=?, noiDung=?, maLop=?, trangThai=?, tepDinhKem=? 
+                            WHERE maTL=? AND maGV=?");
+    $stmt->bind_param("ssissii", $tieuDe, $noiDung, $maLop, $trangThai, $fileName, $maTL, $maGV);
+
+    if ($stmt->execute()) {
         echo "<script>alert('Cập nhật thành công!'); window.location='tlhoctap.php';</script>";
     } else {
-        echo "Lỗi: " . $conn->error;
+        echo "Lỗi: " . $stmt->error;
     }
+    $stmt->close();
 }
 
 // ==== Xóa file đính kèm ====
@@ -295,16 +307,32 @@ if (isset($_GET['deleteFile']) && $_GET['deleteFile'] == 1) {
                 </div>
 
                 <div class="file-upload">
-                    <label>FILE TÀI LIỆU</label>
+                    <label>TÀI LIỆU ĐÍNH KÈM</label>
                     <?php if (!empty($tl['tepDinhKem'])): ?>
                         <div class="file-name">
                             <i class="fa-solid fa-folder"></i>
-                            <a href="../uploads/tailieu/<?= htmlspecialchars($tl['tepDinhKem']) ?>" target="_blank"><?= htmlspecialchars($tl['tepDinhKem']) ?></a>
-                            <button type="button" class="delete-btn" onclick="if(confirm('Xóa file này?')) window.location='suatlht.php?maTL=<?= $maTL ?>&deleteFile=1'">Xóa file</button>
+                            <?php if (preg_match('/^https?:\/\//', $tl['tepDinhKem'])): ?>
+                                <a href="<?= htmlspecialchars($tl['tepDinhKem']) ?>" target="_blank">
+                                    <?= htmlspecialchars($tl['tepDinhKem']) ?>
+                                </a>
+                            <?php else: ?>
+                                <a href="../uploads/tailieu/<?= htmlspecialchars($tl['tepDinhKem']) ?>" target="_blank">
+                                    <?= htmlspecialchars($tl['tepDinhKem']) ?>
+                                </a>
+                            <?php endif; ?>
+                            <button type="button" class="delete-btn"
+                                onclick="if(confirm('Xóa tài liệu này?')) window.location='suatlht.php?maTL=<?= $maTL ?>&deleteFile=1'">
+                                Xóa
+                            </button>
                         </div>
-                    <?php else: ?>
-                        <input type="file" name="fileTaiLieu" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
                     <?php endif; ?>
+
+                    <p>Chọn file mới (PDF, PPT, video...):</p>
+                    <input type="file" name="fileTaiLieu"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.mp4,.webm,.ogg">
+
+                    <p>Hoặc nhập link tài liệu:</p>
+                    <input type="text" name="linkTaiLieu" placeholder="http://...">
                 </div>
 
                 <div class="buttons">
@@ -431,4 +459,5 @@ if (isset($_GET['deleteFile']) && $_GET['deleteFile'] == 1) {
         }
     </script>
 </body>
+
 </html>

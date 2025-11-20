@@ -134,6 +134,13 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
             width: 60px;
         }
 
+        .button-container {
+            margin-right: 50px;
+            display: flex;
+            justify-content: flex-end;
+            height: 80px;
+        }
+
         .no-data {
             text-align: center;
             padding: 20px;
@@ -210,28 +217,54 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
                 <table>
                     <thead>
                         <tr>
+                            <th><input type="checkbox" id="checkAll"></th>
                             <th>STT</th>
-                            <th>Môn học</th>
-                            <th>Điểm miệng</th>
-                            <th>Điểm 1 tiết</th>
-                            <th>Điểm thi học kì I</th>
-                            <th>Điểm thi học kì II</th>
-                            <th>Trung bình môn</th>
+                            <th>MÔN HỌC</th>
+                            <th>ĐIỂM HK I</th>
+                            <th>ĐIỂM HK II</th>
+                            <th>TRUNG BÌNH</th>
+                            <th>TÁC VỤ</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $i = $offset + 1;
-                        foreach ($bangDiemPaged as $mon => $d): ?>
-                            <tr class="score-row" data-subject="<?= htmlspecialchars($mon) ?>">
-                                <td><?= $i++ ?></td>
-                                <td style="text-align:left;" class="subject-name"><?= htmlspecialchars($mon) ?></td>
-                                <td><?= $d['mieng'] ?? '-' ?></td>
-                                <td><?= $d['1tiet'] ?? '-' ?></td>
-                                <td><?= $d['thi1'] ?? '-' ?></td>
-                                <td><?= $d['thi2'] ?? '-' ?></td>
-                                <td><strong><?= $d['tb'] ?? '-' ?></strong></td>
-                            </tr>
-                        <?php endforeach; ?>
+                        <?php
+                        if (empty($bangDiemPaged)) {
+                            echo "<tr><td colspan='7' style='text-align:center;color:gray;'>Chưa có dữ liệu điểm.</td></tr>";
+                        } else {
+                            $i = $offset + 1;
+                            foreach ($bangDiemPaged as $mon => $d):
+                                // Tính trung bình HK1 + HK2
+                                $tb = "-";
+                                $tong = 0;
+                                $dem = 0;
+                                foreach (['thi1', 'thi2'] as $hk) {
+                                    if (is_numeric($d[$hk])) {
+                                        $tong += $d[$hk];
+                                        $dem++;
+                                    }
+                                }
+                                if ($dem > 0) $tb = round($tong / $dem, 1);
+                        ?>
+                                <tr class="score-row" data-subject="<?= htmlspecialchars($mon) ?>">
+                                    <td><input type='checkbox' class='rowCheckbox'></td>
+                                    <td><?= $i++ ?></td>
+                                    <td style="text-align:left;" class="subject-name"><?= htmlspecialchars($mon) ?></td>
+                                    <td><?= $d['thi1'] ?? '-' ?></td>
+                                    <td><?= $d['thi2'] ?? '-' ?></td>
+                                    <td><strong style="color:#0b3364;"><?= $tb ?></strong></td>
+                                    <td>
+                                        <!-- Ví dụ tác vụ: xem chi tiết hoặc export -->
+                                        <a href="xemchitiet.php?mon=<?= urlencode($mon) ?>" title="Xem chi tiết" style="text-decoration: none">
+                                            <i class="fa-solid fa-eye" style="color:black;"></i>
+                                        </a>
+                                        &nbsp;
+                                        <a href="xuat_diem_excel.php?mon=<?= urlencode($mon) ?>" title="Xuất điểm" style="text-decoration: none">
+                                            <i class="fa-solid fa-file-export" style="color:black;"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                        <?php endforeach;
+                        } ?>
                     </tbody>
                 </table>
 
@@ -246,9 +279,9 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">⏮ Đầu</button>
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">◀ Trước</button>
                         <?php endif; ?>
-                        
+
                         <span style="font-weight:600; font-size:14px; min-width:30px; text-align:center;"><?= $page ?></span>
-                        
+
                         <?php if ($page < $totalPages): ?>
                             <a href="?page=<?= $page + 1 ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Sau ▶</a>
                             <a href="?page=<?= $totalPages ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">Cuối ⏭</a>
@@ -257,6 +290,15 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
                             <button disabled style="border:none; background:#eee; border-radius:4px; padding:5px 10px; opacity:0.5; cursor:default;">Cuối ⏭</button>
                         <?php endif; ?>
                     </div>
+                </div>
+                <!-- Nút Import -->
+                <div class="button-container">
+                    <form method="POST" action="xuat_diem_excel.php" id="exportForm">
+                        <input type="hidden" name="selectedHS" id="selectedHS">
+                        <button type="submit" style="margin:20px 0; padding:10px 16px; background:green; color:white; border:none; border-radius:6px; cursor:pointer; width:200px; height: 41px;">
+                            Xuất bảng điểm
+                        </button>
+                    </form>
                 </div>
                 <!-- ========= HẾT THANH PHÂN TRANG ========= -->
             <?php endif; ?>
@@ -389,7 +431,7 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
 
                 scoreRows.forEach(row => {
                     const subject = row.getAttribute("data-subject").toLowerCase();
-                    
+
                     if (subject.includes(keyword)) {
                         row.style.display = "";
                         foundCount++;

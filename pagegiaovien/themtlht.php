@@ -42,13 +42,12 @@ if (isset($_POST['add'])) {
     $ngayTai = $today;
     $fileName = '';
 
-    // Kiểm tra maLop hợp lệ
     if ($maLop <= 0) {
         echo "<script>alert('Vui lòng chọn lớp học!');</script>";
         exit;
     }
 
-    // ==== Lấy mã môn học mà GV dạy lớp này (để lưu đúng môn) ====
+    // Lấy mã môn học mà GV dạy lớp này
     $sqlMonHoc = "SELECT maMonHoc FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop' LIMIT 1";
     $resultMon = $conn->query($sqlMonHoc);
     if ($resultMon && $resultMon->num_rows > 0) {
@@ -58,13 +57,11 @@ if (isset($_POST['add'])) {
         exit;
     }
 
-    // ==== Upload file nếu có ====
+    // ==== Upload file hoặc link ====
     if (!empty($_FILES['fileTaiLieu']['name'])) {
-
-        // ==== Giới hạn dung lượng 15MB ====
-        $maxSize = 15 * 1024 * 1024; // 15MB
+        $maxSize = 50 * 1024 * 1024; // 50MB
         if ($_FILES['fileTaiLieu']['size'] > $maxSize) {
-            echo "<script>alert('File quá lớn! Giới hạn tối đa là 15MB.');</script>";
+            echo "<script>alert('File quá lớn! Giới hạn tối đa là 50MB.');</script>";
             exit;
         }
 
@@ -73,19 +70,20 @@ if (isset($_POST['add'])) {
         $fileName = time() . "_" . basename($_FILES["fileTaiLieu"]["name"]);
         $targetFile = $targetDir . $fileName;
         move_uploaded_file($_FILES["fileTaiLieu"]["tmp_name"], $targetFile);
+    } elseif (!empty($_POST['linkTaiLieu'])) {
+        // Nếu nhập link thì lưu link
+        $fileName = trim($_POST['linkTaiLieu']);
     }
 
-    // ==== Kiểm tra quyền phân công ====
+    // Kiểm tra quyền phân công
     $kiemtra = $conn->query("SELECT * FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop'");
     if ($kiemtra->num_rows == 0) {
         echo "<script>alert('Bạn không được phân công dạy lớp này!');</script>";
     } else {
-        // Sử dụng prepared statement để tránh SQL injection và đảm bảo giá trị được lưu đúng
         $stmt = $conn->prepare("INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai, tepDinhKem) 
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        // Correct type: i(maMonHoc) i(maLop) s(tieuDe) s(noiDung) s(ngayTai) i(maGV) s(trangThai) s(tepDinhKem)
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->bind_param("iisssiss", $maMonHoc, $maLop, $tieuDe, $moTa, $ngayTai, $maGV, $trangThai, $fileName);
-        
+
         if ($stmt->execute()) {
             echo "<script>alert('Thêm tài liệu thành công!'); window.location='tlhoctap.php';</script>";
         } else {
@@ -94,6 +92,7 @@ if (isset($_POST['add'])) {
         $stmt->close();
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -317,7 +316,11 @@ if (isset($_POST['add'])) {
 
                 <div class="file-upload">
                     <label>FILE TÀI LIỆU</label>
-                    <input type="file" name="fileTaiLieu" accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar">
+                    <input type="file" name="fileTaiLieu"
+                        accept=".pdf,.doc,.docx,.ppt,.pptx,.zip,.rar,.mp4,.webm,.ogg">
+                    <br><br>
+                    <label>HOẶC LINK TÀI LIỆU</label>
+                    <input type="text" name="linkTaiLieu" placeholder="Nhập link (http://...)">
                 </div>
 
                 <div class="buttons">

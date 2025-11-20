@@ -165,11 +165,37 @@ if (!$tailieu) {
                 <?= nl2br(htmlspecialchars($tailieu['noiDung'])) ?>
             </div>
             <?php if (!empty($tailieu['tepDinhKem'])): ?>
-                <p><strong>Tệp đính kèm:</strong><br>
-                    <a class="file-link" href="../uploads/tailieu/<?= htmlspecialchars($tailieu['tepDinhKem']) ?>" target="_blank">
-                        <?= htmlspecialchars($tailieu['tepDinhKem']) ?>
-                    </a>
-                </p>
+                <div class="detail"><strong>Tệp đính kèm:</strong></div>
+                <?php
+                $file = $tailieu['tepDinhKem'];
+                $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+
+                // Nếu là link (bắt đầu bằng http hoặc https)
+                if (preg_match('/^https?:\/\//', $file)) {
+                    echo '<p><a href="' . htmlspecialchars($file) . '" target="_blank">Mở liên kết</a></p>';
+                }
+                // Nếu là video
+                elseif (in_array($ext, ['mp4', 'webm', 'ogg'])) {
+                    echo '<video width="640" controls>
+                    <source src="../uploads/tailieu/' . htmlspecialchars($file) . '" type="video/' . $ext . '">
+                    Trình duyệt không hỗ trợ video.
+                  </video>';
+                }
+                // Nếu là PDF
+                elseif ($ext === 'pdf') {
+                    echo '<iframe src="../uploads/tailieu/' . htmlspecialchars($file) . '" 
+                         width="100%" height="600" style="border:1px solid #ccc;"></iframe>
+                  <p><a href="../uploads/tailieu/' . htmlspecialchars($file) . '" target="_blank">Tải về PDF</a></p>';
+                }
+                // Nếu là slide (ppt, pptx)
+                elseif (in_array($ext, ['ppt', 'pptx'])) {
+                    echo '<p><a href="../uploads/tailieu/' . htmlspecialchars($file) . '" target="_blank">Tải về slide</a></p>';
+                }
+                // Các loại file khác
+                else {
+                    echo '<p><a href="../uploads/tailieu/' . htmlspecialchars($file) . '" target="_blank">Tải về tệp</a></p>';
+                }
+                ?>
             <?php else: ?>
                 <i>Không có tệp đính kèm</i>
             <?php endif; ?>
