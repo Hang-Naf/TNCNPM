@@ -33,7 +33,7 @@ $hs = $resultHS->fetch_assoc();
 // === Lấy điểm theo môn ===
 $sql = "SELECT d.maMonHoc, m.tenMonHoc, d.loaiDiem, d.diem
         FROM diemso d
-        LEFT JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+        JOIN monhoc m ON d.maMonHoc = m.maMonHoc
         WHERE d.maHS = ?";
 $stmt = $conn->prepare($sql);
 $stmt->bind_param("i", $userID);
@@ -42,43 +42,96 @@ $result = $stmt->get_result();
 
 $bangDiem = [];
 while ($r = $result->fetch_assoc()) {
+    $maMonHoc = $r['maMonHoc'];
     $mon = $r['tenMonHoc'];
-    $loai = strtolower($r['loaiDiem']); // ví dụ: 'miệng', '1 tiết', 'thi hk i'
+    $loai = strtolower($r['loaiDiem']);
     $diem = is_numeric($r['diem']) ? (float)$r['diem'] : null;
 
-    if (!isset($bangDiem[$mon])) {
-        $bangDiem[$mon] = [
-            'mieng' => null,
-            '1tiet' => null,
-            'thi1' => null,
-            'thi2' => null,
+    if (!isset($bangDiem[$maMonHoc])) {
+        $bangDiem[$maMonHoc] = [
+            'maMonHoc' => $maMonHoc,
+            'tenMonHoc' => $mon,
+            'hk1_mieng' => null,
+            'hk1_1tiet' => null,
+            'hk1_thiGK' => null,
+            'hk1_thiCK' => null,
+            'hk2_mieng' => null,
+            'hk2_1tiet' => null,
+            'hk2_thiGK' => null,
+            'hk2_thiCK' => null,
+            'tbHK1' => null,
+            'tbHK2' => null,
             'tb' => null
         ];
     }
 
-    if (strpos($loai, 'miệng') !== false) $bangDiem[$mon]['mieng'] = $diem;
-    elseif (strpos($loai, '1') !== false) $bangDiem[$mon]['1tiet'] = $diem;
-    elseif (strpos($loai, 'hk i') !== false) $bangDiem[$mon]['thi1'] = $diem;
-    elseif (strpos($loai, 'hk ii') !== false || strpos($loai, 'hk2') !== false) $bangDiem[$mon]['thi2'] = $diem;
+    // Gán điểm theo loại
+    if (strpos($loai, 'hk1_mieng') !== false) $bangDiem[$maMonHoc]['hk1_mieng'] = $diem;
+    elseif (strpos($loai, 'hk1_1tiet') !== false) $bangDiem[$maMonHoc]['hk1_1tiet'] = $diem;
+    elseif (strpos($loai, 'hk1_thigk') !== false) $bangDiem[$maMonHoc]['hk1_thiGK'] = $diem;
+    elseif (strpos($loai, 'hk1_thick') !== false) $bangDiem[$maMonHoc]['hk1_thiCK'] = $diem;
+    elseif (strpos($loai, 'hk2_mieng') !== false) $bangDiem[$maMonHoc]['hk2_mieng'] = $diem;
+    elseif (strpos($loai, 'hk2_1tiet') !== false) $bangDiem[$maMonHoc]['hk2_1tiet'] = $diem;
+    elseif (strpos($loai, 'hk2_thigk') !== false) $bangDiem[$maMonHoc]['hk2_thiGK'] = $diem;
+    elseif (strpos($loai, 'hk2_thick') !== false) $bangDiem[$maMonHoc]['hk2_thiCK'] = $diem;
 
-    // Tính trung bình sau khi có đủ dữ liệu
-    $arr = $bangDiem[$mon];
+    // Tính trung bình HK1
     $sum = 0;
     $count = 0;
-    foreach (['mieng', '1tiet', 'thi1', 'thi2'] as $key) {
-        if (is_numeric($arr[$key])) {
-            $sum += $arr[$key];
-            $count++;
-        }
+    if (is_numeric($bangDiem[$maMonHoc]['hk1_mieng'])) {
+        $sum += $bangDiem[$maMonHoc]['hk1_mieng'] * 1;
+        $count += 1;
     }
-    $bangDiem[$mon]['tb'] = $count > 0 ? round($sum / $count, 1) : null;
+    if (is_numeric($bangDiem[$maMonHoc]['hk1_1tiet'])) {
+        $sum += $bangDiem[$maMonHoc]['hk1_1tiet'] * 2;
+        $count += 2;
+    }
+    if (is_numeric($bangDiem[$maMonHoc]['hk1_thiGK'])) {
+        $sum += $bangDiem[$maMonHoc]['hk1_thiGK'] * 2;
+        $count += 2;
+    }
+    if (is_numeric($bangDiem[$maMonHoc]['hk1_thiCK'])) {
+        $sum += $bangDiem[$maMonHoc]['hk1_thiCK'] * 3;
+        $count += 3;
+    }
+    $bangDiem[$maMonHoc]['tbHK1'] = $count > 0 ? round($sum / $count, 1) : null;
+
+    // Tính trung bình HK2
+    $sum = 0;
+    $count = 0;
+    if (is_numeric($bangDiem[$maMonHoc]['hk2_mieng'])) {
+        $sum += $bangDiem[$maMonHoc]['hk2_mieng'] * 1;
+        $count += 1;
+    }
+    if (is_numeric($bangDiem[$maMonHoc]['hk2_1tiet'])) {
+        $sum += $bangDiem[$maMonHoc]['hk2_1tiet'] * 2;
+        $count += 2;
+    }
+    if (is_numeric($bangDiem[$maMonHoc]['hk2_thiGK'])) {
+        $sum += $bangDiem[$maMonHoc]['hk2_thiGK'] * 2;
+        $count += 2;
+    }
+    if (is_numeric($bangDiem[$maMonHoc]['hk2_thiCK'])) {
+        $sum += $bangDiem[$maMonHoc]['hk2_thiCK'] * 3;
+        $count += 3;
+    }
+    $bangDiem[$maMonHoc]['tbHK2'] = $count > 0 ? round($sum / $count, 1) : null;
+
+    // Trung bình môn
+    $hk1 = $bangDiem[$maMonHoc]['tbHK1'];
+    $hk2 = $bangDiem[$maMonHoc]['tbHK2'];
+    if (is_numeric($hk1) && is_numeric($hk2)) {
+        $bangDiem[$maMonHoc]['tb'] = round(($hk1 + $hk2) / 2, 1);
+    } elseif (is_numeric($hk1)) {
+        $bangDiem[$maMonHoc]['tb'] = $hk1;
+    } elseif (is_numeric($hk2)) {
+        $bangDiem[$maMonHoc]['tb'] = $hk2;
+    }
 }
 
 // === TÍNH TOÁN PHÂN TRANG ===
 $totalItems = count($bangDiem);
 $totalPages = ceil($totalItems / $itemsPerPage);
-
-// === LẤY DANH SÁCH MÔN HỌC CHO TRANG HIỆN TẠI ===
 $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
 ?>
 
@@ -96,6 +149,10 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
             font-family: 'Segoe UI', sans-serif;
             background: #f7f9fb;
             margin: 0;
+        }
+
+        .header {
+            padding: 10px 25px;
         }
 
         h1 {
@@ -227,44 +284,26 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
                         </tr>
                     </thead>
                     <tbody>
-                        <?php
-                        if (empty($bangDiemPaged)) {
-                            echo "<tr><td colspan='7' style='text-align:center;color:gray;'>Chưa có dữ liệu điểm.</td></tr>";
-                        } else {
-                            $i = $offset + 1;
-                            foreach ($bangDiemPaged as $mon => $d):
-                                // Tính trung bình HK1 + HK2
-                                $tb = "-";
-                                $tong = 0;
-                                $dem = 0;
-                                foreach (['thi1', 'thi2'] as $hk) {
-                                    if (is_numeric($d[$hk])) {
-                                        $tong += $d[$hk];
-                                        $dem++;
-                                    }
-                                }
-                                if ($dem > 0) $tb = round($tong / $dem, 1);
-                        ?>
-                                <tr class="score-row" data-subject="<?= htmlspecialchars($mon) ?>">
-                                    <td><input type='checkbox' class='rowCheckbox'></td>
-                                    <td><?= $i++ ?></td>
-                                    <td style="text-align:left;" class="subject-name"><?= htmlspecialchars($mon) ?></td>
-                                    <td><?= $d['thi1'] ?? '-' ?></td>
-                                    <td><?= $d['thi2'] ?? '-' ?></td>
-                                    <td><strong style="color:#0b3364;"><?= $tb ?></strong></td>
-                                    <td>
-                                        <!-- Ví dụ tác vụ: xem chi tiết hoặc export -->
-                                        <a href="xemchitiet.php?mon=<?= urlencode($mon) ?>" title="Xem chi tiết" style="text-decoration: none">
-                                            <i class="fa-solid fa-eye" style="color:black;"></i>
-                                        </a>
-                                        &nbsp;
-                                        <a href="xuat_diem_excel.php?mon=<?= urlencode($mon) ?>" title="Xuất điểm" style="text-decoration: none">
-                                            <i class="fa-solid fa-file-export" style="color:black;"></i>
-                                        </a>
-                                    </td>
-                                </tr>
-                        <?php endforeach;
-                        } ?>
+                        <?php $i = $offset + 1;
+                        foreach ($bangDiemPaged as $maMonHoc => $d): ?>
+                            <tr class="score-row" data-subject="<?= htmlspecialchars(strtolower($d['tenMonHoc'])) ?>">
+                                <td><input type='checkbox' class='rowCheckbox'></td>
+                                <td><?= $i++ ?></td>
+                                <td><?= htmlspecialchars($d['tenMonHoc']) ?></td>
+                                <td><?= $d['tbHK1'] ?? '-' ?></td>
+                                <td><?= $d['tbHK2'] ?? '-' ?></td>
+                                <td><strong><?= $d['tb'] ?? '-' ?></strong></td>
+                                <td>
+                                    <a href="xemchitiet.php?maMonHoc=<?= urlencode($d['maMonHoc']) ?>" title="Xem chi tiết" style="text-decoration: none">
+                                        <i class="fa-solid fa-eye" style="color:black;"></i>
+                                    </a>
+                                    &nbsp;
+                                    <a href="xuat_diem_excel.php?mon=<?= urlencode($d['tenMonHoc']) ?>" title="Xuất điểm" style="text-decoration: none">
+                                        <i class="fa-solid fa-file-export" style="color:black;"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
 
@@ -291,7 +330,7 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
                         <?php endif; ?>
                     </div>
                 </div>
-                <!-- Nút Import -->
+                <!-- Nút EXport -->
                 <div class="button-container">
                     <form method="POST" action="xuat_diem_excel.php" id="exportForm">
                         <input type="hidden" name="selectedHS" id="selectedHS">
@@ -305,6 +344,29 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
         </div>
     </div>
     <script>
+        // Checkbox "chọn tất cả"
+        const checkAll = document.getElementById("checkAll");
+        const rowCheckboxes = document.querySelectorAll(".rowCheckbox");
+
+        // Khi tick vào checkbox đầu tiên
+        checkAll.addEventListener("change", function() {
+            rowCheckboxes.forEach(cb => cb.checked = checkAll.checked);
+        });
+
+        // Khi submit form xuất nhiều môn
+        document.getElementById("exportForm").addEventListener("submit", function(e) {
+            const selected = [];
+            document.querySelectorAll(".rowCheckbox:checked").forEach(cb => {
+                selected.push(cb.value);
+            });
+            if (selected.length === 0) {
+                alert("Vui lòng chọn ít nhất một môn để xuất!");
+                e.preventDefault();
+                return;
+            }
+            document.getElementById("selectedMon").value = selected.join(",");
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu

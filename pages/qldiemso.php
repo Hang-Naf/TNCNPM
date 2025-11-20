@@ -376,7 +376,7 @@ $result = $conn->query($sql);
                             <tr>
                                 <td><input type='checkbox' class='rowCheckbox'></td>
                                 <td>{$stt}</td>
-                                <td>K" . str_pad($row['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
+                                <td>" . htmlspecialchars($row['maHS']) . "</td>
                                 <td>" . htmlspecialchars($row['hoVaTen']) . "</td>
                                 <td>" . htmlspecialchars($row['tenMonHoc'] ?? '-') . "</td>
                                 <td>" . ($row['diemHK1'] ?? '-') . "</td>
@@ -424,7 +424,7 @@ $result = $conn->query($sql);
                 <?php endif; ?>
             </div>
         </div>
-        <!-- Nút Import -->
+        <!-- Nút Import & Export-->
         <div class="button-container">
             <a href="import_diem_excel.php"
                 style="margin:20px 30px; padding:10px 16px; background:#0b1e6b; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; width:180px; text-align:center;">

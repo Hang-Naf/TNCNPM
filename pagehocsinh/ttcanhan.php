@@ -66,7 +66,7 @@ if (!empty($hs['ngaySinh'])) {
         }
 
         .header {
-            padding: 0px 25px;
+            padding: 10px 25px;
         }
 
         .container {

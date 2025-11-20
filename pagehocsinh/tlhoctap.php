@@ -107,6 +107,10 @@ $stmt->close();
             background: #fff;
         }
 
+        .header {
+            padding: 10px 25px;
+        }
+
         .content-area {
             padding: 30px;
         }

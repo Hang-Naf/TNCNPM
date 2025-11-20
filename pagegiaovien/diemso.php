@@ -170,6 +170,8 @@ $result = $stmt3->get_result();
         .button-container {
             text-align: right;
             margin-right: 50px;
+            display: flex;
+            justify-self: flex-end;
         }
 
         .filter-box {
@@ -183,8 +185,8 @@ $result = $stmt3->get_result();
             margin: 15px 20px 15px 30px;
         }
 
-        
-        .filter-box form{
+
+        .filter-box form {
             width: 100%;
         }
 
@@ -394,6 +396,7 @@ $result = $stmt3->get_result();
             <table>
                 <thead>
                     <tr>
+                        <th><input type="checkbox" id="checkAll"></th>
                         <th>STT</th>
                         <th>MÃ HS</th>
                         <th>HỌ TÊN</th>
@@ -422,27 +425,30 @@ $result = $stmt3->get_result();
                                 $tb = $dem ? round($tong / $dem, 1) : "-";
                             }
                             $hrefSua = "suadiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
-                            $hrefXoa = "xoadiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
-                            $hrefCT = "chitietdiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
+                            $hrefXuat = "../pagegiaovien/export_diem_excel.php?maHS=" . urlencode($r['maHS']) . "&mon=" . urlencode($tenMonHoc);
+                            $hrefCT   = "chitietdiem.php?maHS={$r['maHS']}&mon={$maMonHoc}";
                             echo "
-                        <tr class='score-row' data-name='" . htmlspecialchars($r['hoVaTen']) . "'>
-                            <td>{$stt}</td>
-                            <td>K" . str_pad($r['maHS'], 7, '0', STR_PAD_LEFT) . "</td>
-                            <td>" . htmlspecialchars($r['hoVaTen']) . "</td>
-                            <td>" . htmlspecialchars($r['tenLop']) . "</td>
-                            <td>" . ($r['diemHK1'] ?? '-') . "</td>
-                            <td>" . ($r['diemHK2'] ?? '-') . "</td>
-                            <td><strong>{$tb}</strong></td>
-                            <td>
-                                <a href='{$hrefCT}'><i class='fa-solid fa-eye' style='color:green'></i></a>
-                                &nbsp;
-                                <a href='{$hrefSua}'><i class='fa-solid fa-pen-to-square' style='color:black'></i></a>
-                                &nbsp;
-                                <a href='{$hrefXoa}' onclick=\"return confirm('Xóa toàn bộ điểm của học sinh này?');\">
-                                    <i class='fa-solid fa-trash' style='color:black'></i>
-                                </a>
-                            </td>
-                        </tr>";
+                                <tr class='score-row' 
+                                    data-name='" . htmlspecialchars($r['hoVaTen']) . "' 
+                                    data-mahs='" . htmlspecialchars($r['maHS']) . "'>
+                                    <td><input type='checkbox' class='rowCheckbox'></td>
+                                    <td>{$stt}</td>
+                                    <td>" . htmlspecialchars($r['maHS']) . "</td>
+                                    <td>" . htmlspecialchars($r['hoVaTen']) . "</td>
+                                    <td>" . htmlspecialchars($r['tenLop']) . "</td>
+                                    <td>" . ($r['diemHK1'] ?? '-') . "</td>
+                                    <td>" . ($r['diemHK2'] ?? '-') . "</td>
+                                    <td><strong>{$tb}</strong></td>
+                                    <td>
+                                        <a href='{$hrefCT}'><i class='fa-solid fa-eye' style='color:green'></i></a>
+                                        &nbsp;
+                                        <a href='{$hrefSua}'><i class='fa-solid fa-pen-to-square' style='color:black'></i></a>
+                                        &nbsp;
+                                        <a href='{$hrefXuat}' onclick=\"return confirm('Bạn có chắc muốn xuất toàn bộ điểm của học sinh này trong môn " . htmlspecialchars($tenMonHoc) . " không?');\" title='Xuất điểm'>
+                                            <i class='fa-solid fa-file-export' style='color:black;'></i>
+                                        </a>
+                                    </td>
+                                </tr>";
                             $stt++;
                         }
                     } else {
@@ -456,7 +462,7 @@ $result = $stmt3->get_result();
                 <span style="font-size:14px; color:#333;">Trang <?= $page ?>/<?= max(1, $totalPages) ?> (Tổng: <?= $totalItems ?> học sinh)</span>
                 <div style="display:flex; gap:8px; align-items:center;">
                     <?php $baseParams = '';
-                          if ($lopChon !== '') $baseParams .= '&lop=' . urlencode($lopChon);
+                    if ($lopChon !== '') $baseParams .= '&lop=' . urlencode($lopChon);
                     ?>
                     <?php if ($page > 1): ?>
                         <a href="?page=1<?= $baseParams ?>" style="border:none; background:#eee; border-radius:4px; padding:5px 10px; text-decoration:none; color:#333; font-weight:600;">⏮ Đầu</a>
@@ -477,9 +483,49 @@ $result = $stmt3->get_result();
                     <?php endif; ?>
                 </div>
             </div>
+            <!-- Nút Import & Export-->
+            <div class="button-container">
+                <a href="import_diem_excel.php"
+                    style="margin:20px 30px; padding:10px 16px; background:#0b1e6b; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; width:180px; text-align:center;">
+                    Import bảng điểm
+                </a>
+                <form method="POST" action="export_diem_excel.php" id="exportForm">
+                    <input type="hidden" name="selectedHS" id="selectedHS">
+                    <button type="submit" style="margin:20px 0; padding:10px 16px; background:green; color:white; border:none; border-radius:6px; cursor:pointer; width:200px; height: 41px;">
+                        Export bảng điểm
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
     <script>
+        // Checkbox "chọn tất cả"
+        const checkAll = document.getElementById("checkAll");
+        const rowCheckboxes = document.querySelectorAll(".rowCheckbox");
+
+        // Khi tick vào checkbox đầu tiên
+        checkAll.addEventListener("change", function() {
+            rowCheckboxes.forEach(cb => cb.checked = checkAll.checked);
+        });
+
+        document.getElementById("exportForm").addEventListener("submit", function(e) {
+            const selected = [];
+            document.querySelectorAll("tbody tr").forEach(row => {
+                const checkbox = row.querySelector(".rowCheckbox");
+                if (checkbox && checkbox.checked) {
+                    // cột MÃ HS nằm ở vị trí thứ 2 (index 2)
+                    const maHS = row.children[2]?.innerText.replace("K", "");
+                    selected.push(maHS);
+                }
+            });
+            if (selected.length === 0) {
+                alert("Vui lòng chọn ít nhất một học sinh để export!");
+                e.preventDefault();
+                return;
+            }
+            document.getElementById("selectedHS").value = selected.join(",");
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu
@@ -626,13 +672,19 @@ $result = $stmt3->get_result();
         // Xử lý tìm kiếm học sinh
         const searchInput = document.getElementById("searchScores");
         const scoreRows = document.querySelectorAll(".score-row");
-        
+
         if (searchInput) {
             searchInput.addEventListener("input", function() {
                 const keyword = this.value.trim().toLowerCase();
                 scoreRows.forEach(row => {
                     const name = row.getAttribute("data-name").toLowerCase();
-                    row.style.display = name.includes(keyword) ? "" : "none";
+                    const mahs = row.getAttribute("data-mahs").toLowerCase();
+
+                    if (name.includes(keyword) || mahs.includes(keyword)) {
+                        row.style.display = "";
+                    } else {
+                        row.style.display = "none";
+                    }
                 });
             });
         }

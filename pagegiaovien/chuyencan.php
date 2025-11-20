@@ -93,6 +93,17 @@ $maMonHoc = $monhoc['maMonHoc']; // dùng để lọc và lưu điểm danh
 // ==== Xử lý lưu điểm danh ====
 if (isset($_POST['save'])) {
     $ngayHoc = $_POST['ngayHoc'];
+    $today = date('Y-m-d');
+    $weekday = date('w', strtotime($ngayHoc));
+
+    if ($weekday == 0) {
+        echo "<script>alert('⚠️ Không thể điểm danh vào Chủ nhật!'); window.location='chuyencan.php';</script>";
+        exit();
+    }
+    if ($ngayHoc > $today) {
+        echo "<script>alert('⚠️ Không thể điểm danh cho ngày trong tương lai!'); window.location='chuyencan.php';</script>";
+        exit();
+    }
     $maMonHoc = $_POST['maMonHoc'];
     $maHS = $_POST['maHS'];
     $trangThai = $_POST['trangThai'];
@@ -115,12 +126,23 @@ if (isset($_POST['save'])) {
         }
     }
 
-    echo "<script>alert('✅ Lưu điểm danh thành công!'); window.location='chuyencan.php';</script>";
+    echo "<script>alert('Lưu điểm danh thành công!'); window.location='chuyencan.php';</script>";
     exit();
 }
 
 // ==== Lấy dữ liệu lọc ====
 $loc_ngay = $_GET['ngayHoc'] ?? date('Y-m-d');
+// Không cho điểm danh ngày Chủ nhật hoặc ngày tương lai
+$today = date('Y-m-d');
+$weekday = date('w', strtotime($loc_ngay)); // 0 = Chủ nhật, 1 = Thứ 2, ...
+
+if ($weekday == 0) {
+    die("<h3 style='color:red;text-align:center;'>⚠️ Không thể điểm danh vào ngày Chủ nhật!</h3>");
+}
+
+if ($loc_ngay > $today) {
+    die("<h3 style='color:red;text-align:center;'>⚠️ Không thể điểm danh cho ngày trong tương lai!</h3>");
+}
 $loc_lop = $_GET['maLop'] ?? '';
 $loc_mon = $_GET['maMonHoc'] ?? '';
 
@@ -217,7 +239,7 @@ if ($cc) {
             margin: 15px 20px 15px 30px;
         }
 
-        .filter-box form{
+        .filter-box form {
             width: 100%;
         }
 

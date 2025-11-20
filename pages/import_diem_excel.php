@@ -293,7 +293,7 @@ if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "Admin") {
         // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                window.location.href = "dangxuat.php"; // hoặc logout.php nếu có xử lý session
+                window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
             }
         }
     </script>

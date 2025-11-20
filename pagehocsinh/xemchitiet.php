@@ -3,22 +3,15 @@ include_once(__DIR__ . '/../csdl/db.php');
 session_start();
 
 // ==== Kiểm tra đăng nhập ====
-if (!isset($_SESSION["userID"])) {
-    header("Location: ../dangnhap.php");
-    exit();
-}
-
-// ==== Chỉ cho phép Học sinh ====
-if ($_SESSION["vaiTro"] !== "HocSinh") {
-    session_destroy();
+if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "HocSinh") {
     header("Location: ../dangnhap.php");
     exit();
 }
 
 $userID = $_SESSION["userID"];
-$monHoc = $_GET['mon'] ?? '';
+$maMonHoc = $_GET['maMonHoc'] ?? '';
 
-if ($monHoc == '') {
+if ($maMonHoc == '') {
     echo "Thiếu tham số môn học!";
     exit();
 }
@@ -28,22 +21,97 @@ $sqlHS = "SELECT hoVaTen FROM user WHERE userID = ?";
 $stmtHS = $conn->prepare($sqlHS);
 $stmtHS->bind_param("i", $userID);
 $stmtHS->execute();
-$resultHS = $stmtHS->get_result();
-$hs = $resultHS->fetch_assoc();
+$hs = $stmtHS->get_result()->fetch_assoc();
 
 // === Lấy chi tiết điểm theo môn ===
 $sql = "SELECT d.loaiDiem, d.diem, m.tenMonHoc
         FROM diemso d
-        LEFT JOIN monhoc m ON d.maMonHoc = m.maMonHoc
-        WHERE d.maHS = ? AND m.tenMonHoc = ?";
+        JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+        WHERE d.maHS = ? AND d.maMonHoc = ?";
 $stmt = $conn->prepare($sql);
-$stmt->bind_param("is", $userID, $monHoc);
+$stmt->bind_param("ii", $userID, $maMonHoc);
 $stmt->execute();
 $result = $stmt->get_result();
 
-$dsDiem = [];
+$diem = [
+    'hk1_mieng' => null,
+    'hk1_1tiet' => null,
+    'hk1_thiGK' => null,
+    'hk1_thiCK' => null,
+    'hk2_mieng' => null,
+    'hk2_1tiet' => null,
+    'hk2_thiGK' => null,
+    'hk2_thiCK' => null,
+    'tbHK1' => null,
+    'tbHK2' => null,
+    'tb' => null
+];
+
 while ($r = $result->fetch_assoc()) {
-    $dsDiem[] = $r;
+    $loai = strtolower($r['loaiDiem']);
+    $val  = is_numeric($r['diem']) ? (float)$r['diem'] : null;
+
+    if (strpos($loai, 'hk1_mieng') !== false) $diem['hk1_mieng'] = $val;
+    elseif (strpos($loai, 'hk1_1tiet') !== false) $diem['hk1_1tiet'] = $val;
+    elseif (strpos($loai, 'hk1_thigk') !== false) $diem['hk1_thiGK'] = $val;
+    elseif (strpos($loai, 'hk1_thick') !== false) $diem['hk1_thiCK'] = $val;
+    elseif (strpos($loai, 'hk2_mieng') !== false) $diem['hk2_mieng'] = $val;
+    elseif (strpos($loai, 'hk2_1tiet') !== false) $diem['hk2_1tiet'] = $val;
+    elseif (strpos($loai, 'hk2_thigk') !== false) $diem['hk2_thiGK'] = $val;
+    elseif (strpos($loai, 'hk2_thick') !== false) $diem['hk2_thiCK'] = $val;
+
+    $tenMonHoc = $r['tenMonHoc'];
+}
+
+// Tính trung bình HK1
+$sum = 0;
+$count = 0;
+if (is_numeric($diem['hk1_mieng'])) {
+    $sum += $diem['hk1_mieng'] * 1;
+    $count += 1;
+}
+if (is_numeric($diem['hk1_1tiet'])) {
+    $sum += $diem['hk1_1tiet'] * 2;
+    $count += 2;
+}
+if (is_numeric($diem['hk1_thiGK'])) {
+    $sum += $diem['hk1_thiGK'] * 2;
+    $count += 2;
+}
+if (is_numeric($diem['hk1_thiCK'])) {
+    $sum += $diem['hk1_thiCK'] * 3;
+    $count += 3;
+}
+$diem['tbHK1'] = $count > 0 ? round($sum / $count, 1) : null;
+
+// Tính trung bình HK2
+$sum = 0;
+$count = 0;
+if (is_numeric($diem['hk2_mieng'])) {
+    $sum += $diem['hk2_mieng'] * 1;
+    $count += 1;
+}
+if (is_numeric($diem['hk2_1tiet'])) {
+    $sum += $diem['hk2_1tiet'] * 2;
+    $count += 2;
+}
+if (is_numeric($diem['hk2_thiGK'])) {
+    $sum += $diem['hk2_thiGK'] * 2;
+    $count += 2;
+}
+if (is_numeric($diem['hk2_thiCK'])) {
+    $sum += $diem['hk2_thiCK'] * 3;
+    $count += 3;
+}
+$diem['tbHK2'] = $count > 0 ? round($sum / $count, 1) : null;
+
+// Trung bình môn
+if (is_numeric($diem['tbHK1']) && is_numeric($diem['tbHK2'])) {
+    $diem['tb'] = round(($diem['tbHK1'] + $diem['tbHK2']) / 2, 1);
+} elseif (is_numeric($diem['tbHK1'])) {
+    $diem['tb'] = $diem['tbHK1'];
+} elseif (is_numeric($diem['tbHK2'])) {
+    $diem['tb'] = $diem['tbHK2'];
 }
 ?>
 
@@ -70,7 +138,7 @@ while ($r = $result->fetch_assoc()) {
         }
 
         table {
-            width: 80%;
+            width: 95%;
             margin: 20px auto;
             border-collapse: collapse;
             background: #fff;
@@ -168,28 +236,47 @@ while ($r = $result->fetch_assoc()) {
         </header>
 
         <div class="container">
-            <h1>Chi tiết điểm môn <?= htmlspecialchars($monHoc) ?></h1>
+            <h1>Chi tiết điểm môn <?= htmlspecialchars($tenMonHoc ?? '') ?></h1>
 
-            <?php if (empty($dsDiem)): ?>
+            <?php if (empty(array_filter($diem))): ?>
                 <p style="text-align:center;color:gray;">Chưa có dữ liệu điểm cho môn này.</p>
             <?php else: ?>
                 <table>
                     <thead>
                         <tr>
-                            <th>STT</th>
-                            <th>Loại điểm</th>
-                            <th>Điểm</th>
+                            <th>HK1 - Miệng</th>
+                            <th>HK1 - 1 Tiết</th>
+                            <th>HK1 - GK</th>
+                            <th>HK1 - CK</th>
+                            <th>TB HK1</th>
+                            <th>HK2 - Miệng</th>
+                            <th>HK2 - 1 Tiết</th>
+                            <th>HK2 - GK</th>
+                            <th>HK2 - CK</th>
+                            <th>TB HK2</th>
+                            <th>Trung bình môn</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <?php $i = 1;
-                        foreach ($dsDiem as $d): ?>
-                            <tr>
-                                <td><?= $i++ ?></td>
-                                <td><?= htmlspecialchars($d['loaiDiem']) ?></td>
-                                <td><?= is_numeric($d['diem']) ? $d['diem'] : '-' ?></td>
-                            </tr>
-                        <?php endforeach; ?>
+                        <tr>
+                            <?php
+                            $fields = [
+                                'hk1_mieng',
+                                'hk1_1tiet',
+                                'hk1_thiGK',
+                                'hk1_thiCK',
+                                'tbHK1',
+                                'hk2_mieng',
+                                'hk2_1tiet',
+                                'hk2_thiGK',
+                                'hk2_thiCK',
+                                'tbHK2',
+                                'tb'
+                            ];
+                            foreach ($fields as $f): ?>
+                                <td><?= $diem[$f] ?? '-' ?></td>
+                            <?php endforeach; ?>
+                        </tr>
                     </tbody>
                 </table>
             <?php endif; ?>
@@ -197,6 +284,145 @@ while ($r = $result->fetch_assoc()) {
             <a href="kqhoctap.php" class="back-btn">⬅ Quay lại bảng điểm</a>
         </div>
     </div>
+    <script>
+
+        document.getElementById("bellIcon").addEventListener("click", function() {
+            const dropdown = document.getElementById("notificationDropdown");
+            // Hiện/ẩn menu
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+
+            // Gọi AJAX lấy thông báo
+            fetch("../get_thongbao.php")
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById("notificationList");
+                    const noNoti = document.getElementById("noNoti");
+                    const badge = document.getElementById("notiBadge");
+                    list.innerHTML = "";
+
+                    let unreadCount = 0;
+
+                    if (data.length > 0) {
+                        noNoti.style.display = "none";
+                        data.forEach(tb => {
+                            const li = document.createElement("li");
+                            li.style.padding = "10px 8px";
+                            li.style.borderBottom = "1px solid #eee";
+                            li.style.cursor = "pointer";
+
+                            if (tb.trangThai === "Chưa đọc") {
+                                unreadCount++;
+                                li.style.background = "#f0f8ff";
+                                li.innerHTML = `
+                        <strong style="color:#0b3364;">${tb.tieuDe} 🔵</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            } else {
+                                li.style.opacity = "0.7";
+                                li.innerHTML = `
+                        <strong>${tb.tieuDe}</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            }
+
+                            li.addEventListener("click", () => markAsRead(tb.maThongBao, li));
+                            list.appendChild(li);
+                        });
+                    } else {
+                        noNoti.style.display = "block";
+                    }
+
+                    // Cập nhật badge
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount;
+                        badge.style.display = "block";
+                    } else {
+                        badge.style.display = "none";
+                    }
+                })
+                .catch(err => console.error("Lỗi tải thông báo:", err));
+
+
+            function markAsRead(maThongBao, element) {
+                fetch("../update_trangthai.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: "maThongBao=" + encodeURIComponent(maThongBao)
+                    })
+                    .then(res => res.text())
+                    .then(response => {
+                        if (response === "OK") {
+                            element.style.background = "transparent";
+                            element.style.opacity = "0.7";
+                            element.querySelector("strong").innerHTML = element.querySelector("strong").innerText;
+
+                            // Giảm số badge đi 1
+                            const badge = document.getElementById("notiBadge");
+                            let current = parseInt(badge.textContent || "0");
+                            if (current > 1) badge.textContent = current - 1;
+                            else badge.style.display = "none";
+                        }
+                    });
+            }
+
+        });
+
+        // Ẩn dropdown khi click ra ngoài
+        document.addEventListener("click", function(e) {
+            const dropdown = document.getElementById("notificationDropdown");
+            const bell = document.getElementById("bellIcon");
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = "none";
+            }
+        });
+
+        function toggleUserMenu() {
+            const menu = document.getElementById("userMenu");
+            menu.style.display = (menu.style.display === "block") ? "none" : "block";
+        }
+
+        // Đóng menu nếu click ra ngoài
+        document.addEventListener("click", function(e) {
+            const menu = document.getElementById("userMenu");
+            const userInfo = document.querySelector(".user-info");
+            if (!userInfo.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = "none";
+            }
+        });
+
+        // Xử lý đăng xuất
+        function logout() {
+            if (confirm("Bạn có chắc muốn đăng xuất không?")) {
+                window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
+            }
+        }
+
+        // === CHỨC NĂNG TÌM KIẾM BẢNG ĐIỂM ===
+        const searchInput = document.getElementById("searchScores");
+        const scoreRows = document.querySelectorAll(".score-row");
+
+        if (searchInput) {
+            searchInput.addEventListener("input", function() {
+                const keyword = this.value.trim().toLowerCase();
+                let foundCount = 0;
+
+                scoreRows.forEach(row => {
+                    const subject = row.getAttribute("data-subject").toLowerCase();
+
+                    if (subject.includes(keyword)) {
+                        row.style.display = "";
+                        foundCount++;
+                    } else {
+                        row.style.display = "none";
+                    }
+                });
+            });
+        }
+    </script>
 </body>
 
 </html>

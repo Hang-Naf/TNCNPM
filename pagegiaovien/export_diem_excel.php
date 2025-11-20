@@ -13,8 +13,8 @@ if (!isset($_SESSION["userID"])) {
     exit();
 }
 
-// ==== Chỉ cho phép Admin ====
-if ($_SESSION["vaiTro"] !== "Admin") {
+// ==== Chỉ cho phép GiaoVien ====
+if ($_SESSION["vaiTro"] !== "GiaoVien") {
     session_destroy();
     header("Location: ../dangnhap.php");
     exit();
