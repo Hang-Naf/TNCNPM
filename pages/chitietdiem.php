@@ -1,5 +1,20 @@
 <?php
+include_once(__DIR__ . '/../src/func.php');
 include_once(__DIR__ . '/../csdl/db.php');
+session_start();
+
+// ==== Kiểm tra đăng nhập ====
+if (!isset($_SESSION["userID"])) {
+    header("Location: ../dangnhap.php");
+    exit();
+}
+
+// ==== Chỉ cho phép Admin ====
+if ($_SESSION["vaiTro"] !== "Admin") {
+    session_destroy();
+    header("Location: ../dangnhap.php");
+    exit();
+}
 
 $maHS = $_GET['maHS'] ?? '';
 $tenMon = $_GET['mon'] ?? '';

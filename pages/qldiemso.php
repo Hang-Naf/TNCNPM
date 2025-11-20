@@ -426,9 +426,10 @@ $result = $conn->query($sql);
         </div>
         <!-- Nút Import -->
         <div class="button-container">
-            <button href="import_diem_excel.php" style="margin:20px 30px; padding:10px 16px; background:#0b1e6b; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; width:200px;">
+            <a href="import_diem_excel.php"
+                style="margin:20px 30px; padding:10px 16px; background:#0b1e6b; color:white; border:none; border-radius:6px; cursor:pointer; text-decoration:none; display:inline-block; width:180px; text-align:center;">
                 Import bảng điểm
-            </button>
+            </a>
             <form method="POST" action="export_diem_excel.php" id="exportForm">
                 <input type="hidden" name="selectedHS" id="selectedHS">
                 <button type="submit" style="margin:20px 0; padding:10px 16px; background:green; color:white; border:none; border-radius:6px; cursor:pointer; width:200px; height: 41px;">
@@ -454,7 +455,7 @@ $result = $conn->query($sql);
         //         checkAll.checked = allChecked;
         //     });
         // });
-        
+
         document.getElementById("exportForm").addEventListener("submit", function(e) {
             const selected = [];
             document.querySelectorAll("tbody tr").forEach(row => {
