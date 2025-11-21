@@ -34,6 +34,8 @@ $sqlLop = "SELECT DISTINCT l.maLop, l.tenLop
 $lopList = $conn->query($sqlLop);
 
 // ==== Xử lý thêm tài liệu ====
+$errorMsg = ''; // Biến lưu thông báo lỗi
+
 if (isset($_POST['add'])) {
     $maLop = intval($_POST['maLop'] ?? 0);
     $tieuDe = trim($_POST['tieuDe'] ?? '');
@@ -43,56 +45,55 @@ if (isset($_POST['add'])) {
     $fileName = '';
 
     if ($maLop <= 0) {
-        echo "<script>alert('Vui lòng chọn lớp học!');</script>";
-        exit;
+        $errorMsg = 'Vui lòng chọn lớp học!';
     }
 
-    // Lấy mã môn học mà GV dạy lớp này
+    // Lấy mã môn học
     $sqlMonHoc = "SELECT maMonHoc FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop' LIMIT 1";
     $resultMon = $conn->query($sqlMonHoc);
     if ($resultMon && $resultMon->num_rows > 0) {
         $maMonHoc = $resultMon->fetch_assoc()['maMonHoc'];
     } else {
-        echo "<script>alert('Không tìm thấy môn học bạn phụ trách trong lớp này!');</script>";
-        exit;
+        $errorMsg = 'Không tìm thấy môn học bạn phụ trách trong lớp này!';
     }
 
-    // ==== Upload file hoặc link ====
-    if (!empty($_FILES['fileTaiLieu']['name'])) {
-        $maxSize = 50 * 1024 * 1024; // 50MB
-        if ($_FILES['fileTaiLieu']['size'] > $maxSize) {
-            echo "<script>alert('File quá lớn! Giới hạn tối đa là 50MB.');</script>";
-            exit;
+    // Upload file hoặc link
+    if (empty($errorMsg)) {
+        if (!empty($_FILES['fileTaiLieu']['name'])) {
+            $maxSize = 50 * 1024 * 1024; // 50MB
+            if ($_FILES['fileTaiLieu']['size'] > $maxSize) {
+                $errorMsg = 'File quá lớn! Giới hạn tối đa là 50MB.';
+            } else {
+                $targetDir = "../uploads/tailieu/";
+                if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
+                $fileName = time() . "_" . basename($_FILES["fileTaiLieu"]["name"]);
+                $targetFile = $targetDir . $fileName;
+                move_uploaded_file($_FILES["fileTaiLieu"]["tmp_name"], $targetFile);
+            }
+        } elseif (!empty($_POST['linkTaiLieu'])) {
+            $fileName = trim($_POST['linkTaiLieu']);
         }
 
-        $targetDir = "../uploads/tailieu/";
-        if (!is_dir($targetDir)) mkdir($targetDir, 0777, true);
-        $fileName = time() . "_" . basename($_FILES["fileTaiLieu"]["name"]);
-        $targetFile = $targetDir . $fileName;
-        move_uploaded_file($_FILES["fileTaiLieu"]["tmp_name"], $targetFile);
-    } elseif (!empty($_POST['linkTaiLieu'])) {
-        // Nếu nhập link thì lưu link
-        $fileName = trim($_POST['linkTaiLieu']);
-    }
-
-    // Kiểm tra quyền phân công
-    $kiemtra = $conn->query("SELECT * FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop'");
-    if ($kiemtra->num_rows == 0) {
-        echo "<script>alert('Bạn không được phân công dạy lớp này!');</script>";
-    } else {
-        $stmt = $conn->prepare("INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai, tepDinhKem) 
-                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->bind_param("iisssiss", $maMonHoc, $maLop, $tieuDe, $moTa, $ngayTai, $maGV, $trangThai, $fileName);
-
-        if ($stmt->execute()) {
-            echo "<script>alert('Thêm tài liệu thành công!'); window.location='tlhoctap.php';</script>";
-        } else {
-            echo "Lỗi: " . $stmt->error;
+        // Kiểm tra quyền phân công
+        $kiemtra = $conn->query("SELECT * FROM lophoc_monhoc WHERE maGV='$maGV' AND maLop='$maLop'");
+        if ($kiemtra->num_rows == 0) {
+            $errorMsg = 'Bạn không được phân công dạy lớp này!';
         }
-        $stmt->close();
+
+        // Nếu không có lỗi, thêm vào DB
+        if (empty($errorMsg)) {
+            $stmt = $conn->prepare("INSERT INTO tailieu (maMonHoc, maLop, tieuDe, noiDung, ngayTai, maGV, trangThai, tepDinhKem) 
+                                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt->bind_param("iisssiss", $maMonHoc, $maLop, $tieuDe, $moTa, $ngayTai, $maGV, $trangThai, $fileName);
+            if ($stmt->execute()) {
+                echo "<script>alert('Thêm tài liệu thành công!'); window.location='tlhoctap.php';</script>";
+            } else {
+                $errorMsg = "Lỗi: " . $stmt->error;
+            }
+            $stmt->close();
+        }
     }
 }
-
 ?>
 
 <!DOCTYPE html>
@@ -286,6 +287,11 @@ if (isset($_POST['add'])) {
         </header>
         <div class="content-area">
             <h1>THÊM TÀI LIỆU</h1>
+            <?php if (!empty($errorMsg)): ?>
+                <div style="color:red; margin-bottom:15px; font-weight:bold;">
+                    <?= htmlspecialchars($errorMsg) ?>
+                </div>
+            <?php endif; ?>
             <form method="POST" enctype="multipart/form-data">
                 <div class="form-grid">
                     <div>
