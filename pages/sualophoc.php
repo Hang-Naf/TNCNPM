@@ -202,7 +202,12 @@ $giaovien_rs = $conn->query("
                 <?php endwhile; ?>
             </select>
             <label>Năm học:</label>
-            <input type="text" name="namHoc" value="<?= htmlspecialchars($data['namHoc']) ?>" required>
+            <input type="text"
+                name="namHoc"
+                value="<?= htmlspecialchars($data['namHoc']) ?>"
+                required
+                pattern="\d{4}-\d{4}"
+                title="Nhập theo định dạng NNNN-NNNN, ví dụ: 2024-2025">
             <label>Trạng thái:</label>
             <select name="trangThai">
                 <option value="Đang học" <?= $data['trangThai'] == 'Đang học' ? 'selected' : '' ?>>Đang học</option>
@@ -217,6 +222,24 @@ $giaovien_rs = $conn->query("
     <script>
         document.getElementById("editForm").addEventListener("submit", async e => {
             e.preventDefault();
+
+            // Validate năm học
+            const namHocInput = document.querySelector('input[name="namHoc"]');
+            const regexNamHoc = /^\d{4}-\d{4}$/;
+
+            if (!regexNamHoc.test(namHocInput.value)) {
+                alert("Năm học phải theo định dạng: 2024-2025");
+                return;
+            }
+
+            // Kiểm tra năm sau > năm trước
+            const [startYear, endYear] = namHocInput.value.split("-").map(Number);
+
+            if (endYear <= startYear) {
+                alert("Năm sau phải lớn hơn năm trước (ví dụ: 2024-2025).");
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch("../src/lophoc.php", {
                 method: "POST",

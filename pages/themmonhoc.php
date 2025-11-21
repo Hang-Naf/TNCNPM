@@ -49,7 +49,7 @@ $gv_rs = $conn->query("
 
 <head>
     <meta charset="UTF-8">
-    <title>Thêm lớp học</title>
+    <title>Thêm môn học</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <link rel="stylesheet" href="../sidebar.css">
     <link rel="stylesheet" href="../content.css">
