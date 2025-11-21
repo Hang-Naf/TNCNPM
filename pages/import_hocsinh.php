@@ -298,23 +298,36 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
             </div>
         </nav>
     </aside>
-
     <div class="main-content">
         <header class="header">
             <div class="left">
                 <div class="search-box">
                     <i class="fa-solid fa-magnifying-glass"></i>
-                    <input type="text" placeholder="Tìm kiếm...">
+                    <input type="text" id="searchBox" placeholder="Tìm kiếm...">
                 </div>
             </div>
 
             <div class="right">
+                <div class="notification-area">
+                    <i class="fa-regular fa-bell" id="bellIcon"></i>
+                    <span class="noti-badge" id="notiBadge">0</span>
+                    <div class="notification-dropdown" id="notificationDropdown">
+                        <h4>Thông báo</h4>
+                        <ul id="notificationList"></ul>
+                        <div class="no-noti" id="noNoti">Không có thông báo mới</div>
+                        <div id="xemChiTietThongBao"
+                            style="text-align:center;padding:10px;background:#f0f2f6;cursor:pointer;font-size:13px;font-weight:600;color:#0b3364;border-top:1px solid #ddd;">
+                            🔍 Xem chi tiết thông báo
+                        </div>
+                    </div>
+                </div>
+
                 <div class="user-info" onclick="toggleUserMenu()">
                     <i class="fa-solid fa-user"></i>
                     <span>Quản trị viên</span>
                     <i class="fa-solid fa-angle-down"></i>
                 </div>
-                <div class="user-menu" id="userMenu" style="display:none;">
+                <div class="user-menu" id="userMenu">
                     <ul>
                         <li onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</li>
                     </ul>
@@ -345,11 +358,106 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
     </div>
 
     <script>
+        document.getElementById("bellIcon").addEventListener("click", function() {
+            const dropdown = document.getElementById("notificationDropdown");
+            // Hiện/ẩn menu
+            dropdown.style.display = (dropdown.style.display === "block") ? "none" : "block";
+
+            // Gọi AJAX lấy thông báo
+            fetch("../get_thongbao.php")
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById("notificationList");
+                    const noNoti = document.getElementById("noNoti");
+                    const badge = document.getElementById("notiBadge");
+                    list.innerHTML = "";
+
+                    let unreadCount = 0;
+
+                    if (data.length > 0) {
+                        noNoti.style.display = "none";
+                        data.forEach(tb => {
+                            const li = document.createElement("li");
+                            li.style.padding = "10px 8px";
+                            li.style.borderBottom = "1px solid #eee";
+                            li.style.cursor = "pointer";
+
+                            if (tb.trangThai === "Chưa đọc") {
+                                unreadCount++;
+                                li.style.background = "#f0f8ff";
+                                li.innerHTML = `
+                        <strong style="color:#0b3364;">${tb.tieuDe} 🔵</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            } else {
+                                li.style.opacity = "0.7";
+                                li.innerHTML = `
+                        <strong>${tb.tieuDe}</strong><br>
+                        <span>${tb.noiDung}</span><br>
+                        <small>${tb.ngayGui}</small>
+                    `;
+                            }
+
+                            li.addEventListener("click", () => markAsRead(tb.maThongBao, li));
+                            list.appendChild(li);
+                        });
+                    } else {
+                        noNoti.style.display = "block";
+                    }
+
+                    // Cập nhật badge
+                    if (unreadCount > 0) {
+                        badge.textContent = unreadCount;
+                        badge.style.display = "block";
+                    } else {
+                        badge.style.display = "none";
+                    }
+                })
+                .catch(err => console.error("Lỗi tải thông báo:", err));
+
+
+            function markAsRead(maThongBao, element) {
+                fetch("../update_trangthai.php", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/x-www-form-urlencoded"
+                        },
+                        body: "maThongBao=" + encodeURIComponent(maThongBao)
+                    })
+                    .then(res => res.text())
+                    .then(response => {
+                        if (response === "OK") {
+                            element.style.background = "transparent";
+                            element.style.opacity = "0.7";
+                            element.querySelector("strong").innerHTML = element.querySelector("strong").innerText;
+
+                            // Giảm số badge đi 1
+                            const badge = document.getElementById("notiBadge");
+                            let current = parseInt(badge.textContent || "0");
+                            if (current > 1) badge.textContent = current - 1;
+                            else badge.style.display = "none";
+                        }
+                    });
+            }
+
+        });
+
+        // Ẩn dropdown khi click ra ngoài
+        document.addEventListener("click", function(e) {
+            const dropdown = document.getElementById("notificationDropdown");
+            const bell = document.getElementById("bellIcon");
+            if (!bell.contains(e.target) && !dropdown.contains(e.target)) {
+                dropdown.style.display = "none";
+            }
+        });
+
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");
             menu.style.display = (menu.style.display === "block") ? "none" : "block";
         }
 
+        // Đóng menu nếu click ra ngoài
         document.addEventListener("click", function(e) {
             const menu = document.getElementById("userMenu");
             const userInfo = document.querySelector(".user-info");
@@ -358,9 +466,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
             }
         });
 
+        // Khi click vào "Xem chi tiết thông báo"
+        document.getElementById("xemChiTietThongBao").addEventListener("click", function() {
+            window.location.href = "../pages/qlthongbao.php";
+        });
+
+        // Xử lý đăng xuất
         function logout() {
             if (confirm("Bạn có chắc muốn đăng xuất không?")) {
-                window.location.href = "../dangxuat.php";
+                window.location.href = "../dangxuat.php"; // hoặc logout.php nếu có xử lý session
             }
         }
     </script>
