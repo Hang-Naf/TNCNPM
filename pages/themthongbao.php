@@ -40,7 +40,13 @@ $currentUserId = $_SESSION["userID"];
         h2 {
             margin-bottom: 20px;
             font-size: 22px;
+            color: #ffffffff;
+        }
+        h1 {
+            margin-bottom: 20px;
+            font-size: 22px;
             color: #0b1e6b;
+            margin-left: 30px;
         }
 
         label {
@@ -182,8 +188,8 @@ $currentUserId = $_SESSION["userID"];
                 </div>
             </div>
         </header>
-        <h2>Thêm thông báo</h2>
-        <form id="addForm" enctype="multipart/form-data" style="width: 90%;">
+        <h1>Thêm thông báo</h1>
+        <form id="addForm" enctype="multipart/form-data" style="width: 90%; margin-left: 25px;">
             <input type="hidden" name="action" value="add">
 
             <label>Tiêu đề:</label>
