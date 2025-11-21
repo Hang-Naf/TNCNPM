@@ -27,24 +27,40 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
         $rows = [];
     }
 
+    if (empty($rows)) {
+        echo "<script>alert('File Excel trống!'); window.location.href='import_giaovien.php';</script>";
+        exit();
+    }
+
+    // Kiểm tra header
+    $header = array_map('trim', $rows[0]);
+    $requiredHeaders = ['Họ và tên', 'Giới tính', 'Email', 'SĐT', 'Mật khẩu'];
+    foreach ($requiredHeaders as $col) {
+        if (!in_array($col, $header)) {
+            echo "<script>alert('File Excel thiếu cột bắt buộc: $col'); window.location.href='qlgiaovien.php';</script>";
+            exit();
+        }
+    }
+
     array_shift($rows); // bỏ dòng tiêu đề
     if (count($rows) > 100) $rows = array_slice($rows, 0, 100);
 
     foreach ($rows as $index => $r) {
-        $hoVaTen = trim($r[0]);
-        $gioiTinh = trim($r[1]);
-        $email = strtolower(trim($r[2]));
-        $sdt = trim($r[3]);
-        $matKhau = trim($r[4]);
-        $boMon = trim($r[5]);
-        $trinhDo = trim($r[6]);
-        $phongBan = trim($r[7]);
-        $namHoc = trim($r[8]);
-        $hocKy = trim($r[9]);
+        // Sử dụng isset để tránh lỗi nếu thiếu cột
+        $hoVaTen = isset($r[0]) ? trim($r[0]) : '';
+        $gioiTinh = isset($r[1]) ? trim($r[1]) : '';
+        $email = isset($r[2]) ? strtolower(trim($r[2])) : '';
+        $sdt = isset($r[3]) ? trim($r[3]) : '';
+        $matKhau = isset($r[4]) ? trim($r[4]) : '';
+        $boMon = isset($r[5]) ? trim($r[5]) : '';
+        $trinhDo = isset($r[6]) ? trim($r[6]) : '';
+        $phongBan = isset($r[7]) ? trim($r[7]) : '';
+        $namHoc = isset($r[8]) ? trim($r[8]) : '';
+        $hocKy = isset($r[9]) ? trim($r[9]) : '';
         $trangThai = 'active';
 
         if (!$hoVaTen || !$email || !$matKhau) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Thiếu dữ liệu bắt buộc";
+            $errorList[] = "Dòng " . ($index + 2) . ": Thiếu dữ liệu bắt buộc (Họ và tên, Email, Mật khẩu)";
             continue;
         }
 
@@ -62,13 +78,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
 
         $hash = password_hash($matKhau, PASSWORD_BCRYPT);
 
-        // Thêm vào user với prepared statement
+        // Thêm vào user
         $stmtUser = $conn->prepare("INSERT INTO user (hoVaTen, gioiTinh, email, sdt, matKhau, vaiTro) VALUES (?, ?, ?, ?, ?, 'GiaoVien')");
         if (!$stmtUser) {
             $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare user - " . $conn->error;
             continue;
         }
-
         $stmtUser->bind_param("sssss", $hoVaTen, $gioiTinh, $email, $sdt, $hash);
         if (!$stmtUser->execute()) {
             $errorList[] = "Dòng " . ($index + 2) . ": Lỗi thêm user - " . $stmtUser->error;
@@ -79,6 +94,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
         $maGV = $stmtUser->insert_id;
         $stmtUser->close();
 
+        // Thêm / cập nhật giáo viên
         $checkGVStmt = $conn->prepare("SELECT maGV FROM giaovien WHERE maGV = ?");
         $checkGVStmt->bind_param("i", $maGV);
         $checkGVStmt->execute();
@@ -88,29 +104,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
 
         if ($gvExists) {
             $stmtGV = $conn->prepare("UPDATE giaovien SET boMon=?, trinhDo=?, phongBan=?, namHoc=?, hocKy=?, trangThai=? WHERE maGV=?");
-            if (!$stmtGV) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare update giaovien - " . $conn->error;
-                continue;
-            }
             $stmtGV->bind_param("ssssssi", $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai, $maGV);
-            if (!$stmtGV->execute()) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi cập nhật giaovien - " . $stmtGV->error;
-                $stmtGV->close();
-                continue;
-            }
+            $stmtGV->execute();
             $stmtGV->close();
         } else {
             $stmtGV = $conn->prepare("INSERT INTO giaovien (maGV, boMon, trinhDo, anhDaiDien, phongBan, namHoc, hocKy, trangThai) VALUES (?, ?, ?, 'Chưa cập nhật', ?, ?, ?, ?)");
-            if (!$stmtGV) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare giaovien - " . $conn->error;
-                continue;
-            }
             $stmtGV->bind_param("isssssss", $maGV, $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai);
-            if (!$stmtGV->execute()) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi thêm vào giaovien - " . $stmtGV->error;
-                $stmtGV->close();
-                continue;
-            }
+            $stmtGV->execute();
             $stmtGV->close();
         }
 
@@ -119,16 +119,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
     }
 
     // Hiển thị kết quả
-    if ($count > 0 && !empty($errorList)) {
-        $errStr = implode("\\n", $errorList);
-        echo "<script>alert('Import thành công $count giáo viên nhưng có lỗi:\\n$errStr'); window.location.href='qlgiaovien.php';</script>";
+    $errStr = !empty($errorList) ? implode("\\n", $errorList) : '';
+    if ($count > 0) {
+        if (!empty($errorList)) {
+            echo "<script>alert('Import thành công $count giáo viên nhưng có lỗi:\\n$errStr'); window.location.href='qlgiaovien.php';</script>";
+        } else {
+            echo "<script>alert('Import thành công $count giáo viên!'); window.location.href='qlgiaovien.php';</script>";
+        }
         exit();
-    } elseif ($count > 0) {
-        header("Location: qlgiaovien.php");
-        exit();
-    } elseif (!empty($errorList)) {
-        $errStr = implode("\\n", $errorList);
-        echo "<script>alert('Không import được giáo viên nào:\\n$errStr');</script>";
+    } else {
+        if (!empty($errorList)) {
+            echo "<script>alert('Không import được giáo viên nào:\\n$errStr'); window.location.href='qlgiaovien.php';</script>";
+            exit();
+        }
     }
 }
 ?>

@@ -27,27 +27,32 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
         $rows = [];
     }
 
+    if (empty($rows)) {
+        echo "<script>alert('File Excel trống!'); window.location.href='qlhocsinh.php';</script>";
+        exit();
+    }
+
     array_shift($rows); // bỏ dòng tiêu đề
     if (count($rows) > 100) $rows = array_slice($rows, 0, 100);
 
     foreach ($rows as $index => $r) {
-        $hoVaTen = trim($r[0]);
-        $gioiTinh = trim($r[1]);
-        $email = strtolower(trim($r[2]));
-        $sdt = trim($r[3]);
-        $matKhau = trim($r[4]);
-        $lopHocPhuTrach = trim($r[5]);
-        $chucVu = trim($r[6]);
-        $namHoc = trim($r[7]);
-        $hocKy = trim($r[8]);
+        $hoVaTen = isset($r[0]) ? trim($r[0]) : '';
+        $gioiTinh = isset($r[1]) ? trim($r[1]) : '';
+        $email = isset($r[2]) ? strtolower(trim($r[2])) : '';
+        $sdt = isset($r[3]) ? trim($r[3]) : '';
+        $matKhau = isset($r[4]) ? trim($r[4]) : '';
+        $lopHocPhuTrach = isset($r[5]) ? trim($r[5]) : '';
+        $chucVu = isset($r[6]) ? trim($r[6]) : '';
+        $namHoc = isset($r[7]) ? trim($r[7]) : '';
+        $hocKy = isset($r[8]) ? trim($r[8]) : '';
         $trangThai = 'active';
 
         if (!$hoVaTen || !$email || !$matKhau) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Thiếu dữ liệu bắt buộc";
+            $errorList[] = "Dòng " . ($index + 2) . ": Thiếu dữ liệu bắt buộc (Họ tên, Email, Mật khẩu)";
             continue;
         }
 
-        // Check email đã tồn tại
+        // Check email tồn tại
         $chkStmt = $conn->prepare("SELECT userID FROM user WHERE email = ?");
         $chkStmt->bind_param("s", $email);
         $chkStmt->execute();
@@ -61,24 +66,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
 
         $hash = password_hash($matKhau, PASSWORD_BCRYPT);
 
-        // Thêm vào user với prepared statement
+        // Thêm user
         $stmtUser = $conn->prepare("INSERT INTO user (hoVaTen, gioiTinh, email, sdt, matKhau, vaiTro) VALUES (?, ?, ?, ?, ?, 'HocSinh')");
-        if (!$stmtUser) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare user - " . $conn->error;
-            continue;
-        }
-
         $stmtUser->bind_param("sssss", $hoVaTen, $gioiTinh, $email, $sdt, $hash);
-        if (!$stmtUser->execute()) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Lỗi thêm user - " . $stmtUser->error;
-            $stmtUser->close();
-            continue;
-        }
-
+        $stmtUser->execute();
         $maHS = $stmtUser->insert_id;
         $stmtUser->close();
 
-        // Check if hocsinh record already exists
+        // Thêm / cập nhật hocsinh
         $checkHSStmt = $conn->prepare("SELECT maHS FROM hocsinh WHERE maHS = ?");
         $checkHSStmt->bind_param("i", $maHS);
         $checkHSStmt->execute();
@@ -87,32 +82,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
         $checkHSStmt->close();
 
         if ($hsExists) {
-            // Update existing hocsinh record
             $stmtHS = $conn->prepare("UPDATE hocsinh SET lopHocPhuTrach=?, chucVu=?, namHoc=?, hocKy=?, trangThai=? WHERE maHS=?");
-            if (!$stmtHS) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare update hocsinh - " . $conn->error;
-                continue;
-            }
             $stmtHS->bind_param("sssssi", $lopHocPhuTrach, $chucVu, $namHoc, $hocKy, $trangThai, $maHS);
-            if (!$stmtHS->execute()) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi cập nhật hocsinh - " . $stmtHS->error;
-                $stmtHS->close();
-                continue;
-            }
+            $stmtHS->execute();
             $stmtHS->close();
         } else {
-            // Insert new hocsinh record
             $stmtHS = $conn->prepare("INSERT INTO hocsinh (maHS, lopHocPhuTrach, chucVu, namHoc, hocKy, anhDaiDien, trangThai) VALUES (?, ?, ?, ?, ?, 'Chưa cập nhật', ?)");
-            if (!$stmtHS) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare hocsinh - " . $conn->error;
-                continue;
-            }
             $stmtHS->bind_param("isssss", $maHS, $lopHocPhuTrach, $chucVu, $namHoc, $hocKy, $trangThai);
-            if (!$stmtHS->execute()) {
-                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi thêm vào hocsinh - " . $stmtHS->error;
-                $stmtHS->close();
-                continue;
-            }
+            $stmtHS->execute();
             $stmtHS->close();
         }
 
@@ -121,19 +98,21 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
     }
 
     // Hiển thị kết quả
-    if ($count > 0 && !empty($errorList)) {
-        $errStr = implode("\\n", $errorList);
-        echo "<script>alert('Import thành công $count học sinh nhưng có lỗi:\\n$errStr'); window.location.href='qlhocsinh.php';</script>";
-        exit();
-    } elseif ($count > 0) {
-        header("Location: qlhocsinh.php");
+    $errStr = !empty($errorList) ? implode("\\n", $errorList) : '';
+    if ($count > 0) {
+        if (!empty($errorList)) {
+            echo "<script>alert('Import thành công $count học sinh nhưng có lỗi:\\n$errStr'); window.location.href='qlhocsinh.php';</script>";
+        } else {
+            echo "<script>alert('Import thành công $count học sinh!'); window.location.href='qlhocsinh.php';</script>";
+        }
         exit();
     } elseif (!empty($errorList)) {
-        $errStr = implode("\\n", $errorList);
-        echo "<script>alert('Không import được học sinh nào:\\n$errStr');</script>";
+        echo "<script>alert('Không import được học sinh nào:\\n$errStr'); window.location.href='qlhocsinh.php';</script>";
+        exit();
     }
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="vi">
