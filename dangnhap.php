@@ -270,6 +270,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
     <div class="container">
+        <div class="left">
+            <h2 style="font-size: 48px;">Hello, Welcome!</h2>
+        </div>
         <div class="right">
             <div class="right-container">
                 <h2>Đăng Nhập</h2>
