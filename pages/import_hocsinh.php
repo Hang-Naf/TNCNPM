@@ -231,6 +231,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
             background: #0b3364;
             color: white;
             width: 150px;
+            height: 48px;
         }
 
         .btn-import:hover {
@@ -345,17 +346,6 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
         <div class="container">
             <h1>IMPORT HỌC SINH TỪ FILE EXCEL</h1>
 
-            <div class="info-box">
-                <h4>📋 Hướng dẫn sử dụng:</h4>
-                <ul>
-                    <li>Tệp Excel phải có các cột: Họ tên, Giới tính, Email, Số điện thoại, Mật khẩu, Lớp, Chức vụ, Năm học, Học kỳ</li>
-                    <li>Dòng tiêu đề sẽ được tự động bỏ qua</li>
-                    <li>Email phải duy nhất, nếu tồn tại sẽ bỏ qua</li>
-                    <li>Tối đa 100 học sinh một lần import</li>
-                    <li>Định dạng ngày: YYYY-MM-DD (nếu có)</li>
-                </ul>
-            </div>
-
             <form method="POST" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="excelFile">Chọn file Excel (.xlsx, .xls):</label>
@@ -363,14 +353,15 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
                 </div>
 
                 <div class="sample-area">
-                    <a href="mau_import_hocsinh.xlsx" class="btn-sample" download>📥 Tải file mẫu</a>
+                    <a href="mau_import_hocsinh.xlsx" class="btn-sample" style="border-radius: 6px; width: 150px; height: 26px; margin-right: 20px;" download>📥 Tải file mẫu</a>
+                    <button type="submit" class="btn-import">📤 Import</button>
                 </div>
 
-                <div class="btn-container">
-                    <button type="submit" class="btn-import">📤 Import</button>
-                    <a href="qlhocsinh.php" class="btn-back" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">⬅ Quay lại</a>
-                </div>
             </form>
+        </div>
+        <div class="btn-container">
+
+            <a href="qlhocsinh.php" class="btn-back" style="text-decoration:none; display:flex; align-items:center; border-radius: 7px; justify-content:center; width: 150px; height: 50px;">⬅ Quay lại</a>
         </div>
     </div>
 
