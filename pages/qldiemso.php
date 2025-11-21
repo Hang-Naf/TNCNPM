@@ -374,7 +374,7 @@ $result = $conn->query($sql);
 
                         echo "
                             <tr>
-                                <td><input type='checkbox' class='rowCheckbox'></td>
+                                <td><input type='checkbox' class='rowCheckbox' value='" . $row['maHS'] . "'></td>
                                 <td>{$stt}</td>
                                 <td>" . htmlspecialchars($row['maHS']) . "</td>
                                 <td>" . htmlspecialchars($row['hoVaTen']) . "</td>
@@ -439,39 +439,73 @@ $result = $conn->query($sql);
         </div>
     </div>
     <script>
-        // Checkbox "chọn tất cả"
-        const checkAll = document.getElementById("checkAll");
-        const rowCheckboxes = document.querySelectorAll(".rowCheckbox");
+        let selectedStudents = JSON.parse(localStorage.getItem("selectedStudents")) || [];
 
-        // Khi tick vào checkbox đầu tiên
-        checkAll.addEventListener("change", function() {
-            rowCheckboxes.forEach(cb => cb.checked = checkAll.checked);
-        });
+        function syncCheckboxState() {
+            document.querySelectorAll(".rowCheckbox").forEach(cb => {
+                cb.checked = selectedStudents.includes(cb.value);
+            });
 
-        // Khi tick/bỏ tick từng checkbox con
-        // rowCheckboxes.forEach(cb => {
-        //     cb.addEventListener("change", function() {
-        //         const allChecked = Array.from(rowCheckboxes).every(c => c.checked);
-        //         checkAll.checked = allChecked;
-        //     });
-        // });
+            const allChecked = Array.from(document.querySelectorAll(".rowCheckbox"))
+                .every(cb => cb.checked);
+            document.getElementById("checkAll").checked = allChecked;
+        }
 
-        document.getElementById("exportForm").addEventListener("submit", function(e) {
-            const selected = [];
-            document.querySelectorAll("tbody tr").forEach(row => {
-                const checkbox = row.querySelector(".rowCheckbox");
-                if (checkbox && checkbox.checked) {
-                    // cột MÃ HS nằm ở vị trí thứ 2 (index 2)
-                    const maHS = row.children[2]?.innerText.replace("K", "");
-                    selected.push(maHS);
+        function updateLocalStorage() {
+            const pageCheckboxes = Array.from(document.querySelectorAll(".rowCheckbox"));
+
+            pageCheckboxes.forEach(cb => {
+                if (cb.checked && !selectedStudents.includes(cb.value)) {
+                    selectedStudents.push(cb.value);
+                }
+                if (!cb.checked && selectedStudents.includes(cb.value)) {
+                    selectedStudents = selectedStudents.filter(id => id !== cb.value);
                 }
             });
-            if (selected.length === 0) {
+
+            localStorage.setItem("selectedStudents", JSON.stringify(selectedStudents));
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const checkAll = document.getElementById("checkAll");
+
+            syncCheckboxState();
+
+            checkAll.addEventListener("change", async function() {
+                if (this.checked) {
+                    const params = new URLSearchParams(window.location.search);
+                    const response = await fetch("get_all_mahs.php?" + params.toString());
+                    selectedStudents = await response.json();
+                } else {
+                    selectedStudents = [];
+                }
+
+                localStorage.setItem("selectedStudents", JSON.stringify(selectedStudents));
+                syncCheckboxState();
+            });
+
+            document.querySelectorAll(".rowCheckbox").forEach(cb => {
+                cb.addEventListener("change", function() {
+                    updateLocalStorage();
+                    syncCheckboxState();
+                });
+            });
+        });
+
+        // Gửi danh sách khi Export
+        document.getElementById("exportForm").addEventListener("submit", function(e) {
+            if (selectedStudents.length === 0) {
                 alert("Vui lòng chọn ít nhất một học sinh để export!");
                 e.preventDefault();
                 return;
             }
-            document.getElementById("selectedHS").value = selected.join(",");
+            document.getElementById("selectedHS").value = selectedStudents.join(",");
+        });
+
+        // Xóa danh sách khi rời trang (tùy chọn)
+        window.addEventListener("beforeunload", function() {
+            // Nếu không muốn reset thì comment dòng dưới lại
+            // localStorage.removeItem("selectedStudents");
         });
 
         document.getElementById("bellIcon").addEventListener("click", function() {

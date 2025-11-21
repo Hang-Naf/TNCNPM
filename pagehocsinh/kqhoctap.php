@@ -287,7 +287,7 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
                         <?php $i = $offset + 1;
                         foreach ($bangDiemPaged as $maMonHoc => $d): ?>
                             <tr class="score-row" data-subject="<?= htmlspecialchars(strtolower($d['tenMonHoc'])) ?>">
-                                <td><input type='checkbox' class='rowCheckbox'></td>
+                                <td><input type='checkbox' class='rowCheckbox' value="<?= $d['maMonHoc'] ?>"></td>
                                 <td><?= $i++ ?></td>
                                 <td><?= htmlspecialchars($d['tenMonHoc']) ?></td>
                                 <td><?= $d['tbHK1'] ?? '-' ?></td>
@@ -364,7 +364,7 @@ $bangDiemPaged = array_slice($bangDiem, $offset, $itemsPerPage, true);
                 e.preventDefault();
                 return;
             }
-            document.getElementById("selectedMon").value = selected.join(",");
+            document.getElementById("selectedHS").value = selected.join(",");
         });
 
         document.getElementById("bellIcon").addEventListener("click", function() {

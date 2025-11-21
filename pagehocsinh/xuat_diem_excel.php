@@ -1,178 +1,289 @@
 <?php
-require __DIR__ . '/../vendor/autoload.php';
+require __DIR__ . "/../vendor/autoload.php";
+include_once(__DIR__ . "/../csdl/db.php");
+session_start();
 
 use PhpOffice\PhpSpreadsheet\Spreadsheet;
 use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
+use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Alignment;
 
-include_once(__DIR__ . '/../csdl/db.php');
-session_start();
+// Kiểm tra đăng nhập 
+if (!isset($_SESSION["userID"])) {
+    header("Location: ../dangnhap.php");
+    exit();
+}
 
-// ==== Kiểm tra đăng nhập ====
-if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "HocSinh") {
+if ($_SESSION["vaiTro"] !== "HocSinh") {
+    session_destroy();
     header("Location: ../dangnhap.php");
     exit();
 }
 
 $userID = $_SESSION["userID"];
 
-// ==== Xác định môn cần xuất ====
-$mons = [];
-if (isset($_GET['mon'])) {
-    $mons[] = $_GET['mon'];
-} elseif (isset($_POST['selectedMon'])) {
-    $mons = explode(",", $_POST['selectedMon']);
+function styleHeader($sheet, $cells)
+{
+    $sheet->getStyle($cells)->applyFromArray([
+        'font' => ['bold' => true],
+        'alignment' => ['horizontal' => Alignment::HORIZONTAL_CENTER],
+        'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+    ]);
 }
 
-if (empty($mons)) {
-    die("Không có môn nào được chọn để export.");
+// XUẤT 1 MÔN — HIỂN THỊ ĐẦY ĐỦ TẤT CẢ LOẠI ĐIỂM
+if (isset($_GET["mon"])) {
+
+    $tenMon = $_GET["mon"];
+
+    $sql = "SELECT d.loaiDiem, d.diem, m.tenMonHoc
+            FROM diemso d
+            JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+            WHERE d.maHS = ? AND m.tenMonHoc = ?";
+    $stm = $conn->prepare($sql);
+    $stm->bind_param("is", $userID, $tenMon);
+    $stm->execute();
+    $rs = $stm->get_result();
+
+    // Mặc định rỗng
+    $hk1 = ["mieng" => "", "1tiet" => "", "gk" => "", "ck" => ""];
+    $hk2 = ["mieng" => "", "1tiet" => "", "gk" => "", "ck" => ""];
+
+    while ($d = $rs->fetch_assoc()) {
+        $loai = strtolower($d["loaiDiem"]);
+        $diem = $d["diem"];
+
+        if (strpos($loai, "hk1_mieng") !== false) $hk1["mieng"] = $diem;
+        if (strpos($loai, "hk1_1tiet") !== false) $hk1["1tiet"] = $diem;
+        if (strpos($loai, "hk1_thigk") !== false) $hk1["gk"] = $diem;
+        if (strpos($loai, "hk1_thick") !== false) $hk1["ck"] = $diem;
+
+        if (strpos($loai, "hk2_mieng") !== false) $hk2["mieng"] = $diem;
+        if (strpos($loai, "hk2_1tiet") !== false) $hk2["1tiet"] = $diem;
+        if (strpos($loai, "hk2_thigk") !== false) $hk2["gk"] = $diem;
+        if (strpos($loai, "hk2_thick") !== false) $hk2["ck"] = $diem;
+    }
+
+    // Tính TB chung (không coi điểm trống = 0)
+    function tinhTB($arr) {
+        $sum = 0; $w = 0;
+
+        if ($arr["mieng"] !== "") { $sum += $arr["mieng"] * 1; $w += 1; }
+        if ($arr["1tiet"] !== "") { $sum += $arr["1tiet"] * 2; $w += 2; }
+        if ($arr["gk"] !== "")    { $sum += $arr["gk"] * 2;    $w += 2; }
+        if ($arr["ck"] !== "")    { $sum += $arr["ck"] * 3;    $w += 3; }
+
+        return $w > 0 ? round($sum / $w, 1) : "";
+    }
+
+    $tbHK1 = tinhTB($hk1);
+    $tbHK2 = tinhTB($hk2);
+
+    if ($tbHK1 !== "" && $tbHK2 !== "")
+        $tbMon = round(($tbHK1 + $tbHK2) / 2, 1);
+    else
+        $tbMon = ($tbHK1 !== "" ? $tbHK1 : $tbHK2);
+
+    // Tạo Excel
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+
+    // Tiêu đề lớn
+    $sheet->setCellValue("A1", "BẢNG ĐIỂM MÔN: $tenMon");
+    $sheet->mergeCells("A1:M1");
+    $sheet->getStyle("A1")->getFont()->setBold(true)->setSize(14);
+    $sheet->getStyle("A1")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
+
+    // Header 1 dòng
+    $header = [
+        "Môn học",
+        "HK1 Miệng", "HK1 1 tiết", "HK1 GK", "HK1 CK", "TB HK1",
+        "HK2 Miệng", "HK2 1 tiết", "HK2 GK", "HK2 CK", "TB HK2",
+        "TB Môn"
+    ];
+    $sheet->fromArray([$header], NULL, "A3");
+    styleHeader($sheet, "A3:M3");
+
+    // Dữ liệu 1 dòng
+    $data = [
+        $tenMon,
+        $hk1["mieng"], $hk1["1tiet"], $hk1["gk"], $hk1["ck"], $tbHK1,
+        $hk2["mieng"], $hk2["1tiet"], $hk2["gk"], $hk2["ck"], $tbHK2,
+        $tbMon
+    ];
+
+    $sheet->fromArray([$data], NULL, "A4");
+
+    // Borders
+    $sheet->getStyle("A4:M4")->applyFromArray([
+        'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+    ]);
+
+    // Xuất file
+    header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    header("Content-Disposition: attachment; filename=\"diem_$tenMon.xlsx\"");
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save("php://output");
+    exit();
 }
 
-// ==== Tạo file Excel ====
-$spreadsheet = new Spreadsheet();
-$sheet = $spreadsheet->getActiveSheet();
-$sheet->setTitle("Chi tiết điểm");
 
-// ==== Header ====
-$sheet->setCellValue('A1', 'STT');
-$sheet->setCellValue('B1', 'Môn học');
-$sheet->setCellValue('C1', 'HK1 - Miệng');
-$sheet->setCellValue('D1', 'HK1 - 1 Tiết');
-$sheet->setCellValue('E1', 'HK1 - Thi GK');
-$sheet->setCellValue('F1', 'HK1 - Thi CK');
-$sheet->setCellValue('G1', 'TB HK1');
-$sheet->setCellValue('H1', 'HK2 - Miệng');
-$sheet->setCellValue('I1', 'HK2 - 1 Tiết');
-$sheet->setCellValue('J1', 'HK2 - Thi GK');
-$sheet->setCellValue('K1', 'HK2 - Thi CK');
-$sheet->setCellValue('L1', 'TB HK2');
-$sheet->setCellValue('M1', 'Trung bình môn');
+// XUẤT NHIỀU MÔN — CHI TIẾT TẤT CẢ ĐIỂM CỦA HAI HỌC KỲ
+if (isset($_POST["selectedHS"])) {
 
-// ==== Lấy dữ liệu điểm từ DB ====
-$sql = "SELECT m.tenMonHoc, d.loaiDiem, d.diem
-        FROM diemso d
-        LEFT JOIN monhoc m ON d.maMonHoc = m.maMonHoc
-        WHERE d.maHS = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("i", $userID);
-$stmt->execute();
-$result = $stmt->get_result();
+    $selected = explode(",", $_POST["selectedHS"]);
 
-$bangDiem = [];
-while ($r = $result->fetch_assoc()) {
-    $mon = $r['tenMonHoc'];
-    if (!in_array($mon, $mons)) continue;
+    $spreadsheet = new Spreadsheet();
+    $sheet = $spreadsheet->getActiveSheet();
+    $sheet->setTitle("Bang diem chi tiet");
 
-    $loai = strtolower($r['loaiDiem']);
-    $diem = is_numeric($r['diem']) ? (float)$r['diem'] : null;
+    // Tiêu đề
+    $sheet->setCellValue("A1", "BẢNG ĐIỂM CHI TIẾT TẤT CẢ MÔN");
+    $sheet->mergeCells("A1:L1");
+    $sheet->getStyle("A1")->getFont()->setBold(true)->setSize(14);
+    $sheet->getStyle("A1")->getAlignment()->setHorizontal(Alignment::HORIZONTAL_CENTER);
 
-    if (!isset($bangDiem[$mon])) {
-        $bangDiem[$mon] = [
-            'hk1_mieng' => null,
-            'hk1_1tiet' => null,
-            'hk1_thiGK' => null,
-            'hk1_thiCK' => null,
-            'hk2_mieng' => null,
-            'hk2_1tiet' => null,
-            'hk2_thiGK' => null,
-            'hk2_thiCK' => null,
-            'tbHK1' => null,
-            'tbHK2' => null,
-            'tb' => null
-        ];
+    // Header bảng
+    $sheet->fromArray([
+        [
+            "Môn học",
+            "HK1 Miệng",
+            "HK1 1 tiết",
+            "HK1 GK",
+            "HK1 CK",
+            "TB HK1",
+            "HK2 Miệng",
+            "HK2 1 tiết",
+            "HK2 GK",
+            "HK2 CK",
+            "TB HK2",
+            "TB Môn"
+        ]
+    ], NULL, "A3");
+
+    styleHeader($sheet, "A3:L3");
+
+    $row = 4;
+
+    foreach ($selected as $maMon) {
+
+        $sql = "SELECT d.loaiDiem, d.diem, m.tenMonHoc
+                FROM diemso d
+                JOIN monhoc m ON d.maMonHoc = m.maMonHoc
+                WHERE d.maHS = ? AND d.maMonHoc = ?";
+        $stm = $conn->prepare($sql);
+        $stm->bind_param("ii", $userID, $maMon);
+        $stm->execute();
+        $rs = $stm->get_result();
+
+        $tenMon = "";
+        $hk1 = ["mieng" => null, "1tiet" => null, "gk" => null, "ck" => null];
+        $hk2 = ["mieng" => null, "1tiet" => null, "gk" => null, "ck" => null];
+
+        while ($d = $rs->fetch_assoc()) {
+            $tenMon = $d["tenMonHoc"];
+            $loai = strtolower($d["loaiDiem"]);
+            $diem = $d["diem"];
+
+            if (strpos($loai, "hk1_mieng") !== false) $hk1["mieng"] = $diem;
+            if (strpos($loai, "hk1_1tiet") !== false) $hk1["1tiet"] = $diem;
+            if (strpos($loai, "hk1_thigk") !== false) $hk1["gk"] = $diem;
+            if (strpos($loai, "hk1_thick") !== false) $hk1["ck"] = $diem;
+
+            if (strpos($loai, "hk2_mieng") !== false) $hk2["mieng"] = $diem;
+            if (strpos($loai, "hk2_1tiet") !== false) $hk2["1tiet"] = $diem;
+            if (strpos($loai, "hk2_thigk") !== false) $hk2["gk"] = $diem;
+            if (strpos($loai, "hk2_thick") !== false) $hk2["ck"] = $diem;
+        }
+
+        // Tính TB
+        // TÍNH TB HK1
+        $sum = 0;
+        $weight = 0;
+
+        if ($hk1["mieng"] !== null) {
+            $sum += $hk1["mieng"] * 1;
+            $weight += 1;
+        }
+        if ($hk1["1tiet"] !== null) {
+            $sum += $hk1["1tiet"] * 2;
+            $weight += 2;
+        }
+        if ($hk1["gk"] !== null) {
+            $sum += $hk1["gk"] * 2;
+            $weight += 2;
+        }
+        if ($hk1["ck"] !== null) {
+            $sum += $hk1["ck"] * 3;
+            $weight += 3;
+        }
+
+        $tbHK1 = $weight > 0 ? round($sum / $weight, 1) : null;
+
+        // TÍNH TB HK2
+        $sum = 0;
+        $weight = 0;
+
+        if ($hk2["mieng"] !== null) {
+            $sum += $hk2["mieng"] * 1;
+            $weight += 1;
+        }
+        if ($hk2["1tiet"] !== null) {
+            $sum += $hk2["1tiet"] * 2;
+            $weight += 2;
+        }
+        if ($hk2["gk"] !== null) {
+            $sum += $hk2["gk"] * 2;
+            $weight += 2;
+        }
+        if ($hk2["ck"] !== null) {
+            $sum += $hk2["ck"] * 3;
+            $weight += 3;
+        }
+
+        $tbHK2 = $weight > 0 ? round($sum / $weight, 1) : null;
+
+        if ($tbHK1 !== null && $tbHK2 !== null)
+            $tbMon = round(($tbHK1 + $tbHK2) / 2, 1);
+        else
+            $tbMon = ($tbHK1 !== null ? $tbHK1 : $tbHK2);
+
+
+        // Ghi từng dòng
+        $sheet->fromArray([
+            [
+                $tenMon,
+                $hk1["mieng"],
+                $hk1["1tiet"],
+                $hk1["gk"],
+                $hk1["ck"],
+                $tbHK1,
+                $hk2["mieng"],
+                $hk2["1tiet"],
+                $hk2["gk"],
+                $hk2["ck"],
+                $tbHK2,
+                $tbMon
+            ]
+        ], NULL, "A$row");
+
+        // Style border
+        $sheet->getStyle("A$row:L$row")->applyFromArray([
+            'borders' => ['allBorders' => ['borderStyle' => Border::BORDER_THIN]]
+        ]);
+
+        $row++;
     }
 
-    // Gán điểm
-    if (strpos($loai, 'hk1_mieng') !== false) $bangDiem[$mon]['hk1_mieng'] = $diem;
-    elseif (strpos($loai, 'hk1_1tiet') !== false) $bangDiem[$mon]['hk1_1tiet'] = $diem;
-    elseif (strpos($loai, 'hk1_thigk') !== false) $bangDiem[$mon]['hk1_thiGK'] = $diem;
-    elseif (strpos($loai, 'hk1_thick') !== false) $bangDiem[$mon]['hk1_thiCK'] = $diem;
-    elseif (strpos($loai, 'hk2_mieng') !== false) $bangDiem[$mon]['hk2_mieng'] = $diem;
-    elseif (strpos($loai, 'hk2_1tiet') !== false) $bangDiem[$mon]['hk2_1tiet'] = $diem;
-    elseif (strpos($loai, 'hk2_thigk') !== false) $bangDiem[$mon]['hk2_thiGK'] = $diem;
-    elseif (strpos($loai, 'hk2_thick') !== false) $bangDiem[$mon]['hk2_thiCK'] = $diem;
+    // Xuất file
+    header("Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    header("Content-Disposition: attachment; filename=\"bang_diem_chi_tiet.xlsx\"");
+
+    $writer = new Xlsx($spreadsheet);
+    $writer->save("php://output");
+    exit();
 }
 
-// ==== Tính trung bình ====
-foreach ($bangDiem as $mon => &$d) {
-    // HK1
-    $sum = 0;
-    $count = 0;
-    if (is_numeric($d['hk1_mieng'])) {
-        $sum += $d['hk1_mieng'] * 1;
-        $count += 1;
-    }
-    if (is_numeric($d['hk1_1tiet'])) {
-        $sum += $d['hk1_1tiet'] * 2;
-        $count += 2;
-    }
-    if (is_numeric($d['hk1_thiGK'])) {
-        $sum += $d['hk1_thiGK'] * 2;
-        $count += 2;
-    }
-    if (is_numeric($d['hk1_thiCK'])) {
-        $sum += $d['hk1_thiCK'] * 3;
-        $count += 3;
-    }
-    $d['tbHK1'] = $count > 0 ? round($sum / $count, 1) : null;
-
-    // HK2
-    $sum = 0;
-    $count = 0;
-    if (is_numeric($d['hk2_mieng'])) {
-        $sum += $d['hk2_mieng'] * 1;
-        $count += 1;
-    }
-    if (is_numeric($d['hk2_1tiet'])) {
-        $sum += $d['hk2_1tiet'] * 2;
-        $count += 2;
-    }
-    if (is_numeric($d['hk2_thiGK'])) {
-        $sum += $d['hk2_thiGK'] * 2;
-        $count += 2;
-    }
-    if (is_numeric($d['hk2_thiCK'])) {
-        $sum += $d['hk2_thiCK'] * 3;
-        $count += 3;
-    }
-    $d['tbHK2'] = $count > 0 ? round($sum / $count, 1) : null;
-
-    // Trung bình môn
-    if (is_numeric($d['tbHK1']) && is_numeric($d['tbHK2'])) {
-        $d['tb'] = round(($d['tbHK1'] + $d['tbHK2']) / 2, 1);
-    } elseif (is_numeric($d['tbHK1'])) {
-        $d['tb'] = $d['tbHK1'];
-    } elseif (is_numeric($d['tbHK2'])) {
-        $d['tb'] = $d['tbHK2'];
-    }
-}
-
-// ==== Ghi dữ liệu vào Excel ====
-$row = 2;
-$stt = 1;
-foreach ($bangDiem as $mon => $d) {
-    $sheet->setCellValue("A$row", $stt++);
-    $sheet->setCellValue("B$row", $mon);
-    $sheet->setCellValue("C$row", $d['hk1_mieng'] ?? '-');
-    $sheet->setCellValue("D$row", $d['hk1_1tiet'] ?? '-');
-    $sheet->setCellValue("E$row", $d['hk1_thiGK'] ?? '-');
-    $sheet->setCellValue("F$row", $d['hk1_thiCK'] ?? '-');
-    $sheet->setCellValue("G$row", $d['tbHK1'] ?? '-');
-    $sheet->setCellValue("H$row", $d['hk2_mieng'] ?? '-');
-    $sheet->setCellValue("I$row", $d['hk2_1tiet'] ?? '-');
-    $sheet->setCellValue("J$row", $d['hk2_thiGK'] ?? '-');
-    $sheet->setCellValue("K$row", $d['hk2_thiCK'] ?? '-');
-    $sheet->setCellValue("L$row", $d['tbHK2'] ?? '-');
-    $sheet->setCellValue("M$row", $d['tb'] ?? '-');
-    $row++;
-}
-
-// ==== Xuất file Excel ====
-$filename = "ChiTietDiem_" . date("Ymd_His") . ".xlsx";
-header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-header("Content-Disposition: attachment;filename=\"$filename\"");
-header('Cache-Control: max-age=0');
-
-$writer = new Xlsx($spreadsheet);
-$writer->save('php://output');
-exit;
+echo "Không có dữ liệu.";
 ?>
