@@ -11,12 +11,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
     $ngayHoc = $_POST['ngayHoc'] ?? '';
     $trangThai = $_POST['trangThai'] ?? '';
 
+    $today = date('Y-m-d');
+    $weekday = date('w', strtotime($ngayHoc));
+
+    if ($weekday == 0) {
+        echo "ERR_SUNDAY";
+        exit();
+    }
+    if ($ngayHoc > $today) {
+        echo "ERR_FUTURE";
+        exit();
+    }
+
     if ($maHS > 0 && $maMonHoc > 0 && !empty($ngayHoc)) {
         $stmt = $conn->prepare("SELECT maDiemDanh FROM chuyencan WHERE maHS=? AND maMonHoc=? AND ngayHoc=?");
-        if (!$stmt) {
-            die("❌ Lỗi prepare SQL: " . $conn->error);
-        }
-
         $stmt->bind_param("iis", $maHS, $maMonHoc, $ngayHoc);
         $stmt->execute();
         $res = $stmt->get_result();
@@ -35,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['ajax']) && $_POST['aj
     } else {
         echo "Thiếu dữ liệu POST";
     }
-    exit(); // Dừng xử lý HTML bên dưới
+    exit();
 }
 
 
@@ -448,7 +456,7 @@ if ($cc) {
 
         <?php if ($danhsach): ?>
             <form method="POST" id="frmDiemDanh">
-                <input type="hidden" name="ngayHoc" value="<?= $loc_ngay ?>">
+                <input type="hidden" name="ngayHoc" max="<?= date('Y-m-d') ?> "value="<?= htmlspecialchars($loc_ngay) ?>">
                 <input type="hidden" name="maMonHoc" value="<?= $maMonHoc  ?>">
                 <div style="display:flex;">
                     <table>
@@ -535,6 +543,29 @@ if ($cc) {
         <?php endif; ?>
     </div>
     <script>
+        const datePicker = document.querySelector('input[name="ngayHoc"]');
+
+        function checkSunday() {
+            const selectedDate = new Date(datePicker.value);
+            if (selectedDate.getDay() === 0) {
+                alert("⚠ Không thể chọn Chủ nhật!");
+                datePicker.value = "";
+            }
+        }
+
+        datePicker.addEventListener("change", function() {
+            const d = new Date(this.value);
+            const today = new Date();
+
+            if (d > today) {
+                alert("⚠ Không thể chọn ngày trong tương lai!");
+                this.value = today.toISOString().split("T")[0];
+                return;
+            }
+
+            checkSunday();
+        });
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu
