@@ -23,18 +23,65 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $hocKy = $_POST['hocKy'];
     $trangThai = $_POST['trangThai'];
 
-    // Thêm vào bảng user và giaovien
-    $insertUser = "INSERT INTO user (hoVaTen, email, sdt, gioiTinh, vaiTro) 
-                   VALUES ('$hoVaTen', '$email', '$sdt', '$gioiTinh', 'GiaoVien')";
-    if ($conn->query($insertUser)) {
-        $maGV = $conn->insert_id;
-        $insertGV = "INSERT INTO giaovien (maGV, boMon, trinhDo, phongBan, namHoc, hocKy, trangThai) 
-                     VALUES ('$maGV', '$boMon', '$trinhDo', '$phongBan', '$namHoc', '$hocKy', '$trangThai')";
-        $conn->query($insertGV);
-        echo "<script>alert('Thêm giáo viên thành công'); window.location.href='qlgiaovien.php';</script>";
-        exit();
+    // Tự động set mật khẩu và mã hóa
+    $matKhauMacDinh = '12345678';
+    $matKhauHash = password_hash($matKhauMacDinh, PASSWORD_BCRYPT);
+
+    // Use prepared statements for user insertion
+    $stmtUser = $conn->prepare("INSERT INTO user (hoVaTen, email, sdt, gioiTinh, matKhau, vaiTro) VALUES (?, ?, ?, ?, ?, 'GiaoVien')");
+    if ($stmtUser) {
+        $stmtUser->bind_param('sssss', $hoVaTen, $email, $sdt, $gioiTinh, $matKhauHash);
+        if ($stmtUser->execute()) {
+            $maGV = $stmtUser->insert_id;
+            $stmtUser->close();
+
+            // Check if giaovien record already exists
+            $checkStmt = $conn->prepare("SELECT maGV FROM giaovien WHERE maGV = ?");
+            $checkStmt->bind_param('i', $maGV);
+            $checkStmt->execute();
+            $checkResult = $checkStmt->get_result();
+            $exists = ($checkResult->num_rows > 0);
+            $checkStmt->close();
+
+            if ($exists) {
+                // Update existing giaovien record
+                $stmtGV = $conn->prepare("UPDATE giaovien SET boMon=?, trinhDo=?, phongBan=?, namHoc=?, hocKy=?, trangThai=? WHERE maGV=?");
+                if ($stmtGV) {
+                    $stmtGV->bind_param('ssssssi', $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai, $maGV);
+                    if ($stmtGV->execute()) {
+                        $stmtGV->close();
+                        echo "<script>alert('Cập nhật giáo viên thành công'); window.location.href='qlgiaovien.php';</script>";
+                        exit();
+                    } else {
+                        echo "Lỗi cập nhật giáo viên: " . $stmtGV->error;
+                        $stmtGV->close();
+                    }
+                } else {
+                    echo "Lỗi prepare update: " . $conn->error;
+                }
+            } else {
+                // Insert new giaovien record
+                $stmtGV = $conn->prepare("INSERT INTO giaovien (maGV, boMon, trinhDo, anhDaiDien, phongBan, namHoc, hocKy, trangThai) VALUES (?, ?, ?, 'Chưa cập nhật', ?, ?, ?, ?)");
+                if ($stmtGV) {
+                    $stmtGV->bind_param('isssssss', $maGV, $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai);
+                    if ($stmtGV->execute()) {
+                        $stmtGV->close();
+                        echo "<script>alert('Thêm giáo viên thành công'); window.location.href='qlgiaovien.php';</script>";
+                        exit();
+                    } else {
+                        echo "Lỗi thêm chi tiết giáo viên: " . $stmtGV->error;
+                        $stmtGV->close();
+                    }
+                } else {
+                    echo "Lỗi prepare giaovien: " . $conn->error;
+                }
+            }
+        } else {
+            echo "Lỗi thêm user: " . $stmtUser->error;
+            $stmtUser->close();
+        }
     } else {
-        echo "Lỗi thêm giáo viên: " . $conn->error;
+        echo "Lỗi prepare user: " . $conn->error;
     }
 }
 ?>

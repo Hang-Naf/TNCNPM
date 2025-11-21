@@ -353,6 +353,10 @@ while ($lh = $lophoc_rs->fetch_assoc()) {
         </div>
         <!-- Nút xóa -->
         <div class="button-container">
+            <button id="importSelected"
+                style="margin:20px 20px 20px 0px; padding:10px 0px; background: green; color:white; border:none; border-radius:6px; cursor:pointer; width:150px;" onclick="window.location.href='import_hocsinh.php'">
+                Import học sinh
+            </button>
             <button id="deleteSelected"
                 style="margin:20px 0; padding:10px 0px; background: red; color:white; border:none; border-radius:6px; cursor:pointer; width:150px;">
                 Xóa học sinh
