@@ -46,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
 
     if (!empty($missingColumns)) {
         $errStr = implode(", ", $missingColumns);
-        echo "<script>alert('File Excel thiếu các cột bắt buộc: $errStr'); window.location.href='qlhocsinh.php';</script>";
+        echo "<script>alert('File Excel thiếu các cột bắt buộc: $errStr'); window.history.back();</script>";
         exit();
     }
 
