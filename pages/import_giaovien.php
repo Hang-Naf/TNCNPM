@@ -46,6 +46,13 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
             }
         }
 
+        if (!empty($errorList)) {
+            $_SESSION["import_errors"] = $errorList;
+            $_SESSION["import_success"] = 0;
+            echo "<script>alert('File Excel thiếu cột bắt buộc!'); window.history.back();</script>";
+            exit();
+        }
+
         array_shift($rows); // bỏ dòng tiêu đề
         if (count($rows) > 100) $rows = array_slice($rows, 0, 100);
 

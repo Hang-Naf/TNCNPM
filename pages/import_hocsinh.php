@@ -32,6 +32,24 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
         exit();
     }
 
+    $header = array_map('trim', $rows[0]);
+    $headerLower = array_map('mb_strtolower', $header);
+
+    $requiredHeaders = ['họ và tên', 'giới tính', 'email', 'sđt', 'mật khẩu'];
+    $missingColumns = [];
+
+    foreach ($requiredHeaders as $col) {
+        if (!in_array(mb_strtolower($col), $headerLower)) {
+            $missingColumns[] = $col;
+        }
+    }
+
+    if (!empty($missingColumns)) {
+        $errStr = implode(", ", $missingColumns);
+        echo "<script>alert('File Excel thiếu các cột bắt buộc: $errStr'); window.location.href='qlhocsinh.php';</script>";
+        exit();
+    }
+
     array_shift($rows); // bỏ dòng tiêu đề
     if (count($rows) > 100) $rows = array_slice($rows, 0, 100);
 
