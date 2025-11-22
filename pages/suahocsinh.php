@@ -283,6 +283,24 @@ $lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
     <script>
         document.getElementById("editForm").addEventListener("submit", async (e) => {
             e.preventDefault();
+            const form = e.target;
+            const namHoc = (form.elements['namHoc'] && form.elements['namHoc'].value || '').trim();
+            const match = namHoc.match(/^\s*(\d{4})\s*-\s*(\d{4})\s*$/);
+
+            if (!match) {
+                alert('Định dạng Năm học phải là YYYY-YYYY (ví dụ: 2022-2023)');
+                return;
+            }
+
+            const start = parseInt(match[1], 10);
+            const end = parseInt(match[2], 10);
+
+            // năm sau = năm trước + 1
+            if (end !== start + 1) {
+                alert('Năm sau phải lớn hơn năm trước đúng 1 năm (ví dụ: 2022-2023)');
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch("../src/hocsinh.php", {
                 method: "POST",

@@ -28,6 +28,15 @@ try {
         $lopHoc    = $conn->real_escape_string($data['lopHocPhuTrach']);
         $chucVu    = $conn->real_escape_string($data['chucVu']);
         $namHoc    = $conn->real_escape_string($data['namHoc']);
+        // Validate namHoc format YYYY-YYYY and ensure end year > start year
+        if (!preg_match('/^\s*(\d{4})\s*-\s*(\d{4})\s*$/', $namHoc, $m)) {
+            echo json_encode(['error' => 'Định dạng Năm học phải là YYYY-YYYY (ví dụ: 2022-2023)']);
+            exit();
+        }
+        if ((int)$m[2] <= (int)$m[1]) {
+            echo json_encode(['error' => 'Năm kết thúc phải lớn hơn năm bắt đầu']);
+            exit();
+        }
         $hocKy     = $conn->real_escape_string($data['hocKy']);
         $trangThai = $conn->real_escape_string($data['trangThai']);
         $matKhau   = password_hash('12345678', PASSWORD_DEFAULT);
@@ -68,6 +77,15 @@ try {
         $lopHoc    = $conn->real_escape_string($data['lopHocPhuTrach']);
         $chucVu    = $conn->real_escape_string($data['chucVu']);
         $namHoc    = $conn->real_escape_string($data['namHoc']);
+        // Validate namHoc format YYYY-YYYY and ensure end year > start year
+        if (!preg_match('/^\s*(\d{4})\s*-\s*(\d{4})\s*$/', $namHoc, $m)) {
+            echo json_encode(['error' => 'Định dạng Năm học phải là YYYY-YYYY (ví dụ: 2022-2023)']);
+            exit();
+        }
+        if ((int)$m[2] <= (int)$m[1]) {
+            echo json_encode(['error' => 'Năm kết thúc phải lớn hơn năm bắt đầu']);
+            exit();
+        }
         $hocKy     = $conn->real_escape_string($data['hocKy']);
         $trangThai = $conn->real_escape_string($data['trangThai']);
 

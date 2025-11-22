@@ -242,6 +242,24 @@ $gv_rs = $conn->query("
     <script>
         document.getElementById("editForm").addEventListener("submit", async e => {
             e.preventDefault();
+            // Validate năm học
+            const namHocInput = document.querySelector('input[name="namHoc"]');
+            const regexNamHoc = /^\d{4}-\d{4}$/;
+
+            if (!regexNamHoc.test(namHocInput.value)) {
+                alert("Năm học phải theo định dạng: 2024-2025");
+                return;
+            }
+
+            // Tách năm
+            const [startYear, endYear] = namHocInput.value.split("-").map(Number);
+
+            // Kiểm tra năm sau = năm trước + 1
+            if (endYear !== startYear + 1) {
+                alert("Năm sau phải lớn hơn năm trước đúng 1 năm (ví dụ: 2024-2025).");
+                return;
+            }
+
             const data = Object.fromEntries(new FormData(e.target).entries());
             const res = await fetch("../src/monhoc.php", {
                 method: "POST",

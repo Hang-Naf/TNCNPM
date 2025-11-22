@@ -23,19 +23,42 @@ $data = $result->fetch_assoc();
 $monhoc_rs = $conn->query("SELECT maMonHoc, tenMonHoc FROM monhoc");
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $hoVaTen = $_POST['hoVaTen'];
-    $email = $_POST['email'];
-    $sdt = $_POST['sdt'];
-    $gioiTinh = $_POST['gioiTinh'];
-    $boMon = $_POST['boMon'];
-    $trinhDo = $_POST['trinhDo'];
-    $phongBan = $_POST['phongBan'];
-    $namHoc = $_POST['namHoc'];
-    $hocKy = $_POST['hocKy'];
-    $trangThai = $_POST['trangThai'];
+    // Lấy và trim dữ liệu
+    $hoVaTen = trim($_POST['hoVaTen'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $sdt = trim($_POST['sdt'] ?? '');
+    $gioiTinh = trim($_POST['gioiTinh'] ?? '');
+    $boMon = trim($_POST['boMon'] ?? '');
+    $trinhDo = trim($_POST['trinhDo'] ?? '');
+    $phongBan = trim($_POST['phongBan'] ?? '');
+    $namHoc = trim($_POST['namHoc'] ?? '');
+    $hocKy = trim($_POST['hocKy'] ?? '');
+    $trangThai = trim($_POST['trangThai'] ?? '');
 
-    $conn->query("UPDATE user SET hoVaTen='$hoVaTen', email='$email', sdt='$sdt', gioiTinh='$gioiTinh' WHERE userID=$id");
-    $conn->query("UPDATE giaovien SET boMon='$boMon', trinhDo='$trinhDo', phongBan='$phongBan', namHoc='$namHoc', hocKy='$hocKy', trangThai='$trangThai' WHERE maGV=$id");
+    // Server-side: Validate namHoc format YYYY-YYYY and ensure end > start
+    if (!preg_match('/^\s*(\d{4})\s*-\s*(\d{4})\s*$/', $namHoc, $m)) {
+        echo "<script>alert('Định dạng Năm học phải là YYYY-YYYY (ví dụ: 2022-2023)'); window.history.back();</script>";
+        exit();
+    }
+    if ((int)$m[2] <= (int)$m[1]) {
+        echo "<script>alert('Năm kết thúc phải lớn hơn năm bắt đầu'); window.history.back();</script>";
+        exit();
+    }
+
+    // Escape trước khi chạy query
+    $hoVaTen_e = $conn->real_escape_string($hoVaTen);
+    $email_e = $conn->real_escape_string($email);
+    $sdt_e = $conn->real_escape_string($sdt);
+    $gioiTinh_e = $conn->real_escape_string($gioiTinh);
+    $boMon_e = $conn->real_escape_string($boMon);
+    $trinhDo_e = $conn->real_escape_string($trinhDo);
+    $phongBan_e = $conn->real_escape_string($phongBan);
+    $namHoc_e = $conn->real_escape_string($namHoc);
+    $hocKy_e = $conn->real_escape_string($hocKy);
+    $trangThai_e = $conn->real_escape_string($trangThai);
+
+    $conn->query("UPDATE user SET hoVaTen='$hoVaTen_e', email='$email_e', sdt='$sdt_e', gioiTinh='$gioiTinh_e' WHERE userID=$id");
+    $conn->query("UPDATE giaovien SET boMon='$boMon_e', trinhDo='$trinhDo_e', phongBan='$phongBan_e', namHoc='$namHoc_e', hocKy='$hocKy_e', trangThai='$trangThai_e' WHERE maGV=$id");
 
     echo "<script>alert('Cập nhật thành công'); window.location.href='qlgiaovien.php';</script>";
     exit();
@@ -197,7 +220,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
         </header>
         <h2 style="margin-left: 30px;">SỬA GIÁO VIÊN</h2>
-        <form method="post" style="margin-left: 50px; margin-right: 50px;">
+        <form method="post" id="editForm" style="margin-left: 50px; margin-right: 50px;">
             <label>Họ và tên:</label>
             <input type="text" name="hoVaTen" value="<?= htmlspecialchars($data['hoVaTen']) ?>" required>
 
@@ -250,8 +273,35 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <button type="submit" class="save-btn">LƯU</button>
             </div>
         </form>
+
     </div>
+
     <script>
+        (function() {
+            const form = document.getElementById('editForm');
+            if (form) {
+                form.addEventListener('submit', function(e) {
+                    const namHoc = (form.elements['namHoc'] && form.elements['namHoc'].value || '').trim();
+                    const m = namHoc.match(/^\s*(\d{4})\s*-\s*(\d{4})\s*$/);
+                    if (!m) {
+                        e.preventDefault();
+                        alert('Định dạng Năm học phải là YYYY-YYYY (ví dụ: 2022-2023)');
+                        return;
+                    }
+
+                    const start = parseInt(m[1], 10);
+                    const end = parseInt(m[2], 10);
+
+                    // Chỉ cho phép năm sau = năm trước + 1
+                    if (end !== start + 1) {
+                        e.preventDefault();
+                        alert('Năm học không hợp lệ! Năm sau phải lớn hơn năm trước đúng 1 năm (ví dụ: 2022-2023).');
+                        return;
+                    }
+                });
+            }
+        })();
+
         document.getElementById("bellIcon").addEventListener("click", function() {
             const dropdown = document.getElementById("notificationDropdown");
             // Hiện/ẩn menu

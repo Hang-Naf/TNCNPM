@@ -5,6 +5,10 @@ session_start();
 
 use PhpOffice\PhpSpreadsheet\IOFactory;
 
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 if (!isset($_SESSION["userID"]) || $_SESSION["vaiTro"] !== "Admin") {
     header("Location: ../dangnhap.php");
     exit();
@@ -28,110 +32,98 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
     }
 
     if (empty($rows)) {
-        echo "<script>alert('File Excel trống!'); window.location.href='import_giaovien.php';</script>";
-        exit();
-    }
-
-    // Kiểm tra header
-    $header = array_map('trim', $rows[0]);
-    $requiredHeaders = ['Họ và tên', 'Giới tính', 'Email', 'SĐT', 'Mật khẩu'];
-    foreach ($requiredHeaders as $col) {
-        if (!in_array($col, $header)) {
-            echo "<script>alert('File Excel thiếu cột bắt buộc: $col'); window.location.href='qlgiaovien.php';</script>";
-            exit();
-        }
-    }
-
-    array_shift($rows); // bỏ dòng tiêu đề
-    if (count($rows) > 100) $rows = array_slice($rows, 0, 100);
-
-    foreach ($rows as $index => $r) {
-        // Sử dụng isset để tránh lỗi nếu thiếu cột
-        $hoVaTen = isset($r[0]) ? trim($r[0]) : '';
-        $gioiTinh = isset($r[1]) ? trim($r[1]) : '';
-        $email = isset($r[2]) ? strtolower(trim($r[2])) : '';
-        $sdt = isset($r[3]) ? trim($r[3]) : '';
-        $matKhau = isset($r[4]) ? trim($r[4]) : '';
-        $boMon = isset($r[5]) ? trim($r[5]) : '';
-        $trinhDo = isset($r[6]) ? trim($r[6]) : '';
-        $phongBan = isset($r[7]) ? trim($r[7]) : '';
-        $namHoc = isset($r[8]) ? trim($r[8]) : '';
-        $hocKy = isset($r[9]) ? trim($r[9]) : '';
-        $trangThai = 'active';
-
-        if (!$hoVaTen || !$email || !$matKhau) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Thiếu dữ liệu bắt buộc (Họ và tên, Email, Mật khẩu)";
-            continue;
-        }
-
-        // Check email đã tồn tại
-        $chkStmt = $conn->prepare("SELECT userID FROM user WHERE email = ?");
-        $chkStmt->bind_param("s", $email);
-        $chkStmt->execute();
-        $chkResult = $chkStmt->get_result();
-        if ($chkResult->num_rows > 0) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Email '$email' đã tồn tại, bỏ qua";
-            $chkStmt->close();
-            continue;
-        }
-        $chkStmt->close();
-
-        $hash = password_hash($matKhau, PASSWORD_BCRYPT);
-
-        // Thêm vào user
-        $stmtUser = $conn->prepare("INSERT INTO user (hoVaTen, gioiTinh, email, sdt, matKhau, vaiTro) VALUES (?, ?, ?, ?, ?, 'GiaoVien')");
-        if (!$stmtUser) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare user - " . $conn->error;
-            continue;
-        }
-        $stmtUser->bind_param("sssss", $hoVaTen, $gioiTinh, $email, $sdt, $hash);
-        if (!$stmtUser->execute()) {
-            $errorList[] = "Dòng " . ($index + 2) . ": Lỗi thêm user - " . $stmtUser->error;
-            $stmtUser->close();
-            continue;
-        }
-
-        $maGV = $stmtUser->insert_id;
-        $stmtUser->close();
-
-        // Thêm / cập nhật giáo viên
-        $checkGVStmt = $conn->prepare("SELECT maGV FROM giaovien WHERE maGV = ?");
-        $checkGVStmt->bind_param("i", $maGV);
-        $checkGVStmt->execute();
-        $checkGVResult = $checkGVStmt->get_result();
-        $gvExists = ($checkGVResult->num_rows > 0);
-        $checkGVStmt->close();
-
-        if ($gvExists) {
-            $stmtGV = $conn->prepare("UPDATE giaovien SET boMon=?, trinhDo=?, phongBan=?, namHoc=?, hocKy=?, trangThai=? WHERE maGV=?");
-            $stmtGV->bind_param("ssssssi", $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai, $maGV);
-            $stmtGV->execute();
-            $stmtGV->close();
-        } else {
-            $stmtGV = $conn->prepare("INSERT INTO giaovien (maGV, boMon, trinhDo, anhDaiDien, phongBan, namHoc, hocKy, trangThai) VALUES (?, ?, ?, 'Chưa cập nhật', ?, ?, ?, ?)");
-            $stmtGV->bind_param("isssssss", $maGV, $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai);
-            $stmtGV->execute();
-            $stmtGV->close();
-        }
-
-        write_log($conn, $_SESSION["userID"], "Import", "Thêm giáo viên: $hoVaTen", "Info");
-        $count++;
-    }
-
-    // Hiển thị kết quả
-    $errStr = !empty($errorList) ? implode("\\n", $errorList) : '';
-    if ($count > 0) {
-        if (!empty($errorList)) {
-            echo "<script>alert('Import thành công $count giáo viên nhưng có lỗi:\\n$errStr'); window.location.href='qlgiaovien.php';</script>";
-        } else {
-            echo "<script>alert('Import thành công $count giáo viên!'); window.location.href='qlgiaovien.php';</script>";
-        }
-        exit();
+        $errorList[] = "File Excel trống!";
     } else {
-        if (!empty($errorList)) {
-            echo "<script>alert('Không import được giáo viên nào:\\n$errStr'); window.location.href='qlgiaovien.php';</script>";
-            exit();
+
+        $header = array_map('trim', $rows[0]);
+        $headerLower = array_map('mb_strtolower', $header);
+
+        $requiredHeaders = ['họ và tên', 'giới tính', 'email', 'sđt', 'mật khẩu'];
+
+        foreach ($requiredHeaders as $col) {
+            if (!in_array(mb_strtolower($col), $headerLower)) {
+                $errorList[] = "File Excel thiếu cột bắt buộc: $col";
+            }
         }
+
+        array_shift($rows); // bỏ dòng tiêu đề
+        if (count($rows) > 100) $rows = array_slice($rows, 0, 100);
+
+        foreach ($rows as $index => $r) {
+            $hoVaTen = isset($r[0]) ? trim($r[0]) : '';
+            $gioiTinh = isset($r[1]) ? trim($r[1]) : '';
+            $email = isset($r[2]) ? strtolower(trim($r[2])) : '';
+            $sdt = isset($r[3]) ? trim($r[3]) : '';
+            $matKhau = isset($r[4]) ? trim($r[4]) : '';
+            $boMon = isset($r[5]) ? trim($r[5]) : '';
+            $trinhDo = isset($r[6]) ? trim($r[6]) : '';
+            $phongBan = isset($r[7]) ? trim($r[7]) : '';
+            $namHoc = isset($r[8]) ? trim($r[8]) : '';
+            $hocKy = isset($r[9]) ? trim($r[9]) : '';
+            $trangThai = 'active';
+
+            if (!$hoVaTen || !$email || !$matKhau) {
+                $errorList[] = "Dòng " . ($index + 2) . ": Thiếu dữ liệu bắt buộc (Họ và tên, Email, Mật khẩu)";
+                continue;
+            }
+
+            $chkStmt = $conn->prepare("SELECT userID FROM user WHERE email = ?");
+            $chkStmt->bind_param("s", $email);
+            $chkStmt->execute();
+            $chkResult = $chkStmt->get_result();
+            if ($chkResult->num_rows > 0) {
+                $errorList[] = "Dòng " . ($index + 2) . ": Email '$email' đã tồn tại";
+                $chkStmt->close();
+                continue;
+            }
+            $chkStmt->close();
+
+            $hash = password_hash($matKhau, PASSWORD_BCRYPT);
+
+            $stmtUser = $conn->prepare("INSERT INTO user (hoVaTen, gioiTinh, email, sdt, matKhau, vaiTro) VALUES (?, ?, ?, ?, ?, 'GiaoVien')");
+            if (!$stmtUser) {
+                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi prepare user - " . $conn->error;
+                continue;
+            }
+            $stmtUser->bind_param("sssss", $hoVaTen, $gioiTinh, $email, $sdt, $hash);
+            if (!$stmtUser->execute()) {
+                $errorList[] = "Dòng " . ($index + 2) . ": Lỗi thêm user - " . $stmtUser->error;
+                $stmtUser->close();
+                continue;
+            }
+
+            $maGV = $stmtUser->insert_id;
+            $stmtUser->close();
+
+            $checkGVStmt = $conn->prepare("SELECT maGV FROM giaovien WHERE maGV = ?");
+            $checkGVStmt->bind_param("i", $maGV);
+            $checkGVStmt->execute();
+            $checkGVResult = $checkGVStmt->get_result();
+            $gvExists = ($checkGVResult->num_rows > 0);
+            $checkGVStmt->close();
+
+            if ($gvExists) {
+                $stmtGV = $conn->prepare("UPDATE giaovien SET boMon=?, trinhDo=?, phongBan=?, namHoc=?, hocKy=?, trangThai=? WHERE maGV=?");
+                $stmtGV->bind_param("ssssssi", $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai, $maGV);
+            } else {
+                $stmtGV = $conn->prepare("INSERT INTO giaovien (maGV, boMon, trinhDo, phongBan, namHoc, hocKy, trangThai) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $stmtGV->bind_param("issssss", $maGV, $boMon, $trinhDo, $phongBan, $namHoc, $hocKy, $trangThai);
+            }
+            $stmtGV->execute();
+            $stmtGV->close();
+
+            write_log($conn, $_SESSION["userID"], "Import", "Thêm giáo viên: $hoVaTen", "Info");
+            $count++;
+        }
+    }
+
+    $_SESSION["import_errors"] = $errorList;
+    $_SESSION["import_success"] = $count;
+
+    // Nếu có dữ liệu hợp lệ → báo thành công + chuyển trang
+    if ($count > 0) {
+        echo "<script>alert('Import thành công $count giáo viên!'); window.location.href='qlgiaovien.php';</script>";
+        exit();
     }
 }
 ?>
@@ -300,20 +292,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST" && isset($_FILES["excelFile"])) {
                 <button type="submit" class="btn btn-upload" style="width: 104px; height: 41px; margin: 20px;">Import</button>
             </form>
         </div>
-        <?php if ($count > 0): ?>
-            <div class="success-msg">✅ Import thành công <?php echo $count; ?> giáo viên</div>
-        <?php endif; ?>
-
-        <?php if (!empty($errorList)): ?>
-            <div class="error-list">
-                <h3>❌ Có lỗi xảy ra:</h3>
-                <ul>
-                    <?php foreach ($errorList as $err): ?>
-                        <li><?php echo $err; ?></li>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-        <?php endif; ?>
+        <?php
+        // Hiển thị lỗi/ thông báo bằng alert (không render trực tiếp trên trang).
+        if (!empty($errorList)) {
+            // Sử dụng json_encode để escape chuỗi JS an toàn (bao gồm newline và dấu nháy)
+            $jsMsg = "Có lỗi xảy ra:\n" . implode("\n", $errorList);
+            echo "<script>alert(" . json_encode($jsMsg) . ");</script>";
+        }
+        ?>
 
         <br>
         <div style="text-align:center;">

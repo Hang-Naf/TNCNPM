@@ -232,11 +232,11 @@ $giaovien_rs = $conn->query("
                 return;
             }
 
-            // Kiểm tra năm sau > năm trước
+            // Kiểm tra năm sau = năm trước + 1
             const [startYear, endYear] = namHocInput.value.split("-").map(Number);
 
-            if (endYear <= startYear) {
-                alert("Năm sau phải lớn hơn năm trước (ví dụ: 2024-2025).");
+            if (endYear !== startYear + 1) {
+                alert("Năm sau phải lớn hơn năm trước đúng 1 năm(ví dụ: 2024-2025).");
                 return;
             }
 
