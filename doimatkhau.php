@@ -57,12 +57,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 <head>
     <meta charset="UTF-8">
-    <title>Đổi Mật Khẩu</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+    <title>Đổi Mật Khẩu</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: "Quicksand", sans-serif;
+        }
+
         body {
             background: #f5f5f5;
-            font-family: "Quicksand", sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -70,17 +77,77 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         }
 
         .container {
-            width: 420px;
+            display: flex;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
             background: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
-        h2 {
+        .left {
+            flex: 1;
+            background: #003f91;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
+            border-radius: 0 25% 25% 0;
+            padding: 40px;
+        }
+
+        .left h2 {
+            font-size: 36px;
             margin-bottom: 10px;
+        }
+
+        .left p {
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+
+        .btn-outline {
+            background: transparent;
+            color: #fff;
+            border: 2px solid #fff;
+            padding: 12px 40px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .btn-outline:hover {
+            background: #fff;
             color: #003f91;
+        }
+
+        .right {
+            width: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .right-container {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 40px;
+            border-radius: 10px;
+        }
+
+        .right-container h2 {
+            text-align: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
         }
 
         label {
@@ -95,6 +162,16 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             border-radius: 6px;
             border: 1px solid #ccc;
             background: #f1f1f1;
+        }
+
+        .form-group input {
+            width: 100%;
+            height: 48px;
+            padding: 12px 15px;
+            border: none;
+            border-radius: 6px;
+            background: #eee;
+            font-size: 15px;
         }
 
         .btn {
@@ -115,47 +192,78 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             color: #d00;
         }
 
-        .success {
-            color: green !important;
+        .new-pass-box {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f1f1f1;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .new-pass-box code {
+            font-size: 18px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .copy-btn {
+            margin-top: 10px;
+            padding: 8px 15px;
+            background: #003f91;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
         }
     </style>
 </head>
 
 <body>
-
     <div class="container">
-        <h2>Đổi Mật Khẩu</h2>
+        <!-- Bên trái -->
+        <div class="left">
+            <h2 style="font-size: 48px;">Hello, Welcome!</h2>
+            <!-- <p style="font-size: 24px;">Bạn chưa có tài khoản?</p>
+            <button class="btn-outline" onclick="window.location.href='dangky.php'">Đăng Ký</button> -->
+        </div>
 
-        <form action="" method="POST">
+        <!-- Bên phải -->
+        <div class="right">
+            <div class="right-container">
+                <h2>Đổi Mật Khẩu</h2>
 
-            <label>Email của bạn:</label>
-            <input type="email" name="email" placeholder="Nhập email của bạn" required>
+                <form action="" method="POST">
 
-            <label>Mật khẩu tạm:</label>
-            <input type="text" name="tempPass" placeholder="Nhập mật khẩu tạm" required>
+                    <label>Email của bạn:</label>
+                    <input type="email" name="email" placeholder="Nhập email của bạn" required>
 
-            <label>Mật khẩu mới:</label>
-            <input type="password" name="newPass" placeholder="Mật khẩu mới" required>
+                    <label>Mật khẩu tạm:</label>
+                    <input type="text" name="tempPass" placeholder="Nhập mật khẩu tạm" required>
 
-            <label>Xác nhận mật khẩu mới:</label>
-            <input type="password" name="confirmPass" placeholder="Nhập lại mật khẩu" required>
+                    <label>Mật khẩu mới:</label>
+                    <input type="password" name="newPass" placeholder="Mật khẩu mới" required>
 
-            <button type="submit" class="btn">Xác Nhận Đổi</button>
-        </form>
+                    <label>Xác nhận mật khẩu mới:</label>
+                    <input type="password" name="confirmPass" placeholder="Nhập lại mật khẩu" required>
 
-        <?php if (!empty($message)) : ?>
-            <div class="message <?= str_contains($message, 'thành công') ? 'success' : '' ?>">
-                <?= $message ?>
+                    <button type="submit" class="btn">Xác Nhận Đổi</button>
+                </form>
+
+                <?php if (!empty($message)) : ?>
+                    <div class="message <?= str_contains($message, 'thành công') ? 'success' : '' ?>">
+                        <?= $message ?>
+                    </div>
+                <?php endif; ?>
+
             </div>
-        <?php endif; ?>
-
+        </div>
     </div>
-<?php if (!empty($success)) : ?>
-<script>
-    alert("Đổi mật khẩu thành công! Nhấn OK để đến trang đăng nhập.");
-    window.location.href = "dangnhap.php";
-</script>
-<?php endif; ?>
+    <?php if (!empty($success)) : ?>
+        <script>
+            alert("Đổi mật khẩu thành công! Nhấn OK để đến trang đăng nhập.");
+            window.location.href = "dangnhap.php";
+        </script>
+    <?php endif; ?>
 
 </body>
 
