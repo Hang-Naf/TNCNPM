@@ -232,7 +232,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                         <p>Mật khẩu mới của bạn:</p>
                         <code id="newPass"><?= $newPass ?></code>
                         <br>
-                        <button class="copy-btn" onclick="copyPass()">📋 Copy & Đăng nhập</button>
+                        <button class="copy-btn" onclick="copyPass()">📋 Copy & Đổi mật khẩu</button>
                     </div>
                 <?php endif; ?>
             </div>
@@ -243,8 +243,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         function copyPass() {
             let passText = document.getElementById("newPass").innerText;
             navigator.clipboard.writeText(passText).then(() => {
-                alert("✅ Mật khẩu đã được copy. Chuyển đến trang đăng nhập...");
-                window.location.href = "dangnhap.php";
+                alert("✅ Mật khẩu đã được copy. Chuyển đến trang đổi mật khẩu mới...");
+                window.location.href = "doimatkhau.php";
             });
         }
     </script>
