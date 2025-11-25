@@ -17,8 +17,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $message = "⚠ Vui lòng nhập đầy đủ thông tin!";
     } elseif ($newPass !== $confirmPass) {
         $message = "⚠ Mật khẩu mới và xác nhận mật khẩu không khớp!";
-    } elseif (strlen($newPass) < 6) {
-        $message = "⚠ Mật khẩu mới phải ít nhất 6 ký tự!";
+    } elseif (strlen($newPass) < 8) {
+        $message = "⚠ Mật khẩu mới phải ít nhất 8 ký tự!";
     } else {
 
         // Kiểm tra email có tồn tại không
