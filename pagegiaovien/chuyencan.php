@@ -91,12 +91,14 @@ $stmt2->execute();
 $result_mon = $stmt2->get_result();
 $monhoc = $result_mon->fetch_assoc();
 
-if (!$monhoc) {
-    die("<h3 style='color:red;text-align:center;'>⚠️ Giáo viên chưa được phân công môn học nào!</h3>");
+if ($monhoc) {
+    $maMonHoc = $monhoc['maMonHoc']; // dùng để lọc và lưu điểm danh
+    $tenMonHoc = $monhoc['tenMonHoc'];
+} else {
+    // Giáo viên chưa được phân công môn học nào
+    $maMonHoc = 0;          // dùng giá trị không tồn tại
+    $tenMonHoc = "(Chưa được phân công)";
 }
-
-$maMonHoc = $monhoc['maMonHoc']; // dùng để lọc và lưu điểm danh
-
 
 // ==== Xử lý lưu điểm danh ====
 if (isset($_POST['save'])) {
@@ -144,9 +146,7 @@ $loc_ngay = $_GET['ngayHoc'] ?? date('Y-m-d');
 $today = date('Y-m-d');
 $weekday = date('w', strtotime($loc_ngay)); // 0 = Chủ nhật, 1 = Thứ 2, ...
 
-if ($weekday == 0) {
-    die("<h3 style='color:red;text-align:center;'>⚠️ Không thể điểm danh vào ngày Chủ nhật!</h3>");
-}
+$isSunday = ($weekday == 0); // true nếu Chủ nhật
 
 if ($loc_ngay > $today) {
     die("<h3 style='color:red;text-align:center;'>⚠️ Không thể điểm danh cho ngày trong tương lai!</h3>");

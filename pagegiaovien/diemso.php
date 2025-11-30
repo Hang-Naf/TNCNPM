@@ -39,11 +39,14 @@ $stmt->execute();
 $monRes = $stmt->get_result();
 $mon = $monRes->fetch_assoc();
 
-if (!$mon) {
-    die("<h3>❌ Bạn chưa được phân công môn học nào.</h3>");
+if ($mon) {
+    $maMonHoc = $mon['maMonHoc'];
+    $tenMonHoc = $mon['tenMonHoc'];
+} else {
+    // Giáo viên chưa được phân công môn nào
+    $maMonHoc = 0; // dùng giá trị không tồn tại
+    $tenMonHoc = "(Chưa được phân công)";
 }
-$maMonHoc = $mon['maMonHoc'];
-$tenMonHoc = $mon['tenMonHoc'];
 
 // ====== Lấy danh sách lớp mà giáo viên này dạy ======
 $sqlLop = "SELECT DISTINCT l.maLop, l.tenLop
