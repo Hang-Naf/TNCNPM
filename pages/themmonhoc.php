@@ -80,7 +80,7 @@ $gv_rs = $conn->query("
 
         input,
         select {
-            width: 100%;
+            width: 35%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -202,24 +202,35 @@ $gv_rs = $conn->query("
         <h2 style="margin-left: 30px;">THÊM MÔN HỌC</h2>
         <form method="post" id="addForm" style="margin-left: 50px; margin-right: 50px;">
             <input type="hidden" name="action" value="add">
-            <label>Tên môn học:</label>
-            <input type="text" name="tenMonHoc" required maxlength="50">
-            <label>Trưởng bộ môn:</label>
-            <select name="truongBoMon"> ... </select>
-            <label>Mô tả:</label>
-            <textarea name="moTa"></textarea>
-            <label>Học kỳ:</label>
-            <input type="text" name="hocKy" id="hocKy" readonly>
-            <label>Năm học:</label>
-            <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" readonly>
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="Hoạt động">Hoạt động</option>
-                <option value="Ngưng">Ngưng</option>
-            </select>
+
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Năm học:</label>
+                <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" readonly>
+                <label>Học kỳ:</label>
+                <input type="text" name="hocKy" id="hocKy" readonly>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Tên môn học:</label>
+                <input type="text" name="tenMonHoc" required maxlength="50">
+                <label>Trưởng bộ môn:</label>
+                <select name="truongBoMon"> ... </select>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Ghi chú:</label>
+                <textarea name="moTa" style="width:38%; height:150px"></textarea>
+
+                <label>Trạng thái:</label>
+                <select name="trangThai" style="width:auto; height:40px;">
+                    <option value="Hoạt động">Đang Hoạt động</option>
+                    <option value="Ngưng">Tạm Dừng</option>
+                </select>
+            </div>
+            
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qlmonhoc.php'">HỦY</button>
-                <button type="submit" class="save-btn">THÊM</button>
+                <button type="submit" class="save-btn">+ THÊM MỚI</button>
             </div>
         </form>
     </div>

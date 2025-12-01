@@ -47,7 +47,7 @@ $lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
 
         input,
         select {
-            width: 100%;
+            width: 20%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -169,48 +169,55 @@ $lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
         <h2 style="margin-left: 30px;">THÊM HỌC SINH</h2>
         <form method="post" style="margin-left: 50px; margin-right: 50px;" id="addForm">
             <input type="hidden" name="action" value="add">
-            
-            <label>Họ và tên:</label>
-            <input type="text" name="hoVaTen" required>
+            <div style="display: flex; gap: 25px;">
+                <!-- Năm học & Học kỳ tự động -->
+                <input type="hidden" name="namHoc" id="addNamHoc">
+                <input type="hidden" name="hocKy" id="addHocKy">
+                <p><strong>Năm học:</strong> <span id="namHocDisplay"></span></p>
+                <p><strong>Học kỳ:</strong> <span id="hocKyDisplay"></span></p>
+            </div>
 
-            <label>Email:</label>
-            <input type="email" name="email" required>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Họ và tên:</label>
+                <input type="text" name="hoVaTen" required style="width: 35%">
 
-            <label>Số điện thoại:</label>
-            <input type="text" name="sdt" required pattern="^0[0-9]{9}$">
+                <label>Email:</label>
+                <input type="email" name="email" required style="width: 30%">
+            </div>
 
-            <label>Giới tính:</label>
-            <select name="gioiTinh">
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Số điện thoại:</label>
+                <input type="text" name="sdt" required pattern="^0[0-9]{9}$">
 
-            <label>Lớp học:</label>
-            <select name="lopHocPhuTrach" required>
-                <option value="">-- Chọn lớp học --</option>
-                <?php while ($lh = $lophoc_rs->fetch_assoc()): ?>
-                    <option value="<?= htmlspecialchars($lh['tenLop']) ?>"><?= htmlspecialchars($lh['tenLop']) ?></option>
-                <?php endwhile; ?>
-            </select>
+                <label>Giới tính:</label>
+                <select name="gioiTinh">
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                </select>
 
-            <label>Chức vụ:</label>
-            <input type="text" name="chucVu">
+                <label>Chức vụ:</label>
+                <input type="text" name="chucVu">
+            </div>
 
-            <!-- Năm học & Học kỳ tự động -->
-            <input type="hidden" name="namHoc" id="addNamHoc">
-            <input type="hidden" name="hocKy" id="addHocKy">
-            <p><strong>Năm học:</strong> <span id="namHocDisplay"></span></p>
-            <p><strong>Học kỳ:</strong> <span id="hocKyDisplay"></span></p>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Lớp học:</label>
+                <select name="lopHocPhuTrach" required>
+                    <option value="">-- Chọn lớp học --</option>
+                    <?php while ($lh = $lophoc_rs->fetch_assoc()): ?>
+                        <option value="<?= htmlspecialchars($lh['tenLop']) ?>"><?= htmlspecialchars($lh['tenLop']) ?></option>
+                    <?php endwhile; ?>
+                </select>
 
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="active">Hoạt động</option>
-                <option value="inactive">Tạm dừng</option>
-            </select>
+                <label>Trạng thái:</label>
+                <select name="trangThai">
+                    <option value="active">Hoạt động</option>
+                    <option value="inactive">Tạm dừng</option>
+                </select>
+            </div>
 
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qlhocsinh.php'">HỦY</button>
-                <button type="submit" class="save-btn">THÊM</button>
+                <button type="submit" class="save-btn"> + THÊM MỚI </button>
             </div>
         </form>
     </div>

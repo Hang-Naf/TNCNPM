@@ -78,7 +78,7 @@ $gv_rs = $conn->query("
 
         input,
         select {
-            width: 100%;
+            width: 35%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -202,40 +202,47 @@ $gv_rs = $conn->query("
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="maMonHoc" value="<?= $maMonHoc ?>">
 
-            <label>Tên môn học:</label>
-            <input type="text" name="tenMonHoc" value="<?= htmlspecialchars($data['tenMonHoc']) ?>" required maxlength="50">
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Năm học:</label>
+                <input type="text" name="namHoc" value="<?= htmlspecialchars($data['namHoc']) ?>" required>
 
-            <label>Trưởng bộ môn:</label>
-            <select name="truongBoMon" required>
-                <option value="">-- Chọn Trưởng Bộ Môn --</option>
-                <?php while ($gv = $gv_rs->fetch_assoc()): ?>
-                    <option value="<?= $gv['maGV'] ?>" <?= ($gv['maGV'] == $data['truongBoMon']) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($gv['hoVaTen']) ?> (<?= htmlspecialchars($gv['boMon']) ?>)
-                    </option>
-                <?php endwhile; ?>
-            </select>
+                <label>Học kỳ:</label>
+                <select name="hocKy">
+                    <option value="HK1" <?= $data['hocKy'] == 'HK1' ? 'selected' : '' ?>>HK1</option>
+                    <option value="HK2" <?= $data['hocKy'] == 'HK2' ? 'selected' : '' ?>>HK2</option>
+                    <option value="Hè" <?= $data['hocKy'] == 'Hè' ? 'selected' : '' ?>>Hè</option>
+                </select>
+            </div>
 
-            <label>Mô tả:</label>
-            <textarea name="moTa" style="width: 95%; height: 200px"><?= htmlspecialchars($data['moTa']) ?></textarea>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Tên môn học:</label>
+                <input type="text" name="tenMonHoc" value="<?= htmlspecialchars($data['tenMonHoc']) ?>" required maxlength="50">
 
-            <label>Học kỳ:</label>
-            <select name="hocKy">
-                <option value="HK1" <?= $data['hocKy'] == 'HK1' ? 'selected' : '' ?>>HK1</option>
-                <option value="HK2" <?= $data['hocKy'] == 'HK2' ? 'selected' : '' ?>>HK2</option>
-                <option value="Hè" <?= $data['hocKy'] == 'Hè' ? 'selected' : '' ?>>Hè</option>
-            </select>
+                <label>Trưởng bộ môn:</label>
+                <select name="truongBoMon" required>
+                    <option value="">-- Chọn Trưởng Bộ Môn --</option>
+                    <?php while ($gv = $gv_rs->fetch_assoc()): ?>
+                        <option value="<?= $gv['maGV'] ?>" <?= ($gv['maGV'] == $data['truongBoMon']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($gv['hoVaTen']) ?> (<?= htmlspecialchars($gv['boMon']) ?>)
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
 
-            <label>Năm học:</label>
-            <input type="text" name="namHoc" value="<?= htmlspecialchars($data['namHoc']) ?>" required>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Ghi chú:</label>
+                <textarea name="moTa" style="width:38%; height:150px"><?= htmlspecialchars($data['moTa']) ?></textarea>
 
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="Hoạt động" <?= $data['trangThai'] == 'Hoạt động' ? 'selected' : '' ?>>Hoạt động</option>
-                <option value="Ngưng" <?= $data['trangThai'] == 'Ngưng' ? 'selected' : '' ?>>Ngưng</option>
-            </select>
+                <label>Trạng thái:</label>
+                <select name="trangThai" style="width:auto; height:40px;">
+                    <option value="Hoạt động" <?= $data['trangThai'] == 'Hoạt động' ? 'selected' : '' ?>>Đang Hoạt động</option>
+                    <option value="Ngưng" <?= $data['trangThai'] == 'Ngưng' ? 'selected' : '' ?>>Tạm dừng</option>
+                </select>
+            </div>
+
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qlmonhoc.php'">HỦY</button>
-                <button type="submit" class="save-btn">LƯU</button>
+                <button type="submit" class="save-btn">LƯU THÔNG TIN</button>
             </div>
         </form>
     </div>

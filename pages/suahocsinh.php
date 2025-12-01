@@ -107,7 +107,7 @@ $lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
 
         input,
         select {
-            width: 100%;
+            width: 20%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -230,53 +230,62 @@ $lophoc_rs = $conn->query("SELECT maLop, tenLop FROM lophoc");
         <form method="post" id="editForm" style="margin-left: 50px; margin-right: 50px;">
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="userId" value="<?= $id ?>">
-            <label>Họ và tên:</label>
-            <input type="text" name="hoVaTen" value="<?= htmlspecialchars($data['hoVaTen']) ?>" required>
 
-            <label>Email:</label>
-            <input type="email" name="email" value="<?= htmlspecialchars($data['email']) ?>" required>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Năm học:</label>
+                <input type="text" name="namHoc" value="<?= htmlspecialchars($data['namHoc']) ?>">
 
-            <label>Số điện thoại:</label>
-            <input type="text" name="sdt" value="<?= htmlspecialchars($data['sdt']) ?>" required pattern="^0[0-9]{9}$">
+                <label>Học kỳ:</label>
+                <select name="hocKy">
+                    <option value="HK1" <?= $data['hocKy'] == 'HK1' ? 'selected' : '' ?>>HK1</option>
+                    <option value="HK2" <?= $data['hocKy'] == 'HK2' ? 'selected' : '' ?>>HK2</option>
+                    <option value="Hè" <?= $data['hocKy'] == 'Hè' ? 'selected' : '' ?>>Hè</option>
+                </select>
+            </div>
 
-            <label>Giới tính:</label>
-            <select name="gioiTinh">
-                <option value="Nam" <?= $data['gioiTinh'] == 'Nam' ? 'selected' : '' ?>>Nam</option>
-                <option value="Nữ" <?= $data['gioiTinh'] == 'Nữ' ? 'selected' : '' ?>>Nữ</option>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Họ và tên:</label>
+                <input type="text" name="hoVaTen" value="<?= htmlspecialchars($data['hoVaTen']) ?>" required style="width: 35%">
 
-            <label>Lớp học:</label>
-            <select name="lopHocPhuTrach" required>
-                <option value="">-- Chọn lớp học --</option>
-                <?php while ($lh = $lophoc_rs->fetch_assoc()): ?>
-                    <option value="<?= htmlspecialchars($lh['tenLop']) ?>" <?= $lh['tenLop'] == $data['lopHocPhuTrach'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($lh['tenLop']) ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
+                <label>Email:</label>
+                <input type="email" name="email" value="<?= htmlspecialchars($data['email']) ?>" required style="width: 30%">
+            </div>
 
-            <label>Chức vụ:</label>
-            <input type="text" name="chucVu" value="<?= htmlspecialchars($data['chucVu']) ?>">
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Số điện thoại:</label>
+                <input type="text" name="sdt" value="<?= htmlspecialchars($data['sdt']) ?>" required pattern="^0[0-9]{9}$">
 
-            <label>Năm học:</label>
-            <input type="text" name="namHoc" value="<?= htmlspecialchars($data['namHoc']) ?>">
+                <label>Giới tính:</label>
+                <select name="gioiTinh">
+                    <option value="Nam" <?= $data['gioiTinh'] == 'Nam' ? 'selected' : '' ?>>Nam</option>
+                    <option value="Nữ" <?= $data['gioiTinh'] == 'Nữ' ? 'selected' : '' ?>>Nữ</option>
+                </select>
 
-            <label>Học kỳ:</label>
-            <select name="hocKy">
-                <option value="HK1" <?= $data['hocKy'] == 'HK1' ? 'selected' : '' ?>>HK1</option>
-                <option value="HK2" <?= $data['hocKy'] == 'HK2' ? 'selected' : '' ?>>HK2</option>
-                <option value="Hè" <?= $data['hocKy'] == 'Hè' ? 'selected' : '' ?>>Hè</option>
-            </select>
+                <label>Chức vụ:</label>
+                <input type="text" name="chucVu" value="<?= htmlspecialchars($data['chucVu']) ?>">
+            </div>
 
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="active" <?= $data['trangThai'] == 'active' ? 'selected' : '' ?>>Hoạt động</option>
-                <option value="inactive" <?= $data['trangThai'] == 'inactive' ? 'selected' : '' ?>>Tạm dừng</option>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Lớp học:</label>
+                <select name="lopHocPhuTrach" required>
+                    <option value="">-- Chọn lớp học --</option>
+                    <?php while ($lh = $lophoc_rs->fetch_assoc()): ?>
+                        <option value="<?= htmlspecialchars($lh['tenLop']) ?>" <?= $lh['tenLop'] == $data['lopHocPhuTrach'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($lh['tenLop']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+
+                <label>Trạng thái:</label>
+                <select name="trangThai">
+                    <option value="active" <?= $data['trangThai'] == 'active' ? 'selected' : '' ?>>Hoạt động</option>
+                    <option value="inactive" <?= $data['trangThai'] == 'inactive' ? 'selected' : '' ?>>Tạm dừng</option>
+                </select>
+            </div>
 
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qlhocsinh.php'">HỦY</button>
-                <button type="submit" class="save-btn">LƯU</button>
+                <button type="submit" class="save-btn">LƯU THÔNG TIN</button>
             </div>
         </form>
     </div>

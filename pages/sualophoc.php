@@ -64,7 +64,7 @@ $giaovien_rs = $conn->query("
 
         input,
         select {
-            width: 100%;
+            width: 30%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -188,34 +188,45 @@ $giaovien_rs = $conn->query("
         <form method="post" id="editForm" style="margin-left: 50px; margin-right: 50px;">
             <input type="hidden" name="action" value="update">
             <input type="hidden" name="maLop" value="<?= $maLop ?>">
-            <label>Tên lớp:</label>
-            <input type="text" name="tenLop" value="<?= htmlspecialchars($data['tenLop']) ?>" required>
-            <label>Sĩ số:</label>
-            <input type="number" name="siSo" value="<?= $data['siSo'] ?>" min="1" required>
-            <label>Giáo viên phụ trách:</label>
-            <select name="maGV" required>
-                <option value="">-- Chọn giáo viên phụ trách --</option>
-                <?php while ($gv = $giaovien_rs->fetch_assoc()): ?>
-                    <option value="<?= $gv['maGV'] ?>" <?= ($gv['maGV'] == $data['maGV']) ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($gv['hoVaTen']) ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
-            <label>Năm học:</label>
-            <input type="text"
-                name="namHoc"
-                value="<?= htmlspecialchars($data['namHoc']) ?>"
-                required
-                pattern="\d{4}-\d{4}"
-                title="Nhập theo định dạng NNNN-NNNN, ví dụ: 2024-2025">
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="Đang học" <?= $data['trangThai'] == 'Đang học' ? 'selected' : '' ?>>Đang học</option>
-                <option value="Tạm dừng" <?= $data['trangThai'] == 'Tạm dừng' ? 'selected' : '' ?>>Tạm dừng</option>
-            </select>
+
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Năm học:</label>
+                <input type="text"
+                    name="namHoc"
+                    value="<?= htmlspecialchars($data['namHoc']) ?>"
+                    required
+                    pattern="\d{4}-\d{4}"
+                    title="Nhập theo định dạng NNNN-NNNN, ví dụ: 2024-2025">
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Tên lớp:</label>
+                <input type="text" name="tenLop" value="<?= htmlspecialchars($data['tenLop']) ?>" required>
+                <label>Giáo viên chủ nhiệm:</label>
+                <select name="maGV" required>
+                    <option value="">-- Chọn giáo viên chủ nhiệm --</option>
+                    <?php while ($gv = $giaovien_rs->fetch_assoc()): ?>
+                        <option value="<?= $gv['maGV'] ?>" <?= ($gv['maGV'] == $data['maGV']) ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($gv['hoVaTen']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Sĩ số:</label>
+                <input type="number" name="siSo" value="<?= $data['siSo'] ?>" min="1" required>
+
+                <label>Trạng thái:</label>
+                <select name="trangThai">
+                    <option value="Đang học" <?= $data['trangThai'] == 'Đang học' ? 'selected' : '' ?>>Đang học</option>
+                    <option value="Tạm dừng" <?= $data['trangThai'] == 'Tạm dừng' ? 'selected' : '' ?>>Tạm dừng</option>
+                </select>
+            </div>
+
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qllophoc.php'">HỦY</button>
-                <button type="submit" class="save-btn">THÊM</button>
+                <button type="submit" class="save-btn">LƯU THÔNG TIN</button>
             </div>
         </form>
     </div>

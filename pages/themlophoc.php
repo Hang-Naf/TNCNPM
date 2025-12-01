@@ -55,7 +55,7 @@ $giaovien_rs = $conn->query("
 
         input,
         select {
-            width: 100%;
+            width: 30%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -177,28 +177,37 @@ $giaovien_rs = $conn->query("
         <h2 style="margin-left: 30px;">THÊM LỚP HỌC</h2>
         <form method="post" id="addForm" style="margin-left: 50px; margin-right: 50px;">
             <input type="hidden" name="action" value="add">
-            <label>Tên lớp:</label>
-            <input type="text" name="tenLop" required>
-            <label>Sĩ số:</label>
-            <input type="number" name="siSo" min="1" required>
-            <label>Giáo viên phụ trách:</label>
-            <select name="maGV" required>
-                <option value="">-- Chọn giáo viên phụ trách --</option>
-                <?php while ($gv = $giaovien_rs->fetch_assoc()): ?>
-                    <option value="<?= $gv['maGV'] ?>"><?= htmlspecialchars($gv['hoVaTen']) ?></option>
-                <?php endwhile; ?>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Năm học:</label>
+                <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" readonly>
+            </div>
 
-            <label>Năm học:</label>
-            <input type="text" name="namHoc" value="<?= date('Y') . '-' . (date('Y') + 1) ?>" readonly>
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="Đang học">Đang học</option>
-                <option value="Tạm dừng">Tạm dừng</option>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Tên lớp:</label>
+                <input type="text" name="tenLop" required>
+                <label>Giáo viên chủ nhiệm:</label>
+                <select name="maGV" required>
+                    <option value="">-- Chọn giáo viên chủ nhiệm --</option>
+                    <?php while ($gv = $giaovien_rs->fetch_assoc()): ?>
+                        <option value="<?= $gv['maGV'] ?>"><?= htmlspecialchars($gv['hoVaTen']) ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
+
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Sĩ số:</label>
+                <input type="number" name="siSo" min="1" required>
+
+                <label>Trạng thái:</label>
+                <select name="trangThai">
+                    <option value="Đang học">Đang học</option>
+                    <option value="Tạm dừng">Tạm dừng</option>
+                </select>
+            </div>
+
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qllophoc.php'">HỦY</button>
-                <button type="submit" class="save-btn">THÊM</button>
+                <button type="submit" class="save-btn">+ THÊM MỚI</button>
             </div>
         </form>
     </div>

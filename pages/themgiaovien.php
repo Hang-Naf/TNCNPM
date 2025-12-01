@@ -121,7 +121,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         input,
         select {
-            width: 100%;
+            width: 20%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -242,50 +242,58 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </header>
         <h2 style="margin-left: 30px;">THÊM GIÁO VIÊN</h2>
         <form method="post" style="margin-left: 50px; margin-right: 50px;">
-            <label>Họ và tên:</label>
-            <input type="text" name="hoVaTen" required>
+            <div style="display: flex; gap: 25px;">
+                <label>Năm học:</label>
+                <input type="text" name="namHoc" id="addNamHoc" readonly>
 
-            <label>Email:</label>
-            <input type="email" name="email" required>
+                <label>Học kỳ:</label>
+                <input type="text" name="hocKy" id="addHocKy" readonly>
 
-            <label>Số điện thoại:</label>
-            <input type="text" name="sdt" required pattern="^0[0-9]{9}$">
+                <label>Bộ môn:</label>
+                <select name="boMon" required>
+                    <option value="">-- Chọn bộ môn --</option>
+                    <?php while ($mh = $monhoc_rs->fetch_assoc()): ?>
+                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>"><?= htmlspecialchars($mh['tenMonHoc']) ?></option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
 
-            <label>Giới tính:</label>
-            <select name="gioiTinh">
-                <option value="Nam">Nam</option>
-                <option value="Nữ">Nữ</option>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Họ và tên:</label>
+                <input type="text" name="hoVaTen" required style="width: 35%">
 
-            <label>Bộ môn:</label>
-            <select name="boMon" required>
-                <option value="">-- Chọn bộ môn --</option>
-                <?php while ($mh = $monhoc_rs->fetch_assoc()): ?>
-                    <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>"><?= htmlspecialchars($mh['tenMonHoc']) ?></option>
-                <?php endwhile; ?>
-            </select>
+                <label>Email:</label>
+                <input type="email" name="email" required>
+            </div>
 
-            <label>Trình độ:</label>
-            <input type="text" name="trinhDo">
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Số điện thoại:</label>
+                <input type="text" name="sdt" required pattern="^0[0-9]{9}$">
 
-            <label>Phòng ban:</label>
-            <input type="text" name="phongBan">
+                <label>Giới tính:</label>
+                <select name="gioiTinh">
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                </select>
 
-            <label>Năm học:</label>
-            <input type="text" name="namHoc" id="addNamHoc" readonly>
+                <label>Trình độ:</label>
+                <input type="text" name="trinhDo">
+            </div>
 
-            <label>Học kỳ:</label>
-            <input type="text" name="hocKy" id="addHocKy" readonly>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Phòng ban:</label>
+                <input type="text" name="phongBan">
 
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="active">Đang công tác</option>
-                <option value="inactive">Nghỉ</option>
-            </select>
+                <label>Trạng thái:</label>
+                <select name="trangThai">
+                    <option value="active">Đang công tác</option>
+                    <option value="inactive">Nghỉ</option>
+                </select>
+            </div>
 
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qlgiaovien.php'">HỦY</button>
-                <button type="submit" class="save-btn">THÊM</button>
+                <button type="submit" class="save-btn"> + THÊM MỚI</button>
             </div>
         </form>
     </div>

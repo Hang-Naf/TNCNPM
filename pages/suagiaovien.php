@@ -100,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
         input,
         select {
-            width: 100%;
+            width: 20%;
             padding: 8px;
             margin-top: 5px;
             border: 1px solid #ccc;
@@ -221,56 +221,64 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </header>
         <h2 style="margin-left: 30px;">SỬA GIÁO VIÊN</h2>
         <form method="post" id="editForm" style="margin-left: 50px; margin-right: 50px;">
-            <label>Họ và tên:</label>
-            <input type="text" name="hoVaTen" value="<?= htmlspecialchars($data['hoVaTen']) ?>" required>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Năm học:</label>
+                <input type="text" name="namHoc" value="<?= htmlspecialchars($data['namHoc']) ?>">
 
-            <label>Email:</label>
-            <input type="email" name="email" value="<?= htmlspecialchars($data['email']) ?>" required>
+                <label>Học kỳ:</label>
+                <select name="hocKy">
+                    <option value="HK1" <?= $data['hocKy'] == 'HK1' ? 'selected' : '' ?>>HK1</option>
+                    <option value="HK2" <?= $data['hocKy'] == 'HK2' ? 'selected' : '' ?>>HK2</option>
+                    <option value="Hè" <?= $data['hocKy'] == 'Hè' ? 'selected' : '' ?>>Hè</option>
+                </select>
 
-            <label>Số điện thoại:</label>
-            <input type="text" name="sdt" value="<?= htmlspecialchars($data['sdt']) ?>" required pattern="^0[0-9]{9}$">
+                <label>Bộ môn:</label>
+                <select name="boMon" required>
+                    <option value="">-- Chọn bộ môn --</option>
+                    <?php while ($mh = $monhoc_rs->fetch_assoc()): ?>
+                        <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>" <?= $mh['tenMonHoc'] == $data['boMon'] ? 'selected' : '' ?>>
+                            <?= htmlspecialchars($mh['tenMonHoc']) ?>
+                        </option>
+                    <?php endwhile; ?>
+                </select>
+            </div>
 
-            <label>Giới tính:</label>
-            <select name="gioiTinh">
-                <option value="Nam" <?= $data['gioiTinh'] == 'Nam' ? 'selected' : '' ?>>Nam</option>
-                <option value="Nữ" <?= $data['gioiTinh'] == 'Nữ' ? 'selected' : '' ?>>Nữ</option>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Họ và tên:</label>
+                <input type="text" name="hoVaTen" value="<?= htmlspecialchars($data['hoVaTen']) ?>" required style="width: 35%">
 
-            <label>Bộ môn:</label>
-            <select name="boMon" required>
-                <option value="">-- Chọn bộ môn --</option>
-                <?php while ($mh = $monhoc_rs->fetch_assoc()): ?>
-                    <option value="<?= htmlspecialchars($mh['tenMonHoc']) ?>" <?= $mh['tenMonHoc'] == $data['boMon'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($mh['tenMonHoc']) ?>
-                    </option>
-                <?php endwhile; ?>
-            </select>
+                <label>Email:</label>
+                <input type="email" name="email" value="<?= htmlspecialchars($data['email']) ?>" required style="width: 30%">
+            </div>
 
-            <label>Trình độ:</label>
-            <input type="text" name="trinhDo" value="<?= htmlspecialchars($data['trinhDo']) ?>">
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Số điện thoại:</label>
+                <input type="text" name="sdt" value="<?= htmlspecialchars($data['sdt']) ?>" required pattern="^0[0-9]{9}$">
 
-            <label>Phòng ban:</label>
-            <input type="text" name="phongBan" value="<?= htmlspecialchars($data['phongBan']) ?>">
+                <label>Giới tính:</label>
+                <select name="gioiTinh">
+                    <option value="Nam" <?= $data['gioiTinh'] == 'Nam' ? 'selected' : '' ?>>Nam</option>
+                    <option value="Nữ" <?= $data['gioiTinh'] == 'Nữ' ? 'selected' : '' ?>>Nữ</option>
+                </select>
 
-            <label>Năm học:</label>
-            <input type="text" name="namHoc" value="<?= htmlspecialchars($data['namHoc']) ?>">
+                <label>Trình độ:</label>
+                <input type="text" name="trinhDo" value="<?= htmlspecialchars($data['trinhDo']) ?>">
+            </div>
 
-            <label>Học kỳ:</label>
-            <select name="hocKy">
-                <option value="HK1" <?= $data['hocKy'] == 'HK1' ? 'selected' : '' ?>>HK1</option>
-                <option value="HK2" <?= $data['hocKy'] == 'HK2' ? 'selected' : '' ?>>HK2</option>
-                <option value="Hè" <?= $data['hocKy'] == 'Hè' ? 'selected' : '' ?>>Hè</option>
-            </select>
+            <div style="display: flex; gap: 20px; margin-top: 25px;">
+                <label>Phòng ban:</label>
+                <input type="text" name="phongBan" value="<?= htmlspecialchars($data['phongBan']) ?>">
 
-            <label>Trạng thái:</label>
-            <select name="trangThai">
-                <option value="active" <?= $data['trangThai'] == 'active' ? 'selected' : '' ?>>Đang công tác</option>
-                <option value="inactive" <?= $data['trangThai'] == 'inactive' ? 'selected' : '' ?>>Nghỉ</option>
-            </select>
+                <label>Trạng thái:</label>
+                <select name="trangThai">
+                    <option value="active" <?= $data['trangThai'] == 'active' ? 'selected' : '' ?>>Đang công tác</option>
+                    <option value="inactive" <?= $data['trangThai'] == 'inactive' ? 'selected' : '' ?>>Nghỉ</option>
+                </select>
+            </div>
 
             <div class="buttons">
                 <button type="button" class="cancel-btn" onclick="window.location.href='qlgiaovien.php'">HỦY</button>
-                <button type="submit" class="save-btn">LƯU</button>
+                <button type="submit" class="save-btn">LƯU THÔNG TIN</button>
             </div>
         </form>
 
