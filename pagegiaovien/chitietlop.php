@@ -80,7 +80,7 @@ $khoi = preg_match('/^\d+/', $lop['tenLop'], $matches) ? $matches[0] : '';
         }
 
         .table {
-            width: 100%;
+            width: 95%;
             border-collapse: collapse;
             background: white;
             border-radius: 10px;
@@ -122,7 +122,7 @@ $khoi = preg_match('/^\d+/', $lop['tenLop'], $matches) ? $matches[0] : '';
                 <ul>
                     <li onclick="window.location.href='../pagegiaovien/ttcanhan.php'"><i class="fa-solid fa-house"></i> Thông tin cá nhân</li>
                     <li onclick="window.location.href='../pagegiaovien/hocsinh.php'"><i class="fa-solid fa-user-graduate"></i> Học sinh</li>
-                    <li class="active"onclick="window.location.href='../pagegiaovien/lophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
+                    <li class="active" onclick="window.location.href='../pagegiaovien/lophoc.php'"><i class="fa-solid fa-school"></i> Lớp học</li>
                 </ul>
             </div>
 
@@ -136,7 +136,7 @@ $khoi = preg_match('/^\d+/', $lop['tenLop'], $matches) ? $matches[0] : '';
             <div class="menu-section">
                 <div class="menu-title">Quản lý đánh giá</div>
                 <ul>
-                    <li  onclick="window.location.href='../pagegiaovien/chuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
+                    <li onclick="window.location.href='../pagegiaovien/chuyencan.php'"><i class="fa-solid fa-check"></i> Chuyên cần</li>
                     <li onclick="window.location.href='../pagegiaovien/diemso.php'"><i class="fa-solid fa-clipboard-list"></i> Điểm số</li>
                 </ul>
             </div>
@@ -182,9 +182,9 @@ $khoi = preg_match('/^\d+/', $lop['tenLop'], $matches) ? $matches[0] : '';
                 </div>
             </div>
         </header>
-        <h1>Chi tiết lớp: <?= htmlspecialchars($lop['tenLop']) ?></h1>
+        <h1 style="margin-left: 35px;">Chi tiết lớp: <?= htmlspecialchars($lop['tenLop']) ?></h1>
 
-        <table class="table">
+        <table class="table" style="margin-left: 35px;">
             <thead>
                 <tr>
                     <th>Năm học</th>
@@ -212,7 +212,9 @@ $khoi = preg_match('/^\d+/', $lop['tenLop'], $matches) ? $matches[0] : '';
         </table>
 
         <br>
-        <button onclick="window.history.back()">Quay lại</button>
+        <div style="display:flex; justify-content:flex-end; margin-right: 40px;">
+            <button onclick="window.history.back()" style="background: #0b1e6b; color: #fff; width: 120px; height: 35px; border-radius: 10px;">Quay lại</button>
+        </div>
     </div>
     <script>
         document.getElementById("bellIcon").addEventListener("click", function() {
